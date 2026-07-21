@@ -96,7 +96,7 @@ export default function VocabularyForm() {
 
   return (
     <>
-      <div className="rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {entries.map((entry, index) => (
             <div key={index} className="flex gap-2">
@@ -105,21 +105,21 @@ export default function VocabularyForm() {
                 placeholder="Từ vựng (vd: apple)"
                 value={entry.word}
                 onChange={(event) => updateEntry(index, "word", event.target.value)}
-                className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
+                className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
               />
               <input
                 type="text"
                 placeholder="Nghĩa (tuỳ chọn)"
                 value={entry.meaning}
                 onChange={(event) => updateEntry(index, "meaning", event.target.value)}
-                className="flex-1 rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
+                className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
               />
               {entries.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeEntry(index)}
                   aria-label="Xoá từ"
-                  className="rounded-lg px-2 text-sm text-gray-500 hover:bg-red-500/10 hover:text-red-400"
+                  className="rounded-lg px-2 text-sm text-slate-500 hover:bg-red-500/10 hover:text-red-400"
                 >
                   ✕
                 </button>
@@ -132,11 +132,11 @@ export default function VocabularyForm() {
               type="button"
               onClick={addEntry}
               disabled={entries.length >= MAX_WORDS_PER_STORY}
-              className="text-sm font-medium text-amber-400 hover:text-amber-300 disabled:cursor-not-allowed disabled:text-gray-600 disabled:hover:text-gray-600"
+              className="text-sm font-medium text-amber-400 hover:text-amber-300 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:text-slate-600"
             >
               + Thêm từ
             </button>
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-slate-500">
               {entries.length}/{MAX_WORDS_PER_STORY} từ
             </span>
           </div>
@@ -148,7 +148,7 @@ export default function VocabularyForm() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-amber-300 disabled:opacity-50"
+            className="mt-2 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300 disabled:opacity-50"
           >
             {loading ? "Đang tạo câu chuyện..." : "Tạo câu chuyện"}
           </button>
@@ -168,7 +168,7 @@ export default function VocabularyForm() {
               type="button"
               onClick={handleRegenerate}
               disabled={regenerating}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-gray-900 px-3.5 py-2 text-sm font-medium text-amber-400 hover:bg-amber-500/10 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-slate-900 px-3.5 py-2 text-sm font-medium text-amber-400 hover:bg-amber-500/10 disabled:opacity-50"
             >
               {regenerating ? "Đang tạo..." : (
                 <>

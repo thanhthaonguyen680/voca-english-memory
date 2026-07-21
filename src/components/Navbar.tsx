@@ -14,10 +14,10 @@ export default async function Navbar() {
   const streak = user ? await getStudyStreak(supabase, user.id) : null;
 
   return (
-    <header className="border-b border-gray-800 bg-black/80 backdrop-blur-sm">
+    <header className="border-b border-slate-800 bg-[#0B1220]/80 backdrop-blur-sm">
       <nav className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3.5">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400 text-sm font-bold text-gray-900">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400 text-sm font-bold text-slate-900">
             V
           </span>
           <span className="text-sm font-semibold text-white">Voca English Memory</span>
@@ -27,13 +27,13 @@ export default async function Navbar() {
           {user ? (
             <>
               {streak && <StreakBadge current={streak.current} studiedToday={streak.studiedToday} />}
-              <Link href="/vocabulary" className="text-gray-400 hover:text-white">
+              <Link href="/vocabulary" className="text-slate-400 hover:text-white">
                 Nhập từ vựng
               </Link>
-              <Link href="/review" className="text-gray-400 hover:text-white">
+              <Link href="/review" className="text-slate-400 hover:text-white">
                 Ôn tập
               </Link>
-              <Link href="/history" className="text-gray-400 hover:text-white">
+              <Link href="/history" className="text-slate-400 hover:text-white">
                 Lịch sử học
               </Link>
               <SignOutButton />
@@ -41,7 +41,7 @@ export default async function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="rounded-lg bg-amber-400 px-3.5 py-1.5 font-medium text-gray-900 hover:bg-amber-300"
+              className="rounded-lg bg-amber-400 px-3.5 py-1.5 font-medium text-slate-900 hover:bg-amber-300"
             >
               Đăng nhập
             </Link>

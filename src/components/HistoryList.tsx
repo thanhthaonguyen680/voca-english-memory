@@ -17,7 +17,7 @@ export default function HistoryList({ initialStories }: { initialStories: StoryR
 
   if (stories.length === 0) {
     return (
-      <p className="text-sm text-gray-400">
+      <p className="text-sm text-slate-400">
         Bạn chưa có câu chuyện nào. Hãy tạo câu chuyện đầu tiên ở trang{" "}
         <a
           href="/vocabulary"

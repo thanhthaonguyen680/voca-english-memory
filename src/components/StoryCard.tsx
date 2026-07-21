@@ -66,7 +66,7 @@ export default function StoryCard({
       className={
         highlight
           ? "rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6"
-          : "rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-sm"
+          : "rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm"
       }
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -107,7 +107,7 @@ export default function StoryCard({
         {(createdAt || id) && (
           <div className="flex shrink-0 items-center gap-2">
             {createdAt && (
-              <time className="text-xs text-gray-500">
+              <time className="text-xs text-slate-500">
                 {new Date(createdAt).toLocaleString("vi-VN")}
               </time>
             )}
@@ -118,7 +118,7 @@ export default function StoryCard({
                 disabled={deleting}
                 title="Xoá câu chuyện"
                 aria-label="Xoá câu chuyện"
-                className="rounded-lg px-1.5 py-1 text-xs text-gray-500 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                className="rounded-lg px-1.5 py-1 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
               >
                 🗑️
               </button>
@@ -138,20 +138,20 @@ export default function StoryCard({
         <button
           type="button"
           onClick={() => speak(content.replace(/\*\*/g, ""))}
-          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-700 hover:text-slate-200"
         >
           <span aria-hidden>🔊</span> Nghe câu chuyện
         </button>
       </div>
 
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-100">
+      <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-100">
         <BoldText text={content} />
       </p>
 
       {translation && (
-        <div className="mt-4 border-t border-gray-800 pt-3">
-          <p className="mb-1 text-xs font-medium text-gray-500">Bản dịch tiếng Việt</p>
-          <p className="whitespace-pre-wrap text-sm text-gray-400">{translation}</p>
+        <div className="mt-4 border-t border-slate-800 pt-3">
+          <p className="mb-1 text-xs font-medium text-slate-500">Bản dịch tiếng Việt</p>
+          <p className="whitespace-pre-wrap text-sm text-slate-400">{translation}</p>
         </div>
       )}
 

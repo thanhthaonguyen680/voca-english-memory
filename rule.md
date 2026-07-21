@@ -190,22 +190,30 @@ secret there.
 - All user-facing text (buttons, form labels, error messages, page copy) stays in
   **Vietnamese** — this app targets Vietnamese speakers learning English. Code (identifiers,
   comments) stays in English.
-- **Dark theme, no toggle.** Body is `bg-black text-white` (set in `layout.tsx` +
-  `globals.css`, no `prefers-color-scheme` branching — this is a firm switch, not a
-  system-preference-based theme). Amber stays the single accent color, unchanged from the
-  light theme, since it reads well on both. Palette mapping (light → dark), keep new UI
-  consistent with this instead of reintroducing light-mode grays:
-  - Page background: `bg-black`
-  - Card/surface background: `bg-gray-900`, border `border-gray-800`
-  - Primary text: `text-white`; secondary text: `text-gray-400`; muted/icon text: `text-gray-500`
-  - Inputs: `bg-gray-800 border-gray-700 text-white`, focus ring stays `amber-400/30`
-  - Hover surface: `bg-gray-800`
+- **Dark "Navy Blue" theme, no toggle.** Body is the exact gradient
+  `bg-[linear-gradient(180deg,#0B1220_0%,#111827_100%)] text-white` (set in `layout.tsx`;
+  `globals.css`'s `--background` is `#0b1220`, just a same-tone fallback — no
+  `prefers-color-scheme` branching, this is a firm switch, not a system-preference-based
+  theme). These two hex stops and the card color below (`#1E293B` = Tailwind's `slate-800`)
+  came directly from a user-supplied palette spec — don't "simplify" them back to a generic
+  `slate-950`/`bg-black`; the exact hex on the body gradient is intentional. Everything else
+  uses Tailwind's **slate** scale, not `gray`. Amber stays the single accent color, unchanged
+  from the light theme, since it reads well on both.
+  - **Layered depth — each step is one shade lighter than the last:** body gradient (darkest,
+    custom hex) → inputs/recessed fields `bg-slate-900` → card/surface `bg-slate-800` (the
+    `#1E293B` from the spec) → hover highlight inside a card `bg-slate-700`. A card's border is
+    always one step lighter than its own background (`bg-slate-800` card → `border-slate-700`;
+    `bg-slate-900` input → `border-slate-700` also reads fine since inputs sit inside a
+    lighter card). When adding a new element, place it in this scale by what it visually sits
+    on top of — don't default every surface to the same gray/slate step, that's what produced
+    the flat, low-contrast draft this was corrected from.
+  - Primary text: `text-white`; secondary text: `text-slate-400`; muted/icon text: `text-slate-500`
   - Amber tinted surfaces (chips, highlighted cards): `bg-amber-500/10` (or `/5`, `/15` for
     layering) with `border-amber-500/20` and `text-amber-300`/`text-amber-400` (not
     `amber-700`/`amber-800` — those are light-mode shades, too dark to read here)
   - Success/error tints: `bg-green-500/10 text-green-400`, `bg-red-500/10 text-red-400`
-  - Primary amber buttons (`bg-amber-400 ... text-gray-900`) are unchanged — dark text on a
-    bright amber button stays correct in both themes.
+  - Primary amber buttons (`bg-amber-400 ... text-slate-900`) are unchanged — dark text on a
+    bright amber button stays correct regardless of what's behind it.
   Don't introduce other brand colors casually.
 - No complex loading skeletons/animations — use simple status text (e.g. "Đang tạo câu
   chuyện...") in line with the "simple, clean UI" requirement.

@@ -52,7 +52,7 @@ export default function PronunciationCheck({ word, onResult }: PronunciationChec
         className={
           status === "listening"
             ? "rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400"
-            : "rounded-full bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-300 hover:bg-gray-700"
+            : "rounded-full bg-slate-700 px-2.5 py-1 text-xs font-medium text-slate-300 hover:bg-slate-600"
         }
       >
         {status === "listening" ? "🎙️ Đang nghe..." : "🎤 Kiểm tra phát âm"}
@@ -64,7 +64,7 @@ export default function PronunciationCheck({ word, onResult }: PronunciationChec
         <span className="text-xs font-medium text-red-400">❌ Nghe thành &ldquo;{heard}&rdquo;</span>
       )}
       {status === "unsupported" && (
-        <span className="text-xs text-gray-500">Trình duyệt không hỗ trợ nhận diện giọng nói</span>
+        <span className="text-xs text-slate-500">Trình duyệt không hỗ trợ nhận diện giọng nói</span>
       )}
     </div>
   );

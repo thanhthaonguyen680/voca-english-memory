@@ -10,7 +10,7 @@ export default function StreakBadge({ current, studiedToday }: StreakBadgeProps)
       className={
         current > 0
           ? "inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-300"
-          : "inline-flex items-center gap-1 rounded-full bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-400"
+          : "inline-flex items-center gap-1 rounded-full bg-slate-700 px-2.5 py-1 text-xs font-medium text-slate-400"
       }
     >
       <span aria-hidden>🔥</span>

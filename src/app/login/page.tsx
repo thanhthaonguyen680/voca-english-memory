@@ -32,12 +32,12 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-16">
-      <div className="rounded-2xl border border-gray-800 bg-gray-900 p-7 shadow-sm">
-        <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-base font-bold text-gray-900">
+      <div className="rounded-2xl border border-slate-700 bg-slate-800 p-7 shadow-sm">
+        <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-base font-bold text-slate-900">
           V
         </span>
         <h1 className="mb-2 text-2xl font-semibold text-white">Đăng nhập</h1>
-        <p className="mb-6 text-sm text-gray-400">
+        <p className="mb-6 text-sm text-slate-400">
           Nhập email để nhận đường link đăng nhập (magic link), không cần mật khẩu.
         </p>
 
@@ -54,12 +54,12 @@ export default function LoginPage() {
               placeholder="you@example.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
+              className="rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
             />
             <button
               type="submit"
               disabled={status === "loading"}
-              className="rounded-lg bg-amber-400 px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-amber-300 disabled:opacity-50"
+              className="rounded-lg bg-amber-400 px-3.5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300 disabled:opacity-50"
             >
               {status === "loading" ? "Đang gửi..." : "Gửi magic link"}
             </button>

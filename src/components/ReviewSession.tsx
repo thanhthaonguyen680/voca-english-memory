@@ -96,8 +96,8 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
 
   if (mode === null) {
     return (
-      <div className="rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-sm">
-        <p className="mb-4 text-sm text-gray-400">
+      <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
+        <p className="mb-4 text-sm text-slate-400">
           Có <strong className="text-white">{words.length}</strong> từ để ôn tập. Chọn chế độ
           kiểm tra:
         </p>
@@ -107,7 +107,7 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
               key={m}
               type="button"
               onClick={() => startSession(m)}
-              className="flex-1 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-amber-300"
+              className="flex-1 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300"
             >
               {MODE_LABELS[m]}
             </button>
@@ -139,14 +139,14 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
           <button
             type="button"
             onClick={() => startSession(mode)}
-            className="rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-amber-300"
+            className="rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-amber-300"
           >
             Ôn lại
           </button>
           <button
             type="button"
             onClick={() => setMode(null)}
-            className="rounded-lg border border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-300 hover:bg-gray-800"
+            className="rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-700"
           >
             Đổi chế độ
           </button>
@@ -180,15 +180,15 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
   }
 
   return (
-    <div className="rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-sm">
-      <div className="mb-4 flex items-center justify-between text-xs text-gray-500">
+    <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between text-xs text-slate-500">
         <span>
           Câu {index + 1}/{deck.length}
         </span>
         <span>Đúng {correctCount}</span>
       </div>
 
-      <p className="mb-1 text-xs font-medium text-gray-500">
+      <p className="mb-1 text-xs font-medium text-slate-500">
         {current.direction === "en-vi" ? "Từ tiếng Anh" : "Nghĩa tiếng Việt"}
       </p>
       <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -208,7 +208,7 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
               type="button"
               onClick={() => speak(englishWordVisible)}
               title="Nghe phát âm"
-              className="rounded-full bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-300 hover:bg-gray-700"
+              className="rounded-full bg-slate-700 px-2.5 py-1 text-xs font-medium text-slate-300 hover:bg-slate-600"
             >
               🔊
             </button>
@@ -226,11 +226,11 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
             placeholder={
               current.direction === "en-vi" ? "Nhập nghĩa tiếng Việt" : "Nhập từ tiếng Anh"
             }
-            className="rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
+            className="rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
           />
           <button
             type="submit"
-            className="rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-amber-300"
+            className="rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300"
           >
             Kiểm tra
           </button>
@@ -246,7 +246,7 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
           >
             {lastCorrect ? "✅ Chính xác!" : "❌ Chưa đúng"}
           </p>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-slate-400">
             Đáp án đúng:{" "}
             {current.direction === "en-vi" ? (
               <EditableMeaning
@@ -261,7 +261,7 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
           <button
             type="button"
             onClick={handleNext}
-            className="rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-amber-300"
+            className="rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300"
           >
             {isLast ? "Xem kết quả" : "Câu tiếp theo →"}
           </button>

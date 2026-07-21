@@ -34,14 +34,14 @@ export default function ConfirmDialog({
         onClick={onCancel}
         className="absolute inset-0 cursor-default bg-black/70 backdrop-blur-sm"
       />
-      <div className="relative w-full max-w-sm rounded-2xl border border-gray-800 bg-gray-900 p-6 shadow-xl">
+      <div className="relative w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-xl">
         <h2 className="text-base font-semibold text-white">{title}</h2>
-        {description && <p className="mt-2 text-sm text-gray-400">{description}</p>}
+        {description && <p className="mt-2 text-sm text-slate-400">{description}</p>}
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800"
+            className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-700"
           >
             {cancelLabel}
           </button>
@@ -52,7 +52,7 @@ export default function ConfirmDialog({
             className={
               danger
                 ? "rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50"
-                : "rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-amber-300 disabled:opacity-50"
+                : "rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-300 disabled:opacity-50"
             }
           >
             {loading ? "Đang xử lý..." : confirmLabel}

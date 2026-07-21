@@ -32,7 +32,7 @@ export default async function ReviewPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
       <h1 className="mb-1 text-2xl font-semibold text-white">Ôn tập từ vựng</h1>
-      <p className="mb-6 text-sm text-gray-400">
+      <p className="mb-6 text-sm text-slate-400">
         Kiểm tra trí nhớ 2 chiều: nhìn từ tiếng Anh đoán nghĩa, hoặc nhìn nghĩa đoán từ tiếng
         Anh. Có thể luyện phát âm bằng giọng của bạn.
       </p>
@@ -42,7 +42,7 @@ export default async function ReviewPage() {
       )}
 
       {!error && words.length === 0 && (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-slate-400">
           Chưa có từ nào để ôn tập. Hãy tạo vài câu chuyện ở trang{" "}
           <a
             href="/vocabulary"
