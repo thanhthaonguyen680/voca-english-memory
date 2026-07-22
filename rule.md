@@ -33,6 +33,24 @@ Mandatory rules for this project. Read before adding any new feature.
 Don't create additional client variants. Don't call the server `createClient` from a client
 component, or vice versa.
 
+## Auth: OTP code, not just the magic link
+
+- `/login` (`src/app/login/page.tsx`) sends the code via `signInWithOtp`, same as before, but
+  the **primary** login path is now typing the 6-digit code Supabase includes in that same
+  email (`supabase.auth.verifyOtp({ email, token, type: "email" })`) — not clicking the link.
+  Verifying a code creates the session directly, client-side, with no redirect involved.
+- Why: the magic-link click depends on Supabase's Auth **Site URL / Redirect URLs** dashboard
+  config matching the domain the user is actually on. That's an out-of-repo setting we can't
+  fix from code — if it's stale (e.g. still only `localhost:3000` after deploying to Vercel),
+  the link silently redirects to the wrong host and login never completes, with no error
+  surfaced to the user. The code path has no such dependency, so it works regardless of
+  whatever the dashboard's redirect config currently is.
+- `emailRedirectTo` is still passed to `signInWithOtp` and `/auth/callback` still exists, so
+  the link keeps working as a secondary path *if* the dashboard config is correct — don't
+  remove either. But don't make the link-click flow the only option again; the code entry is
+  what actually makes login reliable across environments (local, preview, production) without
+  needing to keep the Supabase dashboard's redirect list in sync with every deploy URL.
+
 ## `Database` type (`src/lib/supabase/types.ts`)
 
 `@supabase/supabase-js` requires the exact `GenericSchema` shape — a missing field silently
