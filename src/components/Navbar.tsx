@@ -36,6 +36,14 @@ export default async function Navbar() {
               <Link href="/history" className="text-slate-400 hover:text-white">
                 Lịch sử học
               </Link>
+              <Link
+                href="/settings"
+                title="Cài đặt"
+                aria-label="Cài đặt"
+                className="text-slate-400 hover:text-white"
+              >
+                ⚙️
+              </Link>
               <SignOutButton />
             </>
           ) : (

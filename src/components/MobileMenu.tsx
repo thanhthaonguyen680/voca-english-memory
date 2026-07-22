@@ -15,6 +15,7 @@ const LINKS = [
   { href: "/vocabulary", label: "Nhập từ vựng" },
   { href: "/review", label: "Ôn tập" },
   { href: "/history", label: "Lịch sử học" },
+  { href: "/settings", label: "Cài đặt" },
 ];
 
 export default function MobileMenu({ loggedIn, streakCurrent, studiedToday }: MobileMenuProps) {

@@ -58,6 +58,24 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      user_settings: {
+        Row: {
+          user_id: string;
+          gemini_api_key: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          gemini_api_key?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<{
+          user_id: string;
+          gemini_api_key: string | null;
+          updated_at: string;
+        }>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

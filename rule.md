@@ -33,23 +33,29 @@ Mandatory rules for this project. Read before adding any new feature.
 Don't create additional client variants. Don't call the server `createClient` from a client
 component, or vice versa.
 
-## Auth: OTP code, not just the magic link
+## Auth: email + password, not magic link / OTP
 
-- `/login` (`src/app/login/page.tsx`) sends the code via `signInWithOtp`, same as before, but
-  the **primary** login path is now typing the 6-digit code Supabase includes in that same
-  email (`supabase.auth.verifyOtp({ email, token, type: "email" })`) — not clicking the link.
-  Verifying a code creates the session directly, client-side, with no redirect involved.
-- Why: the magic-link click depends on Supabase's Auth **Site URL / Redirect URLs** dashboard
-  config matching the domain the user is actually on. That's an out-of-repo setting we can't
-  fix from code — if it's stale (e.g. still only `localhost:3000` after deploying to Vercel),
-  the link silently redirects to the wrong host and login never completes, with no error
-  surfaced to the user. The code path has no such dependency, so it works regardless of
-  whatever the dashboard's redirect config currently is.
-- `emailRedirectTo` is still passed to `signInWithOtp` and `/auth/callback` still exists, so
-  the link keeps working as a secondary path *if* the dashboard config is correct — don't
-  remove either. But don't make the link-click flow the only option again; the code entry is
-  what actually makes login reliable across environments (local, preview, production) without
-  needing to keep the Supabase dashboard's redirect list in sync with every deploy URL.
+- `/login` (`src/app/login/page.tsx`) uses `supabase.auth.signUp` /
+  `supabase.auth.signInWithPassword` — no email round-trip at all. This is a deliberate
+  pivot away from two earlier approaches that both turned out to depend on things outside
+  this repo:
+  - **Magic link** (`signInWithOtp` + `/auth/callback`) depends on Supabase's Auth
+    **Site URL / Redirect URLs** dashboard config matching the domain the user is on. Stale
+    config (e.g. still `localhost:3000` after deploying) silently redirects to the wrong host
+    with no error shown.
+  - **OTP code** (`verifyOtp`) doesn't need a redirect, but the 6-digit code only reaches the
+    user if the email template includes `{{ .Token }}` — and Supabase's default (non-SMTP)
+    email service **locks template editing** entirely. Without custom SMTP configured, there
+    is no way to get the code into the email at all.
+  Password auth has neither dependency: signup/login complete client-side immediately.
+- This requires **"Confirm email" turned OFF** in the Supabase dashboard (Authentication →
+  Providers → Email), otherwise `signUp` won't return a session (`data.session` is null) and
+  the user is stuck waiting on a confirmation email — which hits the exact same
+  template/redirect problems above. The login page already handles that case (shows an info
+  message instead of failing silently) but the simple, no-email-dependency flow only works
+  with confirmation off.
+- If magic link or OTP is revisited later (e.g. once custom SMTP is set up), don't delete
+  `/auth/callback` — it's dormant, not dead, and is what a link-based flow would need again.
 
 ## `Database` type (`src/lib/supabase/types.ts`)
 
@@ -88,12 +94,14 @@ a confusing error like
 
 - Always check `user` via `supabase.auth.getUser()` first and return `401` if not
   authenticated.
-- Always rate-limit before calling Gemini (currently: count `stories` created today, compare
-  against `MAX_STORIES_PER_DAY`). If a new AI-calling feature is added, apply the same
-  daily-count mechanism — don't skip rate limiting "just for testing".
-- Wrap the Gemini call (`gemini.models.generateContent`, in `@/lib/gemini/client`) in its own
-  `try/catch`, return a user-friendly Vietnamese error message, and `console.error` the
-  original error for debugging — never leak a raw error to the response.
+- Always rate-limit before calling Gemini with the **shared** server key (currently: count
+  `stories` created today, compare against `MAX_STORIES_PER_DAY`) — skip the rate limit only
+  when the user has their own key (see the "Per-user Gemini API key" section below). If a new
+  AI-calling feature is added, apply the same daily-count mechanism — don't skip rate limiting
+  "just for testing".
+- Wrap the Gemini call in its own `try/catch`, return a user-friendly Vietnamese error message,
+  and `console.error` the original error for debugging — never leak a raw error to the
+  response.
 - Never expose `GEMINI_API_KEY` or any secret on the client — only use it inside a Route
   Handler (server-side).
 - The per-story word cap (`MAX_WORDS_PER_STORY`) lives in `src/lib/constants.ts` — a shared
@@ -118,6 +126,28 @@ a confusing error like
 - Per-word `meaning`: a user-entered meaning always wins; the AI-generated one only fills the
   gap when the user left it blank (see the merge in the route, `entry.meaning || ai?.meaning`).
   Don't overwrite a user's own input with the AI's.
+
+## Per-user Gemini API key (`/settings`)
+
+- A user can add their own Gemini key on `/settings` (`GeminiKeyForm`) instead of using the
+  app's shared server key. Purpose: the shared `GEMINI_API_KEY` is one fixed credential for
+  every user of the app — it does **not** automatically use each user's own Google/Gmail
+  account. Without a personal key, everyone shares the same free-tier quota, which is why
+  `MAX_STORIES_PER_DAY` exists. A personal key gets its own quota and skips that limit.
+- The key is **encrypted before it ever reaches the database**
+  (`src/lib/crypto.ts`, AES-256-GCM, keyed off the server-only `ENCRYPTION_KEY` env var) and
+  stored in `user_settings.gemini_api_key`. It's only decrypted server-side, at the moment
+  `generate-story` needs it to build a per-request `GoogleGenAI` client — never sent back to
+  the client in plaintext. `/settings` only ever displays a masked preview
+  (`maskKey`, last 4 characters).
+- `generate-story`'s route checks `user_settings` first: if a (decryptable) personal key
+  exists, it builds a one-off `GoogleGenAI` client from it and **skips** the
+  `MAX_STORIES_PER_DAY` check entirely; otherwise it falls back to the shared `gemini` client
+  from `@/lib/gemini/client` and the normal rate limit applies. Don't add a separate code path
+  for this — it's the same generation logic either way, just a different client instance.
+- `user_settings` has its own migration + RLS (`user_settings_select_own` etc.) — same
+  one-row-per-user, `auth.uid() = user_id` pattern as every other table. If a new per-user
+  setting is needed later, add a column to this table rather than creating a new one.
 
 ## Voice (text-to-speech)
 

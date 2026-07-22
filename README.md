@@ -7,8 +7,9 @@ translation, IPA pronunciation per word, and text-to-speech playback — saved f
 ## Stack
 
 - Next.js (App Router) + TypeScript
-- Supabase (Postgres + Auth) — free tier
-- Google Gemini API (`gemini-flash-lite-latest`) — free tier, no credit card required
+- Supabase (Postgres + Auth, email/password) — free tier
+- Google Gemini API (`gemini-flash-lite-latest`) — free tier, no credit card required; users
+  can optionally add their own key on `/settings` to skip the shared daily limit
 - Deployed on Vercel — free tier
 
 ## Project structure
@@ -16,49 +17,45 @@ translation, IPA pronunciation per word, and text-to-speech playback — saved f
 ```
 src/
   app/
-    page.tsx                 Home page
-    login/page.tsx           Magic-link sign in
-    auth/callback/route.ts   Handles the callback after clicking the magic link
-    vocabulary/page.tsx      Enter vocabulary, calls the story-generation API
-    history/page.tsx         History of previously generated stories
-    api/generate-story/      API route: calls Gemini + rate limiting + saves to DB
-  components/                Navbar, SignOutButton, StoryCard, BoldText...
+    page.tsx                     Home page
+    login/page.tsx               Email + password sign in / sign up
+    vocabulary/page.tsx          Enter vocabulary, calls the story-generation API
+    history/page.tsx             History of previously generated stories
+    review/page.tsx              Flashcard-style vocabulary review + pronunciation check
+    settings/page.tsx            Add/remove a personal Gemini API key
+    auth/callback/route.ts       Dormant — only used if magic-link auth is reintroduced
+    api/generate-story/          API route: calls Gemini + rate limiting + saves to DB
+    api/vocabulary-entries/      API route: edit a saved word's meaning
+    api/user-settings/gemini-key/  API route: save/remove a user's own Gemini key (encrypted)
+  components/                    Navbar, StoryCard, ReviewSession, GeminiKeyForm...
   lib/
-    supabase/                Supabase client (browser/server/middleware) + types
-    gemini/                  Gemini client
-    speech.ts                Text-to-speech helper (browser Web Speech API)
-  proxy.ts                   Refreshes the session + protects /vocabulary, /history
+    supabase/                    Supabase client (browser/server/middleware) + types
+    gemini/                      Shared Gemini client (fallback when a user has no own key)
+    crypto.ts                    AES-256-GCM encrypt/decrypt for stored per-user API keys
+    speech.ts, pronunciation.ts  Browser Web Speech API helpers (TTS + speech recognition)
+  proxy.ts                       Refreshes the session + protects the routes above
 supabase/
-  migrations/                Timestamp-prefixed, in the format Supabase CLI itself uses
-    20260720222132_init.sql                        Schema + Row Level Security
-    20260721090849_add_story_translation.sql       Adds the `translation` column to stories
-    20260721141856_add_vocabulary_update_policy.sql Adds the UPDATE policy vocabulary_entries needs
+  migrations/                    Timestamp-prefixed, in the format Supabase CLI itself uses
 ```
 
 ## 1. Set up Supabase
 
 1. Create a new project at [supabase.com](https://supabase.com) (free tier).
 2. Open the **SQL Editor** and run every file in `supabase/migrations/`, in filename order
-   (oldest timestamp first):
-   - [`20260720222132_init.sql`](supabase/migrations/20260720222132_init.sql) — creates the
-     `vocabulary_entries` and `stories` tables and enables Row Level Security.
-   - [`20260721090849_add_story_translation.sql`](supabase/migrations/20260721090849_add_story_translation.sql) —
-     adds the `translation` column used for the Vietnamese story translation.
-   - [`20260721141856_add_vocabulary_update_policy.sql`](supabase/migrations/20260721141856_add_vocabulary_update_policy.sql) —
-     adds the UPDATE policy the `/review` "edit meaning" feature needs.
-3. Under **Authentication > Providers**, make sure the **Email** provider is enabled (on by
-   default). The app uses magic links (email OTP), no password required.
-4. Under **Authentication > URL Configuration**, add:
-   - Site URL: `http://localhost:3000` (dev) and your Vercel domain once deployed.
-   - Redirect URLs: `http://localhost:3000/auth/callback` and
-     `https://<your-vercel-domain>/auth/callback`.
-5. Under **Project Settings > API**, copy the `Project URL` and `anon public` key.
+   (oldest timestamp first — each one is a small, one-time schema change).
+3. Under **Authentication > Providers > Email**, turn **off "Confirm email"**. This app uses
+   plain email + password with no email step at all — leaving confirmation on will make
+   sign-up hang waiting for a confirmation email that (on Supabase's default, non-SMTP email
+   service) has real deliverability/template limitations.
+4. Under **Project Settings > API**, copy the `Project URL` and `anon public` key.
 
 ## 2. Get a Gemini API key (free)
 
 1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
-2. Sign in with a Google account and create an API key — no billing/credit card required for
-   the free tier.
+2. Sign in with a personal Google account (not a Workspace/company email) and create an API
+   key — no billing/credit card required for the free tier. If you pick a **new** project
+   when creating the key, you're less likely to hit the `limit: 0` free-tier quota issue that
+   can happen with older/pre-existing GCP projects.
 
 ## 3. Configure environment variables
 
@@ -73,10 +70,13 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 GEMINI_API_KEY=...
 MAX_STORIES_PER_DAY=10
+ENCRYPTION_KEY=...
 ```
 
-`MAX_STORIES_PER_DAY` is a basic rate limit: each user can generate at most N stories (= N
-Gemini calls) per day, to prevent API abuse and stay comfortably inside the free-tier quota.
+- `MAX_STORIES_PER_DAY` — basic rate limit: each user without their own Gemini key can
+  generate at most N stories (= N Gemini calls) per day using the shared server key.
+- `ENCRYPTION_KEY` — any random long string (e.g. `openssl rand -base64 32`), used to encrypt
+  a user's own Gemini API key before it's stored in the database (see `/settings`).
 
 ## 4. Run locally
 
@@ -92,14 +92,15 @@ Open [http://localhost:3000](http://localhost:3000).
 1. Push the code to GitHub.
 2. Import the repo into [Vercel](https://vercel.com) (free tier).
 3. Add the environment variables above under **Project Settings > Environment Variables**.
-4. Update the Redirect URL in Supabase with the real Vercel domain once deployed.
 
 ## Notes
 
-- RLS ensures each user can only read/write their own `vocabulary_entries` and `stories`
-  (`auth.uid() = user_id`).
+- RLS ensures each user can only read/write their own `vocabulary_entries`, `stories`, and
+  `user_settings` rows (`auth.uid() = user_id`).
 - Rate limiting currently counts `stories` created today by server clock — simple, no extra
-  table needed, sufficient for an MVP.
+  table needed — and is skipped entirely for a user who has added their own Gemini key.
+- A user's own Gemini API key is encrypted (AES-256-GCM, `src/lib/crypto.ts`) before being
+  stored, and only decrypted server-side at the moment a story is generated.
 
 See [rule.md](rule.md) for the conventions this project follows — read it before making
 changes so future work stays consistent.
