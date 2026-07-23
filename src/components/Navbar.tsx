@@ -33,6 +33,9 @@ export default async function Navbar() {
               <Link href="/review" className="text-slate-400 hover:text-white">
                 Ôn tập
               </Link>
+              <Link href="/chat" className="text-slate-400 hover:text-white">
+                Luyện nói
+              </Link>
               <Link href="/history" className="text-slate-400 hover:text-white">
                 Lịch sử học
               </Link>

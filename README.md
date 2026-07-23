@@ -3,6 +3,7 @@
 Learn English vocabulary through "story-based memory": enter a list of words, AI (Google
 Gemini `gemini-flash-lite-latest`) generates a short story using them — with a Vietnamese
 translation, IPA pronunciation per word, and text-to-speech playback — saved for later review.
+Also includes a voice conversation practice mode (`/chat`).
 
 ## Stack
 
@@ -22,12 +23,14 @@ src/
     vocabulary/page.tsx          Enter vocabulary, calls the story-generation API
     history/page.tsx             History of previously generated stories
     review/page.tsx              Flashcard-style vocabulary review + pronunciation check
+    chat/page.tsx                Roleplay voice/text conversation practice with Gemini
     settings/page.tsx            Add/remove a personal Gemini API key
     auth/callback/route.ts       Dormant — only used if magic-link auth is reintroduced
     api/generate-story/          API route: calls Gemini + rate limiting + saves to DB
     api/vocabulary-entries/      API route: edit a saved word's meaning
     api/user-settings/gemini-key/  API route: save/remove a user's own Gemini key (encrypted)
-  components/                    Navbar, StoryCard, ReviewSession, GeminiKeyForm...
+    api/chat/                    API route: multi-turn Gemini conversation + rate limiting
+  components/                    Navbar, StoryCard, ReviewSession, ChatSession, GeminiKeyForm...
   lib/
     supabase/                    Supabase client (browser/server/middleware) + types
     gemini/                      Shared Gemini client (fallback when a user has no own key)
@@ -70,11 +73,13 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 GEMINI_API_KEY=...
 MAX_STORIES_PER_DAY=10
+MAX_CHAT_MESSAGES_PER_DAY=30
 ENCRYPTION_KEY=...
 ```
 
-- `MAX_STORIES_PER_DAY` — basic rate limit: each user without their own Gemini key can
-  generate at most N stories (= N Gemini calls) per day using the shared server key.
+- `MAX_STORIES_PER_DAY` / `MAX_CHAT_MESSAGES_PER_DAY` — basic rate limits: each user without
+  their own Gemini key can generate at most N stories, or send at most N chat messages, per
+  day using the shared server key.
 - `ENCRYPTION_KEY` — any random long string (e.g. `openssl rand -base64 32`), used to encrypt
   a user's own Gemini API key before it's stored in the database (see `/settings`).
 
@@ -95,10 +100,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Notes
 
-- RLS ensures each user can only read/write their own `vocabulary_entries`, `stories`, and
-  `user_settings` rows (`auth.uid() = user_id`).
-- Rate limiting currently counts `stories` created today by server clock — simple, no extra
-  table needed — and is skipped entirely for a user who has added their own Gemini key.
+- RLS ensures each user can only read/write their own `vocabulary_entries`, `stories`,
+  `user_settings`, and `chat_logs` rows (`auth.uid() = user_id`).
+- Rate limiting counts `stories`/`chat_logs` rows created today by server clock — simple, no
+  external rate-limit service — and is skipped entirely for a user who has added their own
+  Gemini key. `chat_logs` stores no message content, only a row per turn, purely for counting.
+- `/chat` conversations are not persisted — history lives in the browser tab for the length of
+  the session and is resent with each request (Gemini's `generateContent` is stateless across
+  serverless invocations either way, so there's no server-side session to lose).
 - A user's own Gemini API key is encrypted (AES-256-GCM, `src/lib/crypto.ts`) before being
   stored, and only decrypted server-side at the moment a story is generated.
 

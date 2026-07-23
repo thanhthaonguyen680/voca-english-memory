@@ -33,7 +33,7 @@ Mandatory rules for this project. Read before adding any new feature.
 Don't create additional client variants. Don't call the server `createClient` from a client
 component, or vice versa.
 
-## Auth: email + password, not magic link / OTP
+## Auth: email + password
 
 - `/login` (`src/app/login/page.tsx`) uses `supabase.auth.signUp` /
   `supabase.auth.signInWithPassword` — no email round-trip at all. This is a deliberate
@@ -148,6 +148,32 @@ a confusing error like
 - `user_settings` has its own migration + RLS (`user_settings_select_own` etc.) — same
   one-row-per-user, `auth.uid() = user_id` pattern as every other table. If a new per-user
   setting is needed later, add a column to this table rather than creating a new one.
+
+## Conversation practice (`/chat`)
+
+- `src/app/api/chat/route.ts` is **stateless**: the client (`ChatSession.tsx`) resends the
+  full message history (capped to the last `MAX_HISTORY_TURNS = 20`) on every turn, and the
+  route just forwards it as Gemini's `contents` array (`{role: "user"|"model", parts:[{text}]}`).
+  There's no server-side chat session object and no persisted transcript — don't add one just
+  to "simplify" the client; a serverless route can't hold state between requests anyway, so
+  resending history is the only correct approach here, not a shortcut.
+- `chat_logs` exists **only** for rate-limiting the shared key (mirrors the `stories`/
+  `MAX_STORIES_PER_DAY` pattern, `MAX_CHAT_MESSAGES_PER_DAY` env var, skipped when the user has
+  their own Gemini key from `/settings`). It stores no message content — just `user_id` +
+  `created_at` — because the conversation itself is never persisted. Don't add columns to
+  store chat text there; if real conversation history/logging is wanted later, that's a
+  different, deliberate feature — not something to bolt onto the rate-limit table.
+- The system instruction pulls up to 10 of the user's own `vocabulary_entries` words and asks
+  Gemini to naturally reuse them in conversation — this is what ties `/chat` back to the app's
+  "learn through context" premise instead of being a generic chatbot. Keep that when editing
+  the prompt.
+- AI replies are automatically read aloud via `speak()` (same TTS helper as everywhere else)
+  the moment they arrive — that auto-play is the actual point of this feature ("AI nói tương
+  tác lại"), don't make it opt-in/behind a button.
+- Voice input (`getSpeechRecognitionConstructor`, from `src/lib/pronunciation.ts`, already used
+  by `PronunciationCheck`) fills the text input rather than auto-sending — the learner can
+  review/edit a mis-transcribed sentence before it's sent, consistent with how the rest of the
+  app treats speech recognition as an input aid, not a blind auto-submit.
 
 ## Voice (text-to-speech)
 

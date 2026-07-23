@@ -182,6 +182,13 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
   return (
     <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between text-xs text-slate-500">
+        <button
+          type="button"
+          onClick={() => setMode(null)}
+          className="flex items-center gap-1 hover:text-white"
+        >
+          ← Quay lại
+        </button>
         <span>
           Câu {index + 1}/{deck.length}
         </span>
