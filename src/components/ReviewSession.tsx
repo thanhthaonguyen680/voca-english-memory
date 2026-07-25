@@ -36,7 +36,13 @@ const MODE_LABELS: Record<Mode, string> = {
   mixed: "Trộn 2 chiều",
 };
 
-export default function ReviewSession({ words }: { words: WordPair[] }) {
+type ReviewSessionProps = {
+  storyId: string;
+  words: WordPair[];
+  onExit: () => void;
+};
+
+export default function ReviewSession({ storyId, words, onExit }: ReviewSessionProps) {
   const [mode, setMode] = useState<Mode | null>(null);
   const [deck, setDeck] = useState<Card[]>([]);
   const [index, setIndex] = useState(0);
@@ -97,6 +103,13 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
   if (mode === null) {
     return (
       <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
+        <button
+          type="button"
+          onClick={onExit}
+          className="mb-3 text-xs text-slate-400 hover:text-white"
+        >
+          ← Chọn câu chuyện khác
+        </button>
         <p className="mb-4 text-sm text-slate-400">
           Có <strong className="text-white">{words.length}</strong> từ để ôn tập. Chọn chế độ
           kiểm tra:
@@ -149,6 +162,13 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
             className="rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-700"
           >
             Đổi chế độ
+          </button>
+          <button
+            type="button"
+            onClick={onExit}
+            className="rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-700"
+          >
+            Chọn câu chuyện khác
           </button>
         </div>
       </div>
@@ -203,6 +223,7 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
           <p className="text-2xl font-semibold text-white">{current.word}</p>
         ) : (
           <EditableMeaning
+            storyId={storyId}
             word={current.word}
             meaning={current.meaning}
             onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}
@@ -257,6 +278,7 @@ export default function ReviewSession({ words }: { words: WordPair[] }) {
             Đáp án đúng:{" "}
             {current.direction === "en-vi" ? (
               <EditableMeaning
+                storyId={storyId}
                 word={current.word}
                 meaning={current.meaning}
                 onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}

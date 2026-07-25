@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 type EditableMeaningProps = {
+  storyId: string;
   word: string;
   meaning: string;
   onSaved: (newMeaning: string) => void;
@@ -10,6 +11,7 @@ type EditableMeaningProps = {
 };
 
 export default function EditableMeaning({
+  storyId,
   word,
   meaning,
   onSaved,
@@ -27,7 +29,7 @@ export default function EditableMeaning({
     setSaving(true);
     setError("");
     try {
-      const res = await fetch("/api/vocabulary-entries", {
+      const res = await fetch(`/api/stories/${storyId}/vocabulary`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ word, meaning: trimmed }),
