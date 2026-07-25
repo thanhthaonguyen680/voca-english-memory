@@ -36,16 +36,11 @@ export default async function Navbar() {
               <Link href="/chat" className="text-slate-400 hover:text-white">
                 Luyện nói
               </Link>
+              <Link href="/writing" className="text-slate-400 hover:text-white">
+                Luyện viết
+              </Link>
               <Link href="/history" className="text-slate-400 hover:text-white">
                 Lịch sử học
-              </Link>
-              <Link
-                href="/settings"
-                title="Cài đặt"
-                aria-label="Cài đặt"
-                className="text-slate-400 hover:text-white"
-              >
-                ⚙️
               </Link>
               <SignOutButton />
             </>

@@ -3,14 +3,16 @@
 Learn English vocabulary through "story-based memory": enter a list of words, AI (Google
 Gemini `gemini-flash-lite-latest`) generates a short story using them — with a Vietnamese
 translation, IPA pronunciation per word, and text-to-speech playback — saved for later review.
-Also includes a voice conversation practice mode (`/chat`).
+Also includes a voice conversation practice mode (`/chat`) and a structured writing practice
+mode (`/writing`) with AI feedback.
 
 ## Stack
 
 - Next.js (App Router) + TypeScript
 - Supabase (Postgres + Auth, email/password) — free tier
-- Google Gemini API (`gemini-flash-lite-latest`) — free tier, no credit card required; users
-  can optionally add their own key on `/settings` to skip the shared daily limit
+- Google Gemini API (`gemini-flash-lite-latest`) — free tier, no credit card required; the
+  server rotates through a pool of API keys (`gemini_api_key_pool`) to multiply the effective
+  free-tier daily quota across all users
 - Deployed on Vercel — free tier
 
 ## Project structure
@@ -22,23 +24,28 @@ src/
     login/page.tsx               Email + password sign in / sign up
     vocabulary/page.tsx          Enter vocabulary, calls the story-generation API
     history/page.tsx             History of previously generated stories
-    review/page.tsx              Flashcard-style vocabulary review + pronunciation check
+    review/page.tsx              Per-story flashcard review + pronunciation check
     chat/page.tsx                Roleplay voice/text conversation practice with Gemini
-    settings/page.tsx            Add/remove a personal Gemini API key
+    writing/page.tsx             Write title/overview/body/conclusion, get AI feedback
+    writing/history/page.tsx     Past writings + feedback, with delete
     auth/callback/route.ts       Dormant — only used if magic-link auth is reintroduced
-    api/generate-story/          API route: calls Gemini + rate limiting + saves to DB
-    api/vocabulary-entries/      API route: edit a saved word's meaning
-    api/user-settings/gemini-key/  API route: save/remove a user's own Gemini key (encrypted)
+    api/generate-story/          API route: calls Gemini (via key pool) + rate limiting + saves to DB
+    api/stories/[id]/vocabulary/ API route: fix a mistyped meaning within one story's words
     api/chat/                    API route: multi-turn Gemini conversation + rate limiting
-  components/                    Navbar, StoryCard, ReviewSession, ChatSession, GeminiKeyForm...
+    api/writing/                 API route: saves an essay + gets AI feedback + rate limiting
+  components/                    Navbar, StoryCard, ReviewSession, ChatSession, WritingForm...
   lib/
     supabase/                    Supabase client (browser/server/middleware) + types
-    gemini/                      Shared Gemini client (fallback when a user has no own key)
-    crypto.ts                    AES-256-GCM encrypt/decrypt for stored per-user API keys
+    supabase/admin.ts            Service-role Supabase client (server-only, bypasses RLS)
+    gemini/client.ts             Shared Gemini client — last-resort fallback if the pool is empty
+    gemini/pool.ts               Sticky API key rotation: generateWithKeyPool()
+    crypto.ts                    AES-256-GCM encrypt/decrypt for pooled Gemini API keys
     speech.ts, pronunciation.ts  Browser Web Speech API helpers (TTS + speech recognition)
   proxy.ts                       Refreshes the session + protects the routes above
 supabase/
   migrations/                    Timestamp-prefixed, in the format Supabase CLI itself uses
+scripts/
+  add-gemini-key.mjs             CLI: encrypt + insert a Gemini API key into the pool
 ```
 
 ## 1. Set up Supabase
@@ -52,13 +59,16 @@ supabase/
    service) has real deliverability/template limitations.
 4. Under **Project Settings > API**, copy the `Project URL` and `anon public` key.
 
-## 2. Get a Gemini API key (free)
+## 2. Get Gemini API keys (free)
 
 1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
 2. Sign in with a personal Google account (not a Workspace/company email) and create an API
    key — no billing/credit card required for the free tier. If you pick a **new** project
    when creating the key, you're less likely to hit the `limit: 0` free-tier quota issue that
    can happen with older/pre-existing GCP projects.
+3. Repeat to create a few keys (2-5 is a reasonable starting pool) — the app rotates through
+   all of them to multiply the effective daily quota. See step 6 for how many you actually
+   need for your expected number of users.
 
 ## 3. Configure environment variables
 
@@ -71,19 +81,60 @@ Fill in `.env.local`:
 ```
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
 GEMINI_API_KEY=...
 MAX_STORIES_PER_DAY=10
 MAX_CHAT_MESSAGES_PER_DAY=30
+MAX_WRITINGS_PER_DAY=10
 ENCRYPTION_KEY=...
 ```
 
-- `MAX_STORIES_PER_DAY` / `MAX_CHAT_MESSAGES_PER_DAY` — basic rate limits: each user without
-  their own Gemini key can generate at most N stories, or send at most N chat messages, per
-  day using the shared server key.
+- `MAX_STORIES_PER_DAY` / `MAX_CHAT_MESSAGES_PER_DAY` / `MAX_WRITINGS_PER_DAY` — basic
+  per-user rate limits: at most N stories, N chat messages, or N writing feedback calls per
+  day, regardless of which pooled key ends up serving the request.
+- `SUPABASE_SERVICE_ROLE_KEY` — from **Project Settings > API > service_role**. ⚠️ Server-only
+  secret, bypasses RLS entirely — never expose to the browser. Used only to read/write the
+  `gemini_api_key_pool` table (which has no per-user owner, so RLS can't scope a normal
+  policy to it).
 - `ENCRYPTION_KEY` — any random long string (e.g. `openssl rand -base64 32`), used to encrypt
-  a user's own Gemini API key before it's stored in the database (see `/settings`).
+  each pooled Gemini API key before it's stored in the database.
+- `GEMINI_API_KEY` — last-resort fallback, only used if `gemini_api_key_pool` is empty or every
+  pooled key is exhausted. Not required once you've populated the pool (step 6), but good to
+  keep set as a safety net.
 
-## 4. Run locally
+## 4. Populate the Gemini key pool
+
+Add each Gemini API key from step 2 into the pool (encrypts it and inserts a row via the
+service-role client):
+
+```bash
+node scripts/add-gemini-key.mjs "AIzaSy..." "key 1"
+node scripts/add-gemini-key.mjs "AIzaSy..." "key 2"
+```
+
+The app tries keys in insertion order, fully draining one (sticky rotation) before moving to
+the next, and automatically retries an exhausted key ~20h later once Gemini's daily quota
+resets. See `src/lib/gemini/pool.ts`.
+
+**How many keys do you need?** Each user can trigger at most
+`MAX_STORIES_PER_DAY + MAX_CHAT_MESSAGES_PER_DAY + MAX_WRITINGS_PER_DAY` Gemini calls/day
+(50 with the defaults above). Gemini's free tier is ~1,500 requests/day per key, so:
+
+```
+keys_needed = ceil(users × 50 / 1500)
+```
+
+| Users | Calls/day | Keys needed |
+| ----- | --------- | ----------- |
+| 20    | 1,000     | 1 (2-3 recommended for headroom) |
+| 50    | 2,500     | 2 (3-5 recommended) |
+| 100   | 5,000     | 4 (5-6 recommended) |
+
+Provision a few more than the bare minimum regardless — some newly-created Gemini keys/GCP
+projects unpredictably start with a `limit: 0` free-tier quota (see step 2), so a spare key or
+two in the pool absorbs that without anyone noticing.
+
+## 5. Run locally
 
 ```bash
 npm install
@@ -92,24 +143,39 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## 5. Deploy to Vercel
+## 7. Deploy to Vercel
 
 1. Push the code to GitHub.
 2. Import the repo into [Vercel](https://vercel.com) (free tier).
-3. Add the environment variables above under **Project Settings > Environment Variables**.
+3. Add the environment variables above under **Project Settings > Environment Variables**
+   (including `SUPABASE_SERVICE_ROLE_KEY`).
+4. Run `scripts/add-gemini-key.mjs` locally against the same Supabase project to populate the
+   pool — it writes straight to the DB, so there's nothing separate to do on Vercel itself.
 
 ## Notes
 
 - RLS ensures each user can only read/write their own `vocabulary_entries`, `stories`,
-  `user_settings`, and `chat_logs` rows (`auth.uid() = user_id`).
-- Rate limiting counts `stories`/`chat_logs` rows created today by server clock — simple, no
-  external rate-limit service — and is skipped entirely for a user who has added their own
-  Gemini key. `chat_logs` stores no message content, only a row per turn, purely for counting.
+  `chat_logs`, and `writings` rows (`auth.uid() = user_id`). `gemini_api_key_pool` has RLS
+  enabled with zero policies — only the service-role key (server-only, bypasses RLS) can touch
+  it, since it's shared infrastructure with no per-user owner.
+- Rate limiting counts `stories`/`chat_logs`/`writings` rows created today by server clock —
+  simple, no external rate-limit service. `chat_logs` stores no message content, only a row per
+  turn, purely for counting.
 - `/chat` conversations are not persisted — history lives in the browser tab for the length of
   the session and is resent with each request (Gemini's `generateContent` is stateless across
   serverless invocations either way, so there's no server-side session to lose).
-- A user's own Gemini API key is encrypted (AES-256-GCM, `src/lib/crypto.ts`) before being
-  stored, and only decrypted server-side at the moment a story is generated.
+- All Gemini calls go through `generateWithKeyPool()` (`src/lib/gemini/pool.ts`): sticky
+  rotation through `gemini_api_key_pool` (drain the lowest-`sort_order` valid key fully before
+  moving on), auto-invalidate on a quota error, auto-retry ~20h later, and fall back to the
+  single `GEMINI_API_KEY` env var if the pool is empty or fully exhausted.
+- The old "user brings their own Gemini key" feature has been replaced by the key pool above.
+  `user_settings.gemini_api_key` and its encrypt/decrypt code path are dormant (table and
+  `src/lib/crypto.ts` left in place, not deleted) rather than removed outright.
+- `/writing` always saves the essay even if the AI feedback call fails — feedback is a
+  nice-to-have, not a condition for saving the user's work.
+- `/review` reads each story's own `vocabulary_used` directly — decks are per-story, never
+  merged, and deleting a story removes its words from review automatically (no separate table,
+  no cascade needed — the words live inside the story row itself).
 
 See [rule.md](rule.md) for the conventions this project follows — read it before making
 changes so future work stays consistent.

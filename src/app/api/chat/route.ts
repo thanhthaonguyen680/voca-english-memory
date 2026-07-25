@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
-import { gemini, STORY_MODEL } from "@/lib/gemini/client";
-import { decrypt } from "@/lib/crypto";
+import { STORY_MODEL } from "@/lib/gemini/client";
+import { generateWithKeyPool } from "@/lib/gemini/pool";
 import { CHAT_AI_NAME } from "@/lib/constants";
 
 const MAX_CHAT_MESSAGES_PER_DAY = Number(process.env.MAX_CHAT_MESSAGES_PER_DAY ?? 30);
@@ -52,46 +51,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu tin nhắn để gửi." }, { status: 400 });
   }
 
-  const { data: settings } = await supabase
-    .from("user_settings")
-    .select("gemini_api_key")
+  const { count, error: countError } = await supabase
+    .from("chat_logs")
+    .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
-    .maybeSingle();
+    .gte("created_at", startOfTodayISO());
 
-  let geminiClient = gemini;
-  if (settings?.gemini_api_key) {
-    try {
-      geminiClient = new GoogleGenAI({ apiKey: decrypt(settings.gemini_api_key) });
-    } catch (err) {
-      console.error("Failed to decrypt stored Gemini API key", err);
-    }
+  if (countError) {
+    return NextResponse.json(
+      { error: "Không thể kiểm tra giới hạn sử dụng." },
+      { status: 500 },
+    );
   }
-  const usesOwnKey = geminiClient !== gemini;
 
-  if (!usesOwnKey) {
-    const { count, error: countError } = await supabase
-      .from("chat_logs")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .gte("created_at", startOfTodayISO());
-
-    if (countError) {
-      return NextResponse.json(
-        { error: "Không thể kiểm tra giới hạn sử dụng." },
-        { status: 500 },
-      );
-    }
-
-    if ((count ?? 0) >= MAX_CHAT_MESSAGES_PER_DAY) {
-      return NextResponse.json(
-        {
-          error:
-            `Bạn đã đạt giới hạn ${MAX_CHAT_MESSAGES_PER_DAY} tin nhắn/ngày. Vui lòng quay ` +
-            "lại vào ngày mai, hoặc thêm API key riêng ở trang Cài đặt để không bị giới hạn.",
-        },
-        { status: 429 },
-      );
-    }
+  if ((count ?? 0) >= MAX_CHAT_MESSAGES_PER_DAY) {
+    return NextResponse.json(
+      {
+        error: `Bạn đã đạt giới hạn ${MAX_CHAT_MESSAGES_PER_DAY} tin nhắn/ngày. Vui lòng quay lại vào ngày mai.`,
+      },
+      { status: 429 },
+    );
   }
 
   // Best-effort: bias the conversation toward words the user is actually learning.
@@ -118,7 +97,7 @@ export async function POST(request: Request) {
 
   let reply: string;
   try {
-    const response = await geminiClient.models.generateContent({
+    const response = await generateWithKeyPool({
       model: STORY_MODEL,
       contents: messages.map((turn) => ({ role: turn.role, parts: [{ text: turn.text }] })),
       config: {
@@ -132,12 +111,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("Gemini chat failed", err);
     return NextResponse.json(
-      {
-        error: usesOwnKey
-          ? "Không thể trò chuyện với API key riêng của bạn. Vui lòng kiểm tra lại key ở " +
-            "trang Cài đặt."
-          : "Không thể trò chuyện lúc này. Vui lòng thử lại sau.",
-      },
+      { error: "Không thể trò chuyện lúc này. Vui lòng thử lại sau." },
       { status: 502 },
     );
   }
@@ -149,11 +123,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!usesOwnKey) {
-    const { error: logError } = await supabase.from("chat_logs").insert({ user_id: user.id });
-    if (logError) {
-      console.error("Failed to log chat usage", logError);
-    }
+  const { error: logError } = await supabase.from("chat_logs").insert({ user_id: user.id });
+  if (logError) {
+    console.error("Failed to log chat usage", logError);
   }
 
   return NextResponse.json({ reply });

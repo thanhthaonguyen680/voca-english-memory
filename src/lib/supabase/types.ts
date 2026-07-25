@@ -94,6 +94,75 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      writings: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string;
+          overview: string | null;
+          body: string;
+          conclusion: string | null;
+          feedback: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          title: string;
+          overview?: string | null;
+          body: string;
+          conclusion?: string | null;
+          feedback?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<{
+          id: string;
+          user_id: string;
+          title: string;
+          overview: string | null;
+          body: string;
+          conclusion: string | null;
+          feedback: string | null;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
+      gemini_api_key_pool: {
+        Row: {
+          id: string;
+          label: string | null;
+          api_key: string;
+          sort_order: number;
+          is_valid: boolean;
+          last_error: string | null;
+          last_used_at: string | null;
+          invalidated_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          label?: string | null;
+          api_key: string;
+          sort_order?: number;
+          is_valid?: boolean;
+          last_error?: string | null;
+          last_used_at?: string | null;
+          invalidated_at?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<{
+          id: string;
+          label: string | null;
+          api_key: string;
+          sort_order: number;
+          is_valid: boolean;
+          last_error: string | null;
+          last_used_at: string | null;
+          invalidated_at: string | null;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
-import { gemini, STORY_MODEL } from "@/lib/gemini/client";
+import { STORY_MODEL } from "@/lib/gemini/client";
+import { generateWithKeyPool } from "@/lib/gemini/pool";
 import { MAX_WORDS_PER_STORY } from "@/lib/constants";
-import { decrypt } from "@/lib/crypto";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
 const STORY_RESPONSE_SCHEMA = {
@@ -96,47 +96,26 @@ export async function POST(request: Request) {
     );
   }
 
-  // A user's own Gemini key uses their own quota — only rate-limit the shared server key.
-  const { data: settings } = await supabase
-    .from("user_settings")
-    .select("gemini_api_key")
+  const { count, error: countError } = await supabase
+    .from("stories")
+    .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
-    .maybeSingle();
+    .gte("created_at", startOfTodayISO());
 
-  let geminiClient = gemini;
-  if (settings?.gemini_api_key) {
-    try {
-      geminiClient = new GoogleGenAI({ apiKey: decrypt(settings.gemini_api_key) });
-    } catch (err) {
-      console.error("Failed to decrypt stored Gemini API key", err);
-    }
+  if (countError) {
+    return NextResponse.json(
+      { error: "Không thể kiểm tra giới hạn sử dụng." },
+      { status: 500 },
+    );
   }
-  const usesOwnKey = geminiClient !== gemini;
 
-  if (!usesOwnKey) {
-    const { count, error: countError } = await supabase
-      .from("stories")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .gte("created_at", startOfTodayISO());
-
-    if (countError) {
-      return NextResponse.json(
-        { error: "Không thể kiểm tra giới hạn sử dụng." },
-        { status: 500 },
-      );
-    }
-
-    if ((count ?? 0) >= MAX_STORIES_PER_DAY) {
-      return NextResponse.json(
-        {
-          error:
-            `Bạn đã đạt giới hạn ${MAX_STORIES_PER_DAY} câu chuyện/ngày. Vui lòng quay lại ` +
-            "vào ngày mai, hoặc thêm API key riêng ở trang Cài đặt để không bị giới hạn.",
-        },
-        { status: 429 },
-      );
-    }
+  if ((count ?? 0) >= MAX_STORIES_PER_DAY) {
+    return NextResponse.json(
+      {
+        error: `Bạn đã đạt giới hạn ${MAX_STORIES_PER_DAY} câu chuyện/ngày. Vui lòng quay lại vào ngày mai.`,
+      },
+      { status: 429 },
+    );
   }
 
   const wordList = words
@@ -150,7 +129,7 @@ export async function POST(request: Request) {
 
   let result: StoryGenerationResult;
   try {
-    const response = await geminiClient.models.generateContent({
+    const response = await generateWithKeyPool({
       model: STORY_MODEL,
       contents: `Write a short story using these vocabulary words: ${wordList}`,
       config: {
@@ -174,12 +153,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("Gemini generate story failed", err);
     return NextResponse.json(
-      {
-        error: usesOwnKey
-          ? "Không thể tạo câu chuyện với API key riêng của bạn. Vui lòng kiểm tra lại key ở " +
-            "trang Cài đặt."
-          : "Không thể tạo câu chuyện lúc này. Vui lòng thử lại sau.",
-      },
+      { error: "Không thể tạo câu chuyện lúc này. Vui lòng thử lại sau." },
       { status: 502 },
     );
   }

@@ -79,9 +79,12 @@ a confusing error like
 
 ## Database & RLS
 
-- Every new table **must** have `enable row level security` and a policy
+- Every new **per-user** table **must** have `enable row level security` and a policy
   `using (auth.uid() = user_id)` for select/insert (and delete if needed). Never disable RLS
-  "just to make debugging easier".
+  "just to make debugging easier". The one exception is shared/admin infrastructure with no
+  per-user owner (e.g. `gemini_api_key_pool`): still `enable row level security`, but add zero
+  policies and access it only via the service-role client (`@/lib/supabase/admin`) — see
+  "Gemini API key pool" below.
 - New migrations go in `supabase/migrations/<YYYYMMDDHHMMSS>_description.sql` — the same
   timestamp-prefix convention the Supabase CLI itself generates (`supabase migration new`),
   so filenames sort chronologically and stay compatible with `supabase db push` if the project
@@ -94,11 +97,15 @@ a confusing error like
 
 - Always check `user` via `supabase.auth.getUser()` first and return `401` if not
   authenticated.
-- Always rate-limit before calling Gemini with the **shared** server key (currently: count
-  `stories` created today, compare against `MAX_STORIES_PER_DAY`) — skip the rate limit only
-  when the user has their own key (see the "Per-user Gemini API key" section below). If a new
-  AI-calling feature is added, apply the same daily-count mechanism — don't skip rate limiting
-  "just for testing".
+- Always rate-limit before calling Gemini (currently: count `stories`/`chat_logs`/`writings`
+  created today, compare against the matching `MAX_*_PER_DAY`) — this is now **always**
+  enforced per user, regardless of which pooled key ends up serving the request (see "Gemini
+  API key pool" below). If a new AI-calling feature is added, apply the same daily-count
+  mechanism — don't skip rate limiting "just for testing".
+- Call Gemini via `generateWithKeyPool()` (`src/lib/gemini/pool.ts`), never by constructing a
+  `GoogleGenAI` client directly in a route — the pool helper is what makes rotation/fallback
+  work. The only file allowed to instantiate `GoogleGenAI` directly is `pool.ts` itself (plus
+  `src/lib/gemini/client.ts` for the last-resort fallback instance).
 - Wrap the Gemini call in its own `try/catch`, return a user-friendly Vietnamese error message,
   and `console.error` the original error for debugging — never leak a raw error to the
   response.
@@ -127,27 +134,50 @@ a confusing error like
   gap when the user left it blank (see the merge in the route, `entry.meaning || ai?.meaning`).
   Don't overwrite a user's own input with the AI's.
 
-## Per-user Gemini API key (`/settings`)
+## Gemini API key pool (replaces per-user keys)
 
-- A user can add their own Gemini key on `/settings` (`GeminiKeyForm`) instead of using the
-  app's shared server key. Purpose: the shared `GEMINI_API_KEY` is one fixed credential for
-  every user of the app — it does **not** automatically use each user's own Google/Gmail
-  account. Without a personal key, everyone shares the same free-tier quota, which is why
-  `MAX_STORIES_PER_DAY` exists. A personal key gets its own quota and skips that limit.
-- The key is **encrypted before it ever reaches the database**
+- The app rotates through a server-managed pool of Gemini API keys
+  (`gemini_api_key_pool` table) instead of asking each user to bring their own key. This
+  **replaces** the earlier "user enters their own Gemini API key" feature entirely — there is
+  no `/settings` page, no `GeminiKeyForm`, no `/api/user-settings/gemini-key` route anymore.
+  Purpose: multiply the effective free-tier daily quota across all users without requiring any
+  action from them.
+- All three AI-calling routes (`generate-story`, `chat`, `writing`) call
+  `generateWithKeyPool()` (`src/lib/gemini/pool.ts`) instead of a route-local `GoogleGenAI`
+  client, and always enforce their `MAX_*_PER_DAY` rate limit — there's no "skip the limit"
+  path anymore since there's no concept of a user's own key.
+- **Rotation is sticky, not round-robin**: `generateWithKeyPool()` always tries the lowest
+  `sort_order` row with `is_valid = true` first, and keeps using that same key for every
+  request until it hits a quota error — only then does it mark that row `is_valid = false` and
+  move to the next one. Don't change this to round-robin; the whole point is draining one key
+  fully (maximizing its daily quota) before touching the next.
+- A quota error is detected by matching `RESOURCE_EXHAUSTED`, `429`, or `quota` in the thrown
+  error's message (`isQuotaError` in `pool.ts`). Any other error (bad request, network failure,
+  etc.) is rethrown immediately without touching the pool or trying another key — only quota
+  exhaustion should trigger rotation.
+- An invalidated key gets a chance to retry automatically ~20h later
+  (`RETRY_AFTER_HOURS` in `pool.ts`), since Gemini's free-tier daily quota resets roughly every
+  24h. If every key is currently invalid and none has passed its retry window, the pool query
+  returns nothing and the helper falls through to the single shared `GEMINI_API_KEY` env var
+  (`src/lib/gemini/client.ts`) as a last resort — keep that fallback, don't remove it even
+  though the pool is meant to be the normal path.
+- Each pooled key is **encrypted before it ever reaches the database**
   (`src/lib/crypto.ts`, AES-256-GCM, keyed off the server-only `ENCRYPTION_KEY` env var) and
-  stored in `user_settings.gemini_api_key`. It's only decrypted server-side, at the moment
-  `generate-story` needs it to build a per-request `GoogleGenAI` client — never sent back to
-  the client in plaintext. `/settings` only ever displays a masked preview
-  (`maskKey`, last 4 characters).
-- `generate-story`'s route checks `user_settings` first: if a (decryptable) personal key
-  exists, it builds a one-off `GoogleGenAI` client from it and **skips** the
-  `MAX_STORIES_PER_DAY` check entirely; otherwise it falls back to the shared `gemini` client
-  from `@/lib/gemini/client` and the normal rate limit applies. Don't add a separate code path
-  for this — it's the same generation logic either way, just a different client instance.
-- `user_settings` has its own migration + RLS (`user_settings_select_own` etc.) — same
-  one-row-per-user, `auth.uid() = user_id` pattern as every other table. If a new per-user
-  setting is needed later, add a column to this table rather than creating a new one.
+  only decrypted server-side, inside `generateWithKeyPool()`, right before use.
+- `gemini_api_key_pool` is read/written exclusively via `createAdminClient()`
+  (`src/lib/supabase/admin.ts`), a Supabase client built with `SUPABASE_SERVICE_ROLE_KEY` that
+  bypasses RLS entirely. The table has RLS **enabled with zero policies** — there's no
+  `auth.uid()` owner for shared infrastructure like this, so don't add an anon/authenticated
+  policy to it; the service-role client is the only intended access path. Never import
+  `createAdminClient` from anything that runs in the browser.
+- Add a key to the pool with `node scripts/add-gemini-key.mjs <api-key> [label]` — it
+  reimplements the same AES-256-GCM encryption inline (a plain `.mjs` script can't import
+  `src/lib/crypto.ts`'s TypeScript) and auto-assigns the next `sort_order`. Don't insert keys
+  by hand through the SQL editor — the encryption has to match `decrypt()`'s exact format
+  (`iv:authTag:ciphertext`, each base64) or the pool will silently fail to decrypt that row.
+- `user_settings.gemini_api_key` and its migration/RLS are left in place but **dormant** — not
+  read or written by any current code path. Don't delete the table or `src/lib/crypto.ts`'s
+  `maskKey` (still used by the CLI script's confirmation output) without discussing first.
 
 ## Conversation practice (`/chat`)
 
@@ -157,12 +187,12 @@ a confusing error like
   There's no server-side chat session object and no persisted transcript — don't add one just
   to "simplify" the client; a serverless route can't hold state between requests anyway, so
   resending history is the only correct approach here, not a shortcut.
-- `chat_logs` exists **only** for rate-limiting the shared key (mirrors the `stories`/
-  `MAX_STORIES_PER_DAY` pattern, `MAX_CHAT_MESSAGES_PER_DAY` env var, skipped when the user has
-  their own Gemini key from `/settings`). It stores no message content — just `user_id` +
-  `created_at` — because the conversation itself is never persisted. Don't add columns to
-  store chat text there; if real conversation history/logging is wanted later, that's a
-  different, deliberate feature — not something to bolt onto the rate-limit table.
+- `chat_logs` exists **only** for rate-limiting (mirrors the `stories`/`MAX_STORIES_PER_DAY`
+  pattern, `MAX_CHAT_MESSAGES_PER_DAY` env var, always enforced — see "Gemini API key pool"
+  above). It stores no message content — just `user_id` + `created_at` — because the
+  conversation itself is never persisted. Don't add columns to store chat text there; if real
+  conversation history/logging is wanted later, that's a different, deliberate feature — not
+  something to bolt onto the rate-limit table.
 - The system instruction pulls up to 10 of the user's own `vocabulary_entries` words and asks
   Gemini to naturally reuse them in conversation — this is what ties `/chat` back to the app's
   "learn through context" premise instead of being a generic chatbot. Keep that when editing
@@ -174,6 +204,32 @@ a confusing error like
   by `PronunciationCheck`) fills the text input rather than auto-sending — the learner can
   review/edit a mis-transcribed sentence before it's sent, consistent with how the rest of the
   app treats speech recognition as an input aid, not a blind auto-submit.
+
+## Writing practice (`/writing`, `/writing/history`)
+
+- Structure is fixed: title (required) + overview/conclusion (optional) + body (required) —
+  matches how the user described the feature. Don't make title/body optional; the AI feedback
+  prompt and the history list both assume they exist.
+- `writings` is a normal per-user table (same `auth.uid() = user_id` RLS shape as `stories`),
+  **not** a rate-limit-only table like `chat_logs` — it stores the full essay text and the AI's
+  feedback, because (unlike `/chat`) the whole point here is a persistent history the user
+  re-reads later.
+- The Gemini call in `src/app/api/writing/route.ts` returns **plain text feedback**, not
+  structured JSON — unlike `generate-story`, there's only one field to get back (the feedback
+  itself), so a `responseSchema` would just be overhead. Only reach for structured JSON output
+  when a call genuinely needs multiple distinct fields back.
+- Feedback failure must never block saving the essay: the Gemini call is wrapped in its own
+  `try/catch` that only sets `feedback = null` on error and continues to the `insert` — a
+  learner's work should never be lost because the AI call happened to fail. `WritingForm`
+  reflects that: if `feedback` comes back null it shows "chưa lấy được nhận xét" instead of an
+  error, since the save itself still succeeded.
+- Rate limiting follows the same pattern as `stories`/`chat_logs`: count `writings` rows
+  created today, compare to `MAX_WRITINGS_PER_DAY`, always enforced. Keep this consistent if a
+  fourth AI-calling feature is ever added — don't invent a different limiting mechanism per
+  feature.
+- Deleting a writing (`WritingHistoryList`) follows the same pattern as deleting a story:
+  browser client, direct `.delete()`, RLS-protected, no API route needed, confirmed via the
+  shared `ConfirmDialog` component — not `window.confirm`.
 
 ## Voice (text-to-speech)
 
@@ -218,11 +274,25 @@ a confusing error like
 
 ## Vocabulary review (`/review`)
 
-- The review pool is read from `vocabulary_entries` (word + meaning), deduped by
-  lowercased word, keeping the first entry (most recent, since queried `created_at desc`)
-  that has a non-null `meaning`. Words that never got a meaning saved are excluded — both
-  quiz directions need one to grade against. Don't add a separate "review deck" table; derive
-  from `vocabulary_entries` like the streak derives from `stories`.
+- **Review decks are scoped one-per-story, never merged.** `review/page.tsx` reads `stories`
+  (`id, content, vocabulary_used, created_at`) directly — each story's own `vocabulary_used`
+  jsonb array *is* its deck. `ReviewStoryList` shows a picker (snippet + word chips + date);
+  picking one renders `ReviewSession` scoped to just that story's words. Don't go back to
+  pooling every word the user has ever studied into one combined deck — that was the previous
+  design and was deliberately replaced because (a) it merged unrelated stories' vocabulary
+  together, and (b) deleting a story didn't remove its words from review.
+- This also means **no separate table is needed for review or for cascade-delete**: a story's
+  words live only inside that story's row, so deleting the story (`StoryCard`'s existing
+  delete flow) automatically removes its words from `/review` too — for free, via normal row
+  deletion. If a future feature needs a "words from every story combined" view, derive it by
+  reading all `stories` rows and flattening client/server-side — don't reintroduce a
+  denormalized word table to get there.
+- `vocabulary_entries` (and its migration/RLS) still exists and is still written to on every
+  `generate-story` call, but as of this design nothing reads it anymore. Don't delete it
+  without discussing first — treat it as dormant, not required, not necessarily permanent.
+- Within a deck, words are deduped by lowercased word and filtered to ones with a non-empty
+  `meaning` (both quiz directions need one to grade against) — same rules as before, just
+  scoped per-story now (`review/page.tsx`).
 - Grading (`src/components/ReviewSession.tsx`, `isCorrectAnswer`): the Việt→Anh direction
   requires a normalized exact match (English words are standardized enough for that); the
   Anh→Việt direction uses a looser containment match, since a Vietnamese meaning is often
@@ -233,14 +303,19 @@ a confusing error like
   the results screen, unlock a "Luyện lại câu sai" button that starts a new deck scoped to
   just those cards via `retryWrongCards`. `startSession` and `retryWrongCards` both funnel
   through the shared `beginDeck` helper — don't duplicate the deck-building/shuffle logic
-  when adding another way to start a session.
+  when adding another way to start a session. `ReviewSession` also takes an `onExit` prop
+  (wired to "← Chọn câu chuyện khác" / "Chọn câu chuyện khác") to pop back up to
+  `ReviewStoryList`'s picker — a third navigation level above `setMode(null)` (back to mode
+  picker) and `beginDeck` (back to card 1 of the same deck).
 - If a card's meaning is wrong (typically a mistyped meaning from bulk-adding words on
   `/vocabulary`), `EditableMeaning` lets the user fix it inline wherever the meaning is shown
-  (the vi-en prompt, or the revealed en-vi answer) — saves via `PATCH /api/vocabulary-entries`,
-  which updates every `vocabulary_entries` row for that word (case-insensitive) for that user.
-  This needs the `vocabulary_entries_update_own` RLS policy (migration
-  `20260721141856_add_vocabulary_update_policy.sql`) — the table originally only had
-  select/insert/delete policies, so an UPDATE silently touched 0 rows without it.
+  (the vi-en prompt, or the revealed en-vi answer) — saves via
+  `PATCH /api/stories/[id]/vocabulary` (`storyId` in the URL, `{word, meaning}` in the body),
+  which finds the matching entry inside *that one story's* `vocabulary_used` array and updates
+  only its `meaning`. This is intentionally scoped to one story, not global — the same word
+  can have independent copies (and independently-fixed meanings) across different stories,
+  matching the "decks are never merged" rule above. `EditableMeaning` therefore requires a
+  `storyId` prop; don't make it optional.
 - If the user pronounces a word correctly (`PronunciationCheck`'s `onResult`) after already
   submitting a wrong text answer for that card, `ReviewSession.handlePronunciationResult`
   flips that card's verdict to correct instead of leaving a confusing "🎤 correct" next to a
