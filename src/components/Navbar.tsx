@@ -14,7 +14,7 @@ export default async function Navbar() {
   const streak = user ? await getStudyStreak(supabase, user.id) : null;
 
   return (
-    <header className="border-b border-slate-800 bg-[#0B1220]/80 backdrop-blur-sm">
+    <header className="relative z-30 border-b border-slate-800 bg-[#0B1220]/80 backdrop-blur-sm">
       <nav className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3.5">
         <Link href="/" className="flex items-center gap-2">
           <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400 text-sm font-bold text-slate-900">
