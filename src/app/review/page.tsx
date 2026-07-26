@@ -32,7 +32,11 @@ export default async function ReviewPage() {
           seen.add(key);
           return true;
         })
-        .map((item) => ({ word: item.word.trim(), meaning: item.meaning!.trim() }));
+        .map((item) => ({
+          word: item.word.trim(),
+          meaning: item.meaning!.trim(),
+          ipa: item.ipa,
+        }));
 
       return {
         id: story.id,

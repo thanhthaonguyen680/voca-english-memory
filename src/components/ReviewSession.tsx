@@ -6,7 +6,7 @@ import { normalizeForCompare } from "@/lib/pronunciation";
 import PronunciationCheck from "@/components/PronunciationCheck";
 import EditableMeaning from "@/components/EditableMeaning";
 
-type WordPair = { word: string; meaning: string };
+type WordPair = { word: string; meaning: string; ipa?: string };
 type Direction = "en-vi" | "vi-en";
 type Mode = "en-vi" | "vi-en" | "mixed";
 type Card = WordPair & { direction: Direction };
@@ -77,7 +77,7 @@ export default function ReviewSession({ storyId, words, onExit }: ReviewSessionP
     if (!mode || wrongCards.length === 0) return;
     beginDeck(
       mode,
-      wrongCards.map(({ word, meaning }) => ({ word, meaning })),
+      wrongCards.map(({ word, meaning, ipa }) => ({ word, meaning, ipa })),
     );
   }
 
@@ -220,7 +220,12 @@ export default function ReviewSession({ storyId, words, onExit }: ReviewSessionP
       </p>
       <div className="mb-4 flex flex-wrap items-center gap-3">
         {current.direction === "en-vi" ? (
-          <p className="text-2xl font-semibold text-white">{current.word}</p>
+          <p className="flex items-center gap-2 text-2xl font-semibold text-white">
+            <span>{current.word}</span>
+            {current.ipa && (
+              <span className="text-base font-normal text-amber-400/70">{current.ipa}</span>
+            )}
+          </p>
         ) : (
           <EditableMeaning
             storyId={storyId}
@@ -284,7 +289,12 @@ export default function ReviewSession({ storyId, words, onExit }: ReviewSessionP
                 onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}
               />
             ) : (
-              <span className="font-medium text-white">{current.word}</span>
+              <span className="font-medium text-white">
+                {current.word}
+                {current.ipa && (
+                  <span className="ml-1.5 font-normal text-amber-400/70">{current.ipa}</span>
+                )}
+              </span>
             )}
           </p>
           <button

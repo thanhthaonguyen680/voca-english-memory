@@ -7,7 +7,7 @@ export type StoryDeck = {
   id: string;
   snippet: string;
   createdAt: string;
-  words: { word: string; meaning: string }[];
+  words: { word: string; meaning: string; ipa?: string }[];
 };
 
 export default function ReviewStoryList({ decks }: { decks: StoryDeck[] }) {
