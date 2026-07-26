@@ -1,10 +1,42 @@
 # Voca English Memory
 
-Learn English vocabulary through "story-based memory": enter a list of words, AI (Google
-Gemini `gemini-flash-lite-latest`) generates a short story using them — with a Vietnamese
-translation, IPA pronunciation per word, and text-to-speech playback — saved for later review.
-Also includes a voice conversation practice mode (`/chat`) and a structured writing practice
-mode (`/writing`) with AI feedback.
+This is a personal project I built to scratch my own itch: learning English vocabulary
+through **"super memory" story-based recall** — instead of memorizing words in isolation, I
+enter a list of words and AI weaves them into a short, meaningful story that's much easier to
+picture and remember than rote drilling. It worked well enough for me that I opened it up to a
+few friends chasing the same goal.
+
+If you're also looking for a way to actually *remember* vocabulary instead of cramming it,
+this might be for you.
+
+## Features
+
+- **Vocabulary → AI story** (`/vocabulary`): enter a list of words, Gemini writes a short
+  English story using all of them, with a Vietnamese translation, IPA pronunciation, and a
+  meaning for each word. Hit "Tạo câu chuyện khác" to get a different story for the same words.
+- **Read-aloud pronunciation** for any word or story, via the browser's built-in speech
+  synthesis (free, no API needed).
+- **Story history** (`/history`): revisit every story you've generated, delete the ones you
+  don't need anymore.
+- **Per-story review decks** (`/review`): each story is its own flashcard deck (words are
+  never pooled across stories) — quiz English→Vietnamese, Vietnamese→English, or mixed, with
+  pronunciation checking via your own voice, and a retry mode for just the cards you missed.
+- **AI conversation practice — "Ran Ran"** (`/chat`): free-form or scenario-based roleplay
+  chat that naturally works your own vocabulary into the conversation, replies in both text
+  and voice, and accepts typed or spoken input.
+- **Writing practice** (`/writing`): write a short essay (title, intro, body, conclusion) and
+  get AI feedback in Vietnamese. Full history of past essays + feedback is kept
+  (`/writing/history`).
+- **Study streak**: tracks consecutive days with at least one story generated, shown right in
+  the navbar to keep the habit going.
+- The whole UI is in **Vietnamese** with a dark theme, since that's who this app is for.
+
+## Why free-tier only
+
+This is a personal/small-friend-group app with no paid plan behind it, so the entire stack is
+deliberately built on free tiers (Supabase, Gemini, Vercel) — see [rule.md](rule.md) for the
+full reasoning. To keep several people sharing the app from burning through AI quota too fast,
+the server rotates through a pool of Gemini API keys (see step 4 below).
 
 ## Stack
 
@@ -12,7 +44,7 @@ mode (`/writing`) with AI feedback.
 - Supabase (Postgres + Auth, email/password) — free tier
 - Google Gemini API (`gemini-flash-lite-latest`) — free tier, no credit card required; the
   server rotates through a pool of API keys (`gemini_api_key_pool`) to multiply the effective
-  free-tier daily quota across all users
+  free-tier daily quota across everyone using the app
 - Deployed on Vercel — free tier
 
 ## Project structure
@@ -67,7 +99,7 @@ scripts/
    when creating the key, you're less likely to hit the `limit: 0` free-tier quota issue that
    can happen with older/pre-existing GCP projects.
 3. Repeat to create a few keys (2-5 is a reasonable starting pool) — the app rotates through
-   all of them to multiply the effective daily quota. See step 6 for how many you actually
+   all of them to multiply the effective daily quota. See step 4 for how many you actually
    need for your expected number of users.
 
 ## 3. Configure environment variables
@@ -99,7 +131,7 @@ ENCRYPTION_KEY=...
 - `ENCRYPTION_KEY` — any random long string (e.g. `openssl rand -base64 32`), used to encrypt
   each pooled Gemini API key before it's stored in the database.
 - `GEMINI_API_KEY` — last-resort fallback, only used if `gemini_api_key_pool` is empty or every
-  pooled key is exhausted. Not required once you've populated the pool (step 6), but good to
+  pooled key is exhausted. Not required once you've populated the pool (step 4), but good to
   keep set as a safety net.
 
 ## 4. Populate the Gemini key pool
@@ -143,7 +175,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-## 7. Deploy to Vercel
+## 6. Deploy to Vercel
 
 1. Push the code to GitHub.
 2. Import the repo into [Vercel](https://vercel.com) (free tier).
