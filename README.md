@@ -152,20 +152,6 @@ resets. See `src/lib/gemini/pool.ts`.
 `MAX_STORIES_PER_DAY + MAX_CHAT_MESSAGES_PER_DAY + MAX_WRITINGS_PER_DAY` Gemini calls/day
 (50 with the defaults above). Gemini's free tier is ~1,500 requests/day per key, so:
 
-```
-keys_needed = ceil(users × 50 / 1500)
-```
-
-| Users | Calls/day | Keys needed |
-| ----- | --------- | ----------- |
-| 20    | 1,000     | 1 (2-3 recommended for headroom) |
-| 50    | 2,500     | 2 (3-5 recommended) |
-| 100   | 5,000     | 4 (5-6 recommended) |
-
-Provision a few more than the bare minimum regardless — some newly-created Gemini keys/GCP
-projects unpredictably start with a `limit: 0` free-tier quota (see step 2), so a spare key or
-two in the pool absorbs that without anyone noticing.
-
 ## 5. Run locally
 
 ```bash
