@@ -3,7 +3,8 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import { speak } from "@/lib/speech";
 import { getSpeechRecognitionConstructor } from "@/lib/pronunciation";
-import { CHAT_AI_NAME } from "@/lib/constants";
+import { CHAT_AI_NAME, LANGUAGES, SPEECH_LANG, type Language } from "@/lib/constants";
+import { useLanguage } from "@/lib/language-context";
 
 type Turn = { role: "user" | "model"; text: string };
 
@@ -11,7 +12,7 @@ type Scenario = {
   id: string;
   label: string;
   prompt: string;
-  opening: string;
+  opening: Record<Language, string>;
 };
 
 const MAX_TEXTAREA_HEIGHT = 120;
@@ -21,35 +22,51 @@ const SCENARIOS: Scenario[] = [
     id: "free",
     label: "Tự do trò chuyện",
     prompt: "",
-    opening: "Hi! What would you like to talk about today?",
+    opening: {
+      en: "Hi! What would you like to talk about today?",
+      zh: "你好！你今天想聊什么？",
+    },
   },
   {
     id: "cafe",
     label: "Quán cà phê",
     prompt: "The AI plays a barista at a coffee shop; the learner is a customer ordering.",
-    opening: "Hi there, welcome in! What can I get started for you today?",
+    opening: {
+      en: "Hi there, welcome in! What can I get started for you today?",
+      zh: "你好，欢迎光临！今天要点什么？",
+    },
   },
   {
     id: "interview",
     label: "Phỏng vấn xin việc",
     prompt: "The AI plays a job interviewer; the learner is the candidate.",
-    opening: "Thanks for coming in today. Can you start by telling me a bit about yourself?",
+    opening: {
+      en: "Thanks for coming in today. Can you start by telling me a bit about yourself?",
+      zh: "谢谢你今天过来面试。可以先自我介绍一下吗？",
+    },
   },
   {
     id: "directions",
     label: "Hỏi đường",
     prompt: "The AI plays a stranger on the street; the learner is a tourist asking for directions.",
-    opening: "Hello! You look a little lost — can I help you find something?",
+    opening: {
+      en: "Hello! You look a little lost — can I help you find something?",
+      zh: "你好！你看起来有点迷路，需要帮忙吗？",
+    },
   },
   {
     id: "restaurant",
     label: "Nhà hàng",
     prompt: "The AI plays a waiter at a restaurant; the learner is a customer ordering food.",
-    opening: "Good evening! Welcome to our restaurant. Have you decided what you'd like to order?",
+    opening: {
+      en: "Good evening! Welcome to our restaurant. Have you decided what you'd like to order?",
+      zh: "晚上好！欢迎光临。您决定好要点什么了吗？",
+    },
   },
 ];
 
 export default function ChatSession() {
+  const { language } = useLanguage();
   const [scenario, setScenario] = useState<Scenario | null>(null);
   const [messages, setMessages] = useState<Turn[]>([]);
   const [input, setInput] = useState("");
@@ -60,10 +77,11 @@ export default function ChatSession() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   function startScenario(chosen: Scenario) {
+    const opening = chosen.opening[language];
     setScenario(chosen);
-    setMessages([{ role: "model", text: chosen.opening }]);
+    setMessages([{ role: "model", text: opening }]);
     setError("");
-    speak(chosen.opening);
+    speak(opening, SPEECH_LANG[language]);
   }
 
   function endScenario() {
@@ -95,7 +113,7 @@ export default function ChatSession() {
     }
 
     const recognition = new RecognitionCtor();
-    recognition.lang = "en-US";
+    recognition.lang = SPEECH_LANG[language];
     recognition.maxAlternatives = 1;
     setListening(true);
 
@@ -126,7 +144,7 @@ export default function ChatSession() {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: nextMessages, scenario: scenario.prompt }),
+        body: JSON.stringify({ messages: nextMessages, scenario: scenario.prompt, language }),
       });
       const data = await res.json();
 
@@ -136,7 +154,7 @@ export default function ChatSession() {
       }
 
       setMessages((prev) => [...prev, { role: "model", text: data.reply as string }]);
-      speak(data.reply as string);
+      speak(data.reply as string, SPEECH_LANG[language]);
       scrollToBottom();
     } catch {
       setError("Không thể kết nối tới server.");
@@ -155,7 +173,11 @@ export default function ChatSession() {
   if (!scenario) {
     return (
       <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
-        <p className="mb-4 text-sm text-slate-400">Chọn 1 chủ đề để bắt đầu trò chuyện:</p>
+        <p className="mb-4 text-sm text-slate-400">
+          Đang luyện nói bằng {LANGUAGES.find((item) => item.id === language)?.flag}{" "}
+          {LANGUAGES.find((item) => item.id === language)?.label.toLowerCase()} — đổi ở góc
+          trên. Chọn 1 chủ đề để bắt đầu trò chuyện:
+        </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {SCENARIOS.map((item) => (
             <button
@@ -176,7 +198,7 @@ export default function ChatSession() {
     <div className="flex flex-1 flex-col rounded-2xl border border-slate-700 bg-slate-800 p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <span className="text-sm font-medium text-amber-400">
-          {CHAT_AI_NAME} · {scenario.label}
+          {CHAT_AI_NAME} · {LANGUAGES.find((item) => item.id === language)?.flag} {scenario.label}
         </span>
         <button
           type="button"
@@ -207,7 +229,7 @@ export default function ChatSession() {
               {msg.role === "model" && (
                 <button
                   type="button"
-                  onClick={() => speak(msg.text)}
+                  onClick={() => speak(msg.text, SPEECH_LANG[language])}
                   title="Nghe lại"
                   aria-label="Nghe lại"
                   className="ml-2 align-middle text-slate-300 hover:text-white"

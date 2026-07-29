@@ -34,3 +34,14 @@ export function normalizeForCompare(text: string) {
     .replace(/[^\p{L}\p{N}\s]/gu, "")
     .replace(/\s+/g, " ");
 }
+
+// Grading Pinyin answers can't require exact tone marks (nǐ hǎo) — most learners can't type
+// them without a special keyboard. Strip tone diacritics + spaces so "ni hao", "nihao", and
+// "nǐ hǎo" all compare equal.
+export function normalizePinyin(text: string) {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, "");
+}

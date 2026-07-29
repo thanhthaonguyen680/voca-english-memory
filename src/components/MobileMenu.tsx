@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import SignOutButton from "@/components/SignOutButton";
 import StreakBadge from "@/components/StreakBadge";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 type MobileMenuProps = {
   loggedIn: boolean;
@@ -59,6 +60,10 @@ export default function MobileMenu({ loggedIn, streakCurrent, studiedToday }: Mo
                     <StreakBadge current={streakCurrent} studiedToday={studiedToday} />
                   </div>
                 )}
+                <div className="mb-1 flex items-center justify-between px-1">
+                  <span className="text-xs text-slate-500">Ngôn ngữ học</span>
+                  <LanguageSwitcher />
+                </div>
                 {LINKS.map((link) => (
                   <Link
                     key={link.href}

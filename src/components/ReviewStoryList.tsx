@@ -2,17 +2,41 @@
 
 import { useState } from "react";
 import ReviewSession from "@/components/ReviewSession";
+import { LANGUAGES, type Language } from "@/lib/constants";
+import { useLanguage } from "@/lib/language-context";
 
 export type StoryDeck = {
   id: string;
   snippet: string;
   createdAt: string;
+  language: Language;
   words: { word: string; meaning: string; ipa?: string }[];
 };
 
-export default function ReviewStoryList({ decks }: { decks: StoryDeck[] }) {
+const LANGUAGE_FLAG: Record<Language, string> = Object.fromEntries(
+  LANGUAGES.map((item) => [item.id, item.flag]),
+) as Record<Language, string>;
+
+export default function ReviewStoryList({ decks: allDecks }: { decks: StoryDeck[] }) {
+  const { language } = useLanguage();
+  const decks = allDecks.filter((deck) => deck.language === language);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = decks.find((deck) => deck.id === selectedId) ?? null;
+
+  if (decks.length === 0) {
+    return (
+      <p className="text-sm text-slate-400">
+        Chưa có câu chuyện {LANGUAGE_FLAG[language]} nào để ôn tập. Hãy tạo ở trang{" "}
+        <a
+          href="/vocabulary"
+          className="font-medium text-amber-400 underline hover:text-amber-300"
+        >
+          Nhập từ vựng
+        </a>
+        .
+      </p>
+    );
+  }
 
   if (selected) {
     return (
@@ -20,6 +44,7 @@ export default function ReviewStoryList({ decks }: { decks: StoryDeck[] }) {
         key={selected.id}
         storyId={selected.id}
         words={selected.words}
+        language={selected.language}
         onExit={() => setSelectedId(null)}
       />
     );
@@ -35,7 +60,9 @@ export default function ReviewStoryList({ decks }: { decks: StoryDeck[] }) {
           className="rounded-2xl border border-slate-700 bg-slate-800 p-4 text-left shadow-sm transition-colors hover:border-amber-400"
         >
           <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
-            <span>{deck.words.length} từ</span>
+            <span>
+              {LANGUAGE_FLAG[deck.language]} {deck.words.length} từ
+            </span>
             <time>{new Date(deck.createdAt).toLocaleString("vi-VN")}</time>
           </div>
           <p className="mb-2 line-clamp-2 text-sm text-slate-300">{deck.snippet}</p>

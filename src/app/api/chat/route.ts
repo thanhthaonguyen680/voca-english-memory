@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { STORY_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
-import { CHAT_AI_NAME } from "@/lib/constants";
+import { CHAT_AI_NAME, DEFAULT_LANGUAGE, isLanguage, type Language } from "@/lib/constants";
+
+const LANGUAGE_NAME: Record<Language, string> = {
+  en: "English",
+  zh: "Chinese (Mandarin)",
+};
 
 const MAX_CHAT_MESSAGES_PER_DAY = Number(process.env.MAX_CHAT_MESSAGES_PER_DAY ?? 30);
 const MAX_HISTORY_TURNS = 20;
@@ -37,6 +42,8 @@ export async function POST(request: Request) {
     ? (body as { messages: unknown[] }).messages
     : [];
   const scenario = String((body as { scenario?: unknown })?.scenario ?? "").trim();
+  const rawLanguage = (body as { language?: unknown })?.language;
+  const language: Language = isLanguage(rawLanguage) ? rawLanguage : DEFAULT_LANGUAGE;
 
   const messages: ChatTurn[] = rawMessages
     .map((entry) => {
@@ -73,23 +80,31 @@ export async function POST(request: Request) {
     );
   }
 
-  // Best-effort: bias the conversation toward words the user is actually learning.
+  // Best-effort: bias the conversation toward words the user is actually learning, scoped to
+  // this session's language so an English chat doesn't get Chinese words mixed in or vice versa.
   const { data: vocabRows } = await supabase
     .from("vocabulary_entries")
     .select("word")
     .eq("user_id", user.id)
+    .eq("language", language)
     .order("created_at", { ascending: false })
     .limit(15);
   const vocabWords = Array.from(new Set((vocabRows ?? []).map((row) => row.word))).slice(0, 10);
 
+  const languageName = LANGUAGE_NAME[language];
+  // English corrections stay in English (immersive, established behavior). Chinese corrections
+  // go in Vietnamese instead — a beginner reading a correction in Hán tự they don't know yet
+  // defeats the point of the correction.
+  const correctionLanguage = language === "zh" ? "Vietnamese" : "English";
   const systemInstruction =
-    `Your name is ${CHAT_AI_NAME}. You are a friendly English conversation partner helping ` +
-    `a Vietnamese learner practice speaking English. If asked your name, say ${CHAT_AI_NAME}. ` +
-    "Keep replies short and natural (1-3 sentences), like real spoken conversation, not an essay. " +
-    "conversation, not an essay. Stay in character for the roleplay scenario given below, if " +
-    "any. Gently keep the conversation going by asking a follow-up question. If the learner " +
-    "writes in Vietnamese or makes a clear grammar mistake, briefly and kindly correct them " +
-    "in English before continuing, without breaking the flow too much." +
+    `Your name is ${CHAT_AI_NAME}. You are a friendly ${languageName} conversation partner ` +
+    `helping a Vietnamese learner practice speaking ${languageName}. Reply in ${languageName}. ` +
+    `If asked your name, say ${CHAT_AI_NAME}. ` +
+    "Keep replies short and natural (1-3 sentences), like real spoken conversation, not an " +
+    "essay. Stay in character for the roleplay scenario given below, if any. Gently keep the " +
+    "conversation going by asking a follow-up question. If the learner writes in Vietnamese " +
+    `or makes a clear grammar/usage mistake, briefly and kindly correct them in ` +
+    `${correctionLanguage} before continuing, without breaking the flow too much.` +
     (scenario ? ` Roleplay scenario: ${scenario}.` : " No specific roleplay — free conversation.") +
     (vocabWords.length > 0
       ? ` When natural, try to reuse some of these words the learner is studying: ${vocabWords.join(", ")}.`

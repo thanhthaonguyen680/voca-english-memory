@@ -328,6 +328,63 @@ a confusing error like
   pulling in an extra `@types` package. Not all browsers support it (notably Safari/Firefox
   are inconsistent) — the component must degrade to an "unsupported" state, never throw.
 
+## Multi-language support (English + Chinese)
+
+- `src/lib/constants.ts` exports `Language = "en" | "zh"`, `LANGUAGES` (id/label/flag, used to
+  render the language picker), `SPEECH_LANG` (BCP-47 codes for TTS/speech recognition), and
+  `isLanguage()` (a type guard for parsing `language` out of an untrusted request body). Any
+  new language-aware code should go through these, not a locally re-declared union.
+- `stories`, `writings`, and `vocabulary_entries` each have a `language text not null default
+  'en'` column (migration `20260729223259_add_language_support.sql`) with a check constraint
+  limiting it to `'en' | 'zh'`. Existing rows default to `'en'` since everything before this
+  migration was English-only. A story/writing's language is fixed at creation time — there's
+  no "convert this deck to another language" operation.
+- The per-word `ipa` field on `VocabularyItem` is reused for Chinese too — it holds an IPA
+  transcription for English words and a Pinyin romanization (with tone marks, e.g. `nǐ hǎo`)
+  for Chinese words. Don't rename the field or add a parallel `pinyin` field; treat `ipa` as
+  "however this word's pronunciation is written," not literally IPA.
+- `generate-story`'s `STORY_RESPONSE_SCHEMA` became `buildStoryResponseSchema(language)` — the
+  JSON shape is identical across languages, only the `ipa` field's schema *description* changes
+  (asks the model for IPA vs Pinyin) and the system instruction's target language changes.
+  Follow this pattern (vary the prompt, not the schema) if a third language is ever added.
+- **Chat corrections stay in the target language for English, but switch to Vietnamese for
+  Chinese** (`correctionLanguage` in `src/app/api/chat/route.ts`): correcting an English
+  mistake in English is immersive and the learner can still follow it; correcting a Chinese
+  mistake in Hán tự a beginner can't read yet defeats the point, so those corrections go in
+  Vietnamese instead. Don't unify this to one language for both.
+- Chat's vocabulary-context lookup (`vocabulary_entries`) filters `.eq("language", language)`
+  so an English chat session never gets Chinese words suggested into it, and vice versa.
+- **Reviewing Việt→Trung typed answers grades against Pinyin, not Hán tự** — a learner without
+  a Chinese IME can't reliably type characters under quiz time pressure, but anyone can type
+  romanized Pinyin. `isCorrectAnswer` in `ReviewSession.tsx` branches on `language`: for `zh`
+  in the `vi-en` direction it compares the typed answer against `card.ipa` (the Pinyin) via
+  `normalizePinyin()` (`src/lib/pronunciation.ts` — NFD-normalizes and strips combining tone
+  diacritics + spaces) instead of `normalizeForCompare()` against the Hán tự. This means a
+  learner can type `"ni hao"`, `"nihao"`, or `"nǐ hǎo"` and all grade as correct — tone marks
+  are optional, not required. The Anh↔Việt path is untouched (still `normalizeForCompare`
+  against the word itself). Voice-based pronunciation checking (`PronunciationCheck`) still
+  compares against the Hán tự (`current.word`), not Pinyin, since Chinese speech recognition
+  returns characters, not romanization — only the *typed* Việt→Trung answer uses Pinyin.
+- **The language to generate new content in is a single, app-wide toggle, not a per-page
+  picker.** `src/lib/language-context.tsx`'s `LanguageProvider` wraps the whole app in
+  `layout.tsx` and holds the current `Language`, persisted per-browser in `localStorage`
+  (`voca:language`) — this is a personal UI preference, not account data, so it deliberately
+  has no DB column and doesn't sync across devices. `LanguageSwitcher.tsx` (a flag + dropdown)
+  is the only place it's changed, rendered in both `Navbar` (desktop) and `MobileMenu`. Every
+  language-aware form (`VocabularyForm`, `ChatSession`, `WritingForm`) reads it via
+  `useLanguage()` and sends it in its POST body — don't reintroduce a local per-form language
+  picker; that was the first version of this feature and was replaced because switching
+  languages separately on every page was repetitive and confusing about which one was "active".
+  `StoryCard`, `ReviewStoryList`'s deck picker, and `WritingHistoryList` are the exception:
+  they show a *specific past story/writing's own* stored `language` (fixed at creation time),
+  not the live global toggle, so mixed-language history stays visually distinguishable.
+- `useLanguage()` throws if called outside `LanguageProvider` — every client component that
+  needs the active language must be a descendant of the root layout's `<LanguageProvider>`
+  (true for anything rendered inside `{children}`, so this should never actually happen).
+- `speak()` and `SpeechRecognition.lang` must always be set from `SPEECH_LANG[language]` for
+  the story/card/message actually being read or listened to — never hardcode `"en-US"` in a
+  new call site now that a second language exists.
+
 ## Env vars
 
 Add new variables to `.env.local.example` whenever one is introduced. Never commit the real

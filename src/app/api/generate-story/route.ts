@@ -3,44 +3,57 @@ import { Type } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
 import { STORY_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
-import { MAX_WORDS_PER_STORY } from "@/lib/constants";
+import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE, isLanguage, type Language } from "@/lib/constants";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
-const STORY_RESPONSE_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    story: {
-      type: Type.STRING,
-      description:
-        "The English story. Wrap each vocabulary word in **bold** markdown the first " +
-        "time it appears.",
-    },
-    translation: {
-      type: Type.STRING,
-      description: "A natural Vietnamese translation of the whole story.",
-    },
-    words: {
-      type: Type.ARRAY,
-      description: "One entry per input vocabulary word, in the same order.",
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          word: { type: Type.STRING },
-          ipa: {
-            type: Type.STRING,
-            description: "IPA phonetic transcription, e.g. /əˈpæl/",
+const LANGUAGE_NAME: Record<Language, string> = {
+  en: "English",
+  zh: "Chinese (Simplified)",
+};
+
+// The schema's shape stays the same across languages (both need story/translation/per-word
+// phonetic+meaning) — only the "ipa" field's meaning changes: IPA for English, Pinyin with
+// tone marks for Chinese. Reusing the field name avoids touching every place that reads it.
+function buildStoryResponseSchema(language: Language) {
+  return {
+    type: Type.OBJECT,
+    properties: {
+      story: {
+        type: Type.STRING,
+        description:
+          `The ${LANGUAGE_NAME[language]} story. Wrap each vocabulary word in **bold** ` +
+          "markdown the first time it appears.",
+      },
+      translation: {
+        type: Type.STRING,
+        description: "A natural Vietnamese translation of the whole story.",
+      },
+      words: {
+        type: Type.ARRAY,
+        description: "One entry per input vocabulary word, in the same order.",
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            word: { type: Type.STRING },
+            ipa: {
+              type: Type.STRING,
+              description:
+                language === "zh"
+                  ? "Pinyin romanization with tone marks, e.g. nǐ hǎo"
+                  : "IPA phonetic transcription, e.g. /əˈpæl/",
+            },
+            meaning: {
+              type: Type.STRING,
+              description: "A short Vietnamese meaning/translation of the word.",
+            },
           },
-          meaning: {
-            type: Type.STRING,
-            description: "A short Vietnamese meaning/translation of the word.",
-          },
+          required: ["word", "ipa", "meaning"],
         },
-        required: ["word", "ipa", "meaning"],
       },
     },
-  },
-  required: ["story", "translation", "words"],
-};
+    required: ["story", "translation", "words"],
+  };
+}
 
 type StoryGenerationResult = {
   story: string;
@@ -73,6 +86,9 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Dữ liệu gửi lên không hợp lệ." }, { status: 400 });
   }
+
+  const rawLanguage = (body as { language?: unknown })?.language;
+  const language: Language = isLanguage(rawLanguage) ? rawLanguage : DEFAULT_LANGUAGE;
 
   const rawWords = Array.isArray((body as { words?: unknown })?.words)
     ? ((body as { words: unknown[] }).words)
@@ -127,6 +143,12 @@ export async function POST(request: Request) {
   const minWords = Math.max(40, words.length * 12);
   const maxWords = Math.max(90, words.length * 20);
 
+  const languageName = LANGUAGE_NAME[language];
+  const phoneticInstruction =
+    language === "zh"
+      ? "the Pinyin romanization (with tone marks) for each vocabulary word"
+      : "the IPA phonetic transcription for each vocabulary word";
+
   let result: StoryGenerationResult;
   try {
     const response = await generateWithKeyPool({
@@ -136,16 +158,16 @@ export async function POST(request: Request) {
         temperature: 0.9,
         maxOutputTokens: 2500,
         responseMimeType: "application/json",
-        responseSchema: STORY_RESPONSE_SCHEMA,
+        responseSchema: buildStoryResponseSchema(language),
         systemInstruction:
-          "You are a creative English teacher. Write a story in English that is simple and " +
-          `easy to understand, between ${minWords} and ${maxWords} words long, that ` +
-          "naturally fits ALL of the given vocabulary words in context so a learner can " +
-          "remember them through the story. Don't pad the story past that length. Vary the " +
-          "setting, characters, and plot each time so repeated requests don't feel like a " +
-          "continuation of a previous story. Also provide a natural Vietnamese translation " +
-          "of the story, the IPA phonetic transcription for each vocabulary word, and a " +
-          "short Vietnamese meaning for each vocabulary word.",
+          `You are a creative ${languageName} teacher. Write a story in ${languageName} ` +
+          `that is simple and easy to understand, between ${minWords} and ${maxWords} words ` +
+          "long, that naturally fits ALL of the given vocabulary words in context so a " +
+          "learner can remember them through the story. Don't pad the story past that " +
+          "length. Vary the setting, characters, and plot each time so repeated requests " +
+          "don't feel like a continuation of a previous story. Also provide a natural " +
+          `Vietnamese translation of the story, ${phoneticInstruction}, and a short ` +
+          "Vietnamese meaning for each vocabulary word.",
       },
     });
 
@@ -186,6 +208,7 @@ export async function POST(request: Request) {
       content,
       translation: result.translation?.trim() || null,
       vocabulary_used: enrichedWords,
+      language,
     })
     .select()
     .single();
@@ -201,6 +224,7 @@ export async function POST(request: Request) {
       user_id: user.id,
       word: entry.word,
       meaning: entry.meaning ?? null,
+      language,
     })),
   );
   if (vocabError) {

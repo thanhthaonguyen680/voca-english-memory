@@ -15,7 +15,7 @@ export default async function WritingHistoryPage() {
 
   const { data: writings, error } = await supabase
     .from("writings")
-    .select("id, title, overview, body, conclusion, feedback, created_at")
+    .select("id, title, overview, body, conclusion, feedback, language, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 

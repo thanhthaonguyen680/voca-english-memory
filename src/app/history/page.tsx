@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import HistoryList from "@/components/HistoryList";
+import type { Language } from "@/lib/constants";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
 type StoryRow = {
@@ -8,6 +9,7 @@ type StoryRow = {
   content: string;
   translation: string | null;
   vocabulary_used: VocabularyItem[];
+  language: Language;
   created_at: string;
 };
 
@@ -24,7 +26,7 @@ export default async function HistoryPage() {
 
   const { data: stories, error } = await supabase
     .from("stories")
-    .select("id, content, translation, vocabulary_used, created_at")
+    .select("id, content, translation, vocabulary_used, language, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 

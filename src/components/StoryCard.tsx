@@ -5,6 +5,7 @@ import BoldText from "@/components/BoldText";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { speak } from "@/lib/speech";
 import { createClient } from "@/lib/supabase/client";
+import { SPEECH_LANG, DEFAULT_LANGUAGE, LANGUAGES, type Language } from "@/lib/constants";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
 type StoryCardProps = {
@@ -12,6 +13,7 @@ type StoryCardProps = {
   content: string;
   translation?: string | null;
   vocabularyUsed: VocabularyItem[];
+  language?: Language;
   createdAt?: string;
   highlight?: boolean;
   onDeleted?: (id: string) => void;
@@ -22,10 +24,12 @@ export default function StoryCard({
   content,
   translation,
   vocabularyUsed,
+  language = DEFAULT_LANGUAGE,
   createdAt,
   highlight = false,
   onDeleted,
 }: StoryCardProps) {
+  const speechLang = SPEECH_LANG[language];
   const [openWords, setOpenWords] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -78,7 +82,7 @@ export default function StoryCard({
                 <div className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-300">
                   <button
                     type="button"
-                    onClick={() => speak(item.word)}
+                    onClick={() => speak(item.word, speechLang)}
                     title="Nghe phát âm"
                     aria-label="Nghe phát âm"
                     className="hover:text-amber-100"
@@ -131,13 +135,15 @@ export default function StoryCard({
 
       <div className="mb-2 flex items-center justify-between gap-2">
         {highlight ? (
-          <h3 className="text-sm font-medium text-amber-300">Câu chuyện của bạn</h3>
+          <h3 className="text-sm font-medium text-amber-300">
+            {LANGUAGES.find((item) => item.id === language)?.flag} Câu chuyện của bạn
+          </h3>
         ) : (
-          <span />
+          <span className="text-sm">{LANGUAGES.find((item) => item.id === language)?.flag}</span>
         )}
         <button
           type="button"
-          onClick={() => speak(content.replace(/\*\*/g, ""))}
+          onClick={() => speak(content.replace(/\*\*/g, ""), speechLang)}
           className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-700 hover:text-slate-200"
         >
           <span aria-hidden>🔊</span> Nghe câu chuyện

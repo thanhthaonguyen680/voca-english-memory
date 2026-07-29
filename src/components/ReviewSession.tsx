@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { speak } from "@/lib/speech";
-import { normalizeForCompare } from "@/lib/pronunciation";
+import { normalizeForCompare, normalizePinyin } from "@/lib/pronunciation";
+import { SPEECH_LANG, DEFAULT_LANGUAGE, type Language } from "@/lib/constants";
 import PronunciationCheck from "@/components/PronunciationCheck";
 import EditableMeaning from "@/components/EditableMeaning";
 
@@ -20,29 +21,65 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
-// English answers must match closely; Vietnamese meanings accept a looser containment
+// Word-side answers must match closely; Vietnamese meanings accept a looser containment
 // match since the same meaning is often phrased several valid ways (e.g. "táo" vs "quả táo").
-function isCorrectAnswer(direction: Direction, answer: string, word: string, meaning: string) {
+// For Chinese, "vi-en" means Vietnamese → Pinyin: the learner can't reliably type tone marks
+// or Hán tự without a special keyboard, so grade against the word's Pinyin (`ipa`) with tone
+// marks stripped instead of the Hán tự itself.
+function isCorrectAnswer(
+  language: Language,
+  direction: Direction,
+  answer: string,
+  word: string,
+  ipa: string | undefined,
+  meaning: string,
+) {
+  if (direction === "vi-en") {
+    if (language === "zh") {
+      const a = normalizePinyin(answer);
+      if (!a) return false;
+      return a === normalizePinyin(ipa ?? word);
+    }
+    const a = normalizeForCompare(answer);
+    if (!a) return false;
+    return a === normalizeForCompare(word);
+  }
   const a = normalizeForCompare(answer);
   if (!a) return false;
-  if (direction === "vi-en") return a === normalizeForCompare(word);
   const m = normalizeForCompare(meaning);
   return a === m || m.includes(a) || a.includes(m);
 }
 
-const MODE_LABELS: Record<Mode, string> = {
-  "en-vi": "Anh → Việt",
-  "vi-en": "Việt → Anh",
-  mixed: "Trộn 2 chiều",
-};
+function getModeLabels(language: Language): Record<Mode, string> {
+  if (language === "zh") {
+    return {
+      "en-vi": "Trung → Việt",
+      "vi-en": "Việt → Trung (gõ Pinyin)",
+      mixed: "Trộn 2 chiều",
+    };
+  }
+  return {
+    "en-vi": "Anh → Việt",
+    "vi-en": "Việt → Anh",
+    mixed: "Trộn 2 chiều",
+  };
+}
 
 type ReviewSessionProps = {
   storyId: string;
   words: WordPair[];
+  language?: Language;
   onExit: () => void;
 };
 
-export default function ReviewSession({ storyId, words, onExit }: ReviewSessionProps) {
+export default function ReviewSession({
+  storyId,
+  words,
+  language = DEFAULT_LANGUAGE,
+  onExit,
+}: ReviewSessionProps) {
+  const speechLang = SPEECH_LANG[language];
+  const modeLabels = getModeLabels(language);
   const [mode, setMode] = useState<Mode | null>(null);
   const [deck, setDeck] = useState<Card[]>([]);
   const [index, setIndex] = useState(0);
@@ -115,14 +152,14 @@ export default function ReviewSession({ storyId, words, onExit }: ReviewSessionP
           kiểm tra:
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
-          {(Object.keys(MODE_LABELS) as Mode[]).map((m) => (
+          {(Object.keys(modeLabels) as Mode[]).map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => startSession(m)}
               className="flex-1 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300"
             >
-              {MODE_LABELS[m]}
+              {modeLabels[m]}
             </button>
           ))}
         </div>
@@ -177,13 +214,20 @@ export default function ReviewSession({ storyId, words, onExit }: ReviewSessionP
 
   const current = deck[index];
   const isLast = index === deck.length - 1;
-  const englishWordVisible =
+  const targetWordVisible =
     current.direction === "en-vi" ? current.word : submitted ? current.word : null;
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (submitted) return;
-    const correct = isCorrectAnswer(current.direction, answer, current.word, current.meaning);
+    const correct = isCorrectAnswer(
+      language,
+      current.direction,
+      answer,
+      current.word,
+      current.ipa,
+      current.meaning,
+    );
     setLastCorrect(correct);
     if (correct) setCorrectCount((c) => c + 1);
     setSubmitted(true);
@@ -216,7 +260,11 @@ export default function ReviewSession({ storyId, words, onExit }: ReviewSessionP
       </div>
 
       <p className="mb-1 text-xs font-medium text-slate-500">
-        {current.direction === "en-vi" ? "Từ tiếng Anh" : "Nghĩa tiếng Việt"}
+        {current.direction === "en-vi"
+          ? language === "zh"
+            ? "Từ tiếng Trung"
+            : "Từ tiếng Anh"
+          : "Nghĩa tiếng Việt"}
       </p>
       <div className="mb-4 flex flex-wrap items-center gap-3">
         {current.direction === "en-vi" ? (
@@ -235,17 +283,21 @@ export default function ReviewSession({ storyId, words, onExit }: ReviewSessionP
             displayClassName="text-2xl font-semibold text-white"
           />
         )}
-        {englishWordVisible && (
+        {targetWordVisible && (
           <>
             <button
               type="button"
-              onClick={() => speak(englishWordVisible)}
+              onClick={() => speak(targetWordVisible, speechLang)}
               title="Nghe phát âm"
               className="rounded-full bg-slate-700 px-2.5 py-1 text-xs font-medium text-slate-300 hover:bg-slate-600"
             >
               🔊
             </button>
-            <PronunciationCheck word={englishWordVisible} onResult={handlePronunciationResult} />
+            <PronunciationCheck
+              word={targetWordVisible}
+              lang={speechLang}
+              onResult={handlePronunciationResult}
+            />
           </>
         )}
       </div>
@@ -257,7 +309,11 @@ export default function ReviewSession({ storyId, words, onExit }: ReviewSessionP
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
             placeholder={
-              current.direction === "en-vi" ? "Nhập nghĩa tiếng Việt" : "Nhập từ tiếng Anh"
+              current.direction === "en-vi"
+                ? "Nhập nghĩa tiếng Việt"
+                : language === "zh"
+                  ? "Nhập Pinyin (không cần dấu thanh)"
+                  : "Nhập từ tiếng Anh"
             }
             className="rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
           />

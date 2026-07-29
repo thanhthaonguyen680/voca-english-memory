@@ -7,10 +7,15 @@ type Status = "idle" | "listening" | "correct" | "incorrect" | "unsupported";
 
 type PronunciationCheckProps = {
   word: string;
+  lang?: string;
   onResult?: (correct: boolean) => void;
 };
 
-export default function PronunciationCheck({ word, onResult }: PronunciationCheckProps) {
+export default function PronunciationCheck({
+  word,
+  lang = "en-US",
+  onResult,
+}: PronunciationCheckProps) {
   const [status, setStatus] = useState<Status>("idle");
   const [heard, setHeard] = useState("");
 
@@ -22,7 +27,7 @@ export default function PronunciationCheck({ word, onResult }: PronunciationChec
     }
 
     const recognition = new RecognitionCtor();
-    recognition.lang = "en-US";
+    recognition.lang = lang;
     recognition.maxAlternatives = 1;
     setStatus("listening");
     setHeard("");

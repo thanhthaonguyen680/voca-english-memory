@@ -13,6 +13,7 @@ export type Database = {
           user_id: string;
           word: string;
           meaning: string | null;
+          language: string;
           created_at: string;
         };
         Insert: {
@@ -20,6 +21,7 @@ export type Database = {
           user_id: string;
           word: string;
           meaning?: string | null;
+          language?: string;
           created_at?: string;
         };
         Update: Partial<{
@@ -27,6 +29,7 @@ export type Database = {
           user_id: string;
           word: string;
           meaning: string | null;
+          language: string;
           created_at: string;
         }>;
         Relationships: [];
@@ -38,6 +41,7 @@ export type Database = {
           content: string;
           translation: string | null;
           vocabulary_used: VocabularyItem[];
+          language: string;
           created_at: string;
         };
         Insert: {
@@ -46,6 +50,7 @@ export type Database = {
           content: string;
           translation?: string | null;
           vocabulary_used: VocabularyItem[];
+          language?: string;
           created_at?: string;
         };
         Update: Partial<{
@@ -54,6 +59,7 @@ export type Database = {
           content: string;
           translation: string | null;
           vocabulary_used: VocabularyItem[];
+          language: string;
           created_at: string;
         }>;
         Relationships: [];
@@ -103,6 +109,7 @@ export type Database = {
           body: string;
           conclusion: string | null;
           feedback: string | null;
+          language: string;
           created_at: string;
         };
         Insert: {
@@ -113,6 +120,7 @@ export type Database = {
           body: string;
           conclusion?: string | null;
           feedback?: string | null;
+          language?: string;
           created_at?: string;
         };
         Update: Partial<{
@@ -123,6 +131,7 @@ export type Database = {
           body: string;
           conclusion: string | null;
           feedback: string | null;
+          language: string;
           created_at: string;
         }>;
         Relationships: [];

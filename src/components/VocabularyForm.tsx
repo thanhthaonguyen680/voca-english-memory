@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import StoryCard from "@/components/StoryCard";
-import { MAX_WORDS_PER_STORY } from "@/lib/constants";
+import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE, type Language } from "@/lib/constants";
+import { useLanguage } from "@/lib/language-context";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
 type WordEntry = { word: string; meaning: string };
@@ -13,17 +14,25 @@ type GeneratedStory = {
   content: string;
   translation: string | null;
   vocabulary_used: VocabularyItem[];
+  language: Language;
 };
 
 const EMPTY_ENTRY: WordEntry = { word: "", meaning: "" };
 
+const WORD_PLACEHOLDER: Record<Language, string> = {
+  en: "Từ vựng (vd: apple)",
+  zh: "Từ vựng (vd: 苹果)",
+};
+
 export default function VocabularyForm() {
+  const { language } = useLanguage();
   const [entries, setEntries] = useState<WordEntry[]>([{ ...EMPTY_ENTRY }]);
   const [loading, setLoading] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [error, setError] = useState("");
   const [story, setStory] = useState<GeneratedStory | null>(null);
   const [lastWords, setLastWords] = useState<WordInput[]>([]);
+  const [lastLanguage, setLastLanguage] = useState<Language>(DEFAULT_LANGUAGE);
 
   function updateEntry(index: number, field: keyof WordEntry, value: string) {
     setEntries((prev) =>
@@ -39,13 +48,13 @@ export default function VocabularyForm() {
     setEntries((prev) => prev.filter((_, i) => i !== index));
   }
 
-  async function generateStory(words: WordInput[]) {
+  async function generateStory(words: WordInput[], forLanguage: Language) {
     setError("");
     try {
       const res = await fetch("/api/generate-story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ words }),
+        body: JSON.stringify({ words, language: forLanguage }),
       });
       const data = await res.json();
 
@@ -58,8 +67,10 @@ export default function VocabularyForm() {
         content: data.story.content as string,
         translation: (data.story.translation as string | null) ?? null,
         vocabulary_used: (data.story.vocabulary_used as VocabularyItem[]) ?? [],
+        language: forLanguage,
       });
       setLastWords(words);
+      setLastLanguage(forLanguage);
     } catch {
       setError("Không thể kết nối tới server.");
     }
@@ -82,7 +93,7 @@ export default function VocabularyForm() {
     }
 
     setLoading(true);
-    await generateStory(words);
+    await generateStory(words, language);
     setEntries([{ ...EMPTY_ENTRY }]);
     setLoading(false);
   }
@@ -90,7 +101,7 @@ export default function VocabularyForm() {
   async function handleRegenerate() {
     if (lastWords.length === 0) return;
     setRegenerating(true);
-    await generateStory(lastWords);
+    await generateStory(lastWords, lastLanguage);
     setRegenerating(false);
   }
 
@@ -102,7 +113,7 @@ export default function VocabularyForm() {
             <div key={index} className="flex gap-2">
               <input
                 type="text"
-                placeholder="Từ vựng (vd: apple)"
+                placeholder={WORD_PLACEHOLDER[language]}
                 value={entry.word}
                 onChange={(event) => updateEntry(index, "word", event.target.value)}
                 className="min-w-0 flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
@@ -161,6 +172,7 @@ export default function VocabularyForm() {
             content={story.content}
             translation={story.translation}
             vocabularyUsed={story.vocabulary_used}
+            language={story.language}
             highlight
           />
           <div className="mt-4 flex flex-wrap items-center gap-4">

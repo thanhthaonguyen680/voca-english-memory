@@ -4,6 +4,7 @@ import { getStudyStreak } from "@/lib/streak";
 import SignOutButton from "@/components/SignOutButton";
 import StreakBadge from "@/components/StreakBadge";
 import MobileMenu from "@/components/MobileMenu";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default async function Navbar() {
   const supabase = await createClient();
@@ -42,6 +43,7 @@ export default async function Navbar() {
               <Link href="/history" className="text-slate-400 hover:text-white">
                 Lịch sử học
               </Link>
+              <LanguageSwitcher />
               <SignOutButton />
             </>
           ) : (

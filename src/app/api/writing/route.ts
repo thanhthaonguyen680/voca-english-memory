@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { STORY_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
+import { DEFAULT_LANGUAGE, isLanguage, type Language } from "@/lib/constants";
 
 const MAX_WRITINGS_PER_DAY = Number(process.env.MAX_WRITINGS_PER_DAY ?? 10);
+
+const LANGUAGE_NAME: Record<Language, string> = {
+  en: "English",
+  zh: "Chinese (Mandarin)",
+};
 
 function startOfTodayISO() {
   const start = new Date();
@@ -34,6 +40,7 @@ export async function POST(request: Request) {
   const overview = String(record.overview ?? "").trim();
   const essayBody = String(record.body ?? "").trim();
   const conclusion = String(record.conclusion ?? "").trim();
+  const language: Language = isLanguage(record.language) ? record.language : DEFAULT_LANGUAGE;
 
   if (!title || !essayBody) {
     return NextResponse.json(
@@ -73,6 +80,8 @@ export async function POST(request: Request) {
     .filter(Boolean)
     .join("\n\n");
 
+  const languageName = LANGUAGE_NAME[language];
+
   let feedback: string | null = null;
   try {
     const response = await generateWithKeyPool({
@@ -82,13 +91,13 @@ export async function POST(request: Request) {
         temperature: 0.7,
         maxOutputTokens: 500,
         systemInstruction:
-          "You are a friendly, encouraging English writing coach helping a Vietnamese " +
-          "learner improve their essay writing. Reply in Vietnamese. Structure your reply " +
-          "as: (1) 1-2 sentences genuinely encouraging about what they did well, (2) up to " +
-          "5 bullet points with the most important corrections, each showing the original " +
-          "phrase and a corrected version with a short reason, (3) 1 closing sentence " +
-          "suggesting one concrete thing to focus on next time. Keep it concise — this is " +
-          "quick feedback, not a full rewrite of the essay.",
+          `You are a friendly, encouraging ${languageName} writing coach helping a ` +
+          "Vietnamese learner improve their essay writing. Reply in Vietnamese. Structure " +
+          "your reply as: (1) 1-2 sentences genuinely encouraging about what they did well, " +
+          "(2) up to 5 bullet points with the most important corrections, each showing the " +
+          "original phrase and a corrected version with a short reason, (3) 1 closing " +
+          "sentence suggesting one concrete thing to focus on next time. Keep it concise — " +
+          "this is quick feedback, not a full rewrite of the essay.",
       },
     });
 
@@ -107,6 +116,7 @@ export async function POST(request: Request) {
       body: essayBody,
       conclusion: conclusion || null,
       feedback,
+      language,
     })
     .select()
     .single();
