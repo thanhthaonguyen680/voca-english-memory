@@ -20,7 +20,7 @@ export default async function VocabularyPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
       <h1 className="mb-1 text-2xl font-semibold text-white">Nhập từ vựng</h1>
       <p className="mb-6 text-sm text-slate-400">
-        Nhập các từ tiếng Anh bạn muốn học, AI sẽ tạo một câu chuyện ngắn để giúp bạn ghi nhớ
+        Nhập các từ vựng bạn muốn học, Ran Ran sẽ tạo một câu chuyện ngắn để giúp bạn ghi nhớ
         qua ngữ cảnh.
       </p>
 

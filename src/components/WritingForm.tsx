@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { LANGUAGES } from "@/lib/constants";
+import { useLanguage } from "@/lib/language-context";
 
 type SubmittedWriting = {
   title: string;
@@ -15,6 +17,7 @@ const FIELD_CLASS =
   "rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30";
 
 export default function WritingForm() {
+  const { language } = useLanguage();
   const [title, setTitle] = useState("");
   const [overview, setOverview] = useState("");
   const [body, setBody] = useState("");
@@ -50,6 +53,7 @@ export default function WritingForm() {
           overview: overview.trim(),
           body: body.trim(),
           conclusion: conclusion.trim(),
+          language,
         }),
       });
       const data = await res.json();
@@ -74,6 +78,11 @@ export default function WritingForm() {
         onSubmit={handleSubmit}
         className="flex flex-col gap-3 rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm"
       >
+        <p className="text-xs text-slate-500">
+          Ngôn ngữ: {LANGUAGES.find((item) => item.id === language)?.flag}{" "}
+          {LANGUAGES.find((item) => item.id === language)?.label} — đổi ở góc trên.
+        </p>
+
         <div className="flex flex-col gap-1">
           <label className="text-xs font-medium text-slate-500">Tiêu đề</label>
           <input
@@ -142,7 +151,7 @@ export default function WritingForm() {
             </p>
           ) : (
             <p className="text-sm text-slate-400">
-              Đã lưu bài viết, nhưng chưa lấy được nhận xét từ AI lúc này.
+              Đã lưu bài viết, nhưng chưa lấy được nhận xét từ Ran Ran lúc này.
             </p>
           )}
           <Link

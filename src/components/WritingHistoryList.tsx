@@ -3,6 +3,8 @@
 import { useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { createClient } from "@/lib/supabase/client";
+import { LANGUAGES, DEFAULT_LANGUAGE, isLanguage } from "@/lib/constants";
+import { useLanguage } from "@/lib/language-context";
 
 type Writing = {
   id: string;
@@ -11,15 +13,24 @@ type Writing = {
   body: string;
   conclusion: string | null;
   feedback: string | null;
+  language?: string;
   created_at: string;
 };
+
+const LANGUAGE_FLAG: Record<string, string> = Object.fromEntries(
+  LANGUAGES.map((item) => [item.id, item.flag]),
+);
 
 export default function WritingHistoryList({
   initialWritings,
 }: {
   initialWritings: Writing[];
 }) {
-  const [writings, setWritings] = useState(initialWritings);
+  const { language } = useLanguage();
+  const [allWritings, setAllWritings] = useState(initialWritings);
+  const writings = allWritings.filter((w) =>
+    isLanguage(w.language) ? w.language === language : language === DEFAULT_LANGUAGE,
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -39,7 +50,7 @@ export default function WritingHistoryList({
       return;
     }
 
-    setWritings((prev) => prev.filter((w) => w.id !== confirmId));
+    setAllWritings((prev) => prev.filter((w) => w.id !== confirmId));
     setDeleting(false);
     setConfirmId(null);
   }
@@ -47,7 +58,7 @@ export default function WritingHistoryList({
   if (writings.length === 0) {
     return (
       <p className="text-sm text-slate-400">
-        Bạn chưa viết bài nào. Hãy viết bài đầu tiên ở trang{" "}
+        Chưa có bài viết {LANGUAGE_FLAG[language]} nào. Hãy viết bài đầu tiên ở trang{" "}
         <a
           href="/writing"
           className="font-medium text-amber-400 underline hover:text-amber-300"
@@ -76,6 +87,7 @@ export default function WritingHistoryList({
                 onClick={() => setExpandedId(isOpen ? null : writing.id)}
                 className="text-left text-sm font-semibold text-white hover:text-amber-300"
               >
+                {LANGUAGE_FLAG[isLanguage(writing.language) ? writing.language : DEFAULT_LANGUAGE]}{" "}
                 {writing.title}
               </button>
               <div className="flex shrink-0 items-center gap-2">
@@ -122,7 +134,7 @@ export default function WritingHistoryList({
                 )}
                 {writing.feedback && (
                   <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
-                    <p className="mb-1 text-xs font-medium text-amber-300">Nhận xét từ AI</p>
+                    <p className="mb-1 text-xs font-medium text-amber-300">Nhận xét từ Ran Ran</p>
                     <p className="whitespace-pre-wrap text-slate-100">{writing.feedback}</p>
                   </div>
                 )}

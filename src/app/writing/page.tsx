@@ -19,8 +19,8 @@ export default async function WritingPage() {
         <div>
           <h1 className="mb-1 text-2xl font-semibold text-white">Luyện viết</h1>
           <p className="text-sm text-slate-400">
-            Viết theo cấu trúc Tiêu đề – Mở bài – Thân bài – Kết luận, AI sẽ nhận xét sau khi
-            bạn nộp bài.
+            Viết theo cấu trúc Tiêu đề – Mở bài – Thân bài – Kết luận, Ran Ran sẽ nhận xét sau
+            khi bạn nộp bài.
           </p>
         </div>
         <a
