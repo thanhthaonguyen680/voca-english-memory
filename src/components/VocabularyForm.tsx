@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import StoryCard from "@/components/StoryCard";
 import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE, type Language } from "@/lib/constants";
 import { useLanguage } from "@/lib/language-context";
+import { compressImageToBase64 } from "@/lib/image";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
 type WordEntry = { word: string; meaning: string };
@@ -33,6 +34,9 @@ export default function VocabularyForm() {
   const [story, setStory] = useState<GeneratedStory | null>(null);
   const [lastWords, setLastWords] = useState<WordInput[]>([]);
   const [lastLanguage, setLastLanguage] = useState<Language>(DEFAULT_LANGUAGE);
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function updateEntry(index: number, field: keyof WordEntry, value: string) {
     setEntries((prev) =>
@@ -46,6 +50,48 @@ export default function VocabularyForm() {
 
   function removeEntry(index: number) {
     setEntries((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  // Appends scanned words to whatever the user already typed (rather than discarding it),
+  // dropping any still-empty rows so a fresh form doesn't leave a blank line at the top.
+  function mergeScannedWords(scanned: WordInput[]) {
+    setEntries((prev) => {
+      const typed = prev.filter((entry) => entry.word.trim().length > 0);
+      const merged = [
+        ...typed,
+        ...scanned.map((entry) => ({ word: entry.word, meaning: entry.meaning ?? "" })),
+      ].slice(0, MAX_WORDS_PER_STORY);
+      return merged.length > 0 ? merged : [{ ...EMPTY_ENTRY }];
+    });
+  }
+
+  async function handlePhotoSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setScanError("");
+    setScanning(true);
+    try {
+      const { base64, mimeType } = await compressImageToBase64(file);
+      const res = await fetch("/api/scan-vocabulary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64, mimeType, language }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setScanError(data.error ?? "Đã có lỗi xảy ra.");
+        return;
+      }
+
+      mergeScannedWords(data.words as WordInput[]);
+    } catch {
+      setScanError("Không thể xử lý ảnh. Vui lòng thử lại.");
+    } finally {
+      setScanning(false);
+    }
   }
 
   async function generateStory(words: WordInput[], forLanguage: Language) {
@@ -108,6 +154,39 @@ export default function VocabularyForm() {
   return (
     <>
       <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-slate-700 bg-slate-900/60 p-3.5">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handlePhotoSelected}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={scanning}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-slate-900 px-3.5 py-2 text-sm font-medium text-amber-400 hover:bg-amber-500/10 disabled:opacity-50"
+          >
+            {scanning ? (
+              "Đang quét ảnh..."
+            ) : (
+              <>
+                <span aria-hidden>📷</span> Chụp / chọn ảnh từ vựng
+              </>
+            )}
+          </button>
+          <span className="text-xs text-slate-500">
+            Ran Ran sẽ tự quét từ trong ảnh và điền vào danh sách bên dưới.
+          </span>
+        </div>
+        {scanError && (
+          <p className="mb-3 rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">
+            {scanError}
+          </p>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {entries.map((entry, index) => (
             <div key={index} className="flex gap-2">

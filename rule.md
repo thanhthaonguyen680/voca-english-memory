@@ -179,6 +179,38 @@ a confusing error like
   read or written by any current code path. Don't delete the table or `src/lib/crypto.ts`'s
   `maskKey` (still used by the CLI script's confirmation output) without discussing first.
 
+## Scan vocabulary from a photo (`/api/scan-vocabulary`)
+
+- Lets a learner photograph or upload an image (notebook page, textbook, flashcards) instead
+  of typing words by hand. `VocabularyForm`'s hidden file input (`accept="image/*"
+  capture="environment"`) opens the phone camera directly on mobile while still falling back
+  to a normal file picker (with gallery access) on desktop/unsupported browsers — don't remove
+  `capture`, it's what makes "chụp ảnh" the default action instead of "chọn file".
+- The photo is downscaled client-side first (`src/lib/image.ts`, `compressImageToBase64` — max
+  1600px on the long edge, JPEG quality 0.85) before being base64-encoded and POSTed. This
+  keeps the payload well under Vercel's serverless body-size limit and reduces Gemini's image
+  token cost; don't send the original full-resolution file.
+- The route sends the image as multimodal input (`parts: [{ text }, { inlineData: { mimeType,
+  data } }]`) through `generateWithKeyPool()` like every other Gemini call — same key pool,
+  same `try/catch` → friendly-Vietnamese-error pattern, same rules apply.
+- **Rate-limited by its own table, `vocab_scans`** (mirrors `chat_logs` exactly: just
+  `user_id` + `created_at`, no image or extracted-word content stored), compared against
+  `MAX_VOCAB_SCANS_PER_DAY`. This is deliberately separate from `MAX_STORIES_PER_DAY` — scanning
+  a photo doesn't create a story by itself, it only fills in the form, so it needs its own
+  daily budget rather than borrowing another feature's.
+- The extraction prompt explicitly forbids inventing a meaning: `meaning` is only filled in if
+  it's *also visibly written next to the word in the image itself* (e.g. a bilingual word
+  list); otherwise the model must return an empty string. Don't relax this to "guess a
+  reasonable meaning" — that would silently produce wrong meanings the learner didn't ask for
+  (the AI-generated meaning during actual story generation is a different, intentional case).
+- Scanned words are **merged into**, not replacing, whatever the learner already typed
+  (`mergeScannedWords` in `VocabularyForm.tsx` keeps non-empty existing rows and appends the
+  scan results, capped at `MAX_WORDS_PER_STORY`) — scanning a second photo (or a photo after
+  typing a few words by hand) shouldn't discard prior input.
+- Scanning is language-aware like every other content-generating feature: it sends the
+  app-wide `language` from `useLanguage()` and asks the model to extract that language's words
+  specifically, so scanning a Chinese vocabulary list while in English mode won't happen.
+
 ## Conversation practice (`/chat`)
 
 - `src/app/api/chat/route.ts` is **stateless**: the client (`ChatSession.tsx`) resends the
