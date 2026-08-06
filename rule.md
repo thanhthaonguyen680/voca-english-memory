@@ -263,6 +263,50 @@ a confusing error like
   browser client, direct `.delete()`, RLS-protected, no API route needed, confirmed via the
   shared `ConfirmDialog` component — not `window.confirm`.
 
+## Grammar reference (`/grammar`)
+
+- **Deliberately static, not AI-generated** — `src/lib/grammar-data.ts` hand-curates all 12
+  English tenses (structure, usage, signal words, examples, question/short-answer patterns)
+  plus a matching multiple-choice question bank (`GRAMMAR_QUESTIONS`). Grammar rules are fixed
+  and objective, unlike a story's wording — generating them fresh via Gemini each time would
+  risk the model hallucinating an incorrect rule or, worse, marking an exercise answer wrong
+  when it's actually right. Don't switch this to an AI call "for variety"; add more hand-written
+  questions to the bank instead if it needs to feel less repetitive.
+- **English-only regardless of the app-wide language toggle** (`useLanguage()` from
+  `src/lib/language-context.tsx`) — tenses are an English-specific grammar concept, so this
+  page doesn't read or react to the Anh/Trung switcher at all, unlike every other
+  content-generating feature. Don't wire it up to `language`; that switch controls what
+  language new vocabulary/stories/chat/writing are *in*, which isn't relevant to a fixed
+  grammar reference.
+- `/grammar` is behind login (added to `PROTECTED_PATHS` in `src/lib/supabase/middleware.ts`)
+  for consistency with the rest of the app's learning tools.
+- `GrammarTenseList.tsx` (browse: expandable card per tense) is the shared entry point for
+  **two** separate practice modes, each scoped to one tense or `"mixed"` (all 12):
+  - **Multiple-choice** (`GrammarQuiz.tsx`, `GRAMMAR_QUESTIONS` in `grammar-data.ts`) — fully
+    static, no AI call. Grading a typed grammar answer reliably needs the same kind of
+    loose-matching logic `ReviewSession` already fights with for Vietnamese meanings, and
+    grammar answers have far less acceptable variation than a translation does — MCQ sidesteps
+    that ambiguity and keeps grading 100% deterministic. Don't switch this to an AI call "for
+    variety"; add more hand-written questions to `GRAMMAR_QUESTIONS` instead.
+  - **Dịch câu (Việt → Anh)** (`GrammarTranslationPractice.tsx`, prompts from
+    `TRANSLATION_PROMPTS` in `grammar-data.ts`, graded by `POST /api/grammar/check`) — this
+    *is* AI-graded, unlike everything else in this feature, because judging a free-written
+    sentence for "did they use this tense correctly and does it mean the right thing" isn't
+    something a static answer key can do (unlike MCQ, there's no finite list of correct
+    strings to match against). The route sends the Vietnamese sentence, the target tense name,
+    and the learner's attempt to Gemini via `generateWithKeyPool()` with a structured
+    `{correct, feedback, correctedSentence}` response schema — same key-pool/try-catch/
+    Vietnamese-error pattern as every other AI route. `TRANSLATION_PROMPTS` entries are
+    intentionally *different* Vietnamese sentences from each tense's `examples` shown on the
+    reference card, so the practice sentence isn't something the learner can just read the
+    answer to a few lines above.
+  - Rate-limited via its own table, `grammar_checks` (mirrors `chat_logs`/`vocab_scans` —
+    just `user_id` + `created_at`, no sentence/feedback content stored), compared against
+    `MAX_GRAMMAR_CHECKS_PER_DAY`. Only the translation mode counts against this; MCQ is free
+    and unlimited since it costs no AI call.
+  - Both modes reuse `ReviewSession.tsx`'s shuffle-deck/score/retry pattern — reuse that
+    structure rather than inventing a third quiz flow if a fourth is ever added.
+
 ## Voice (text-to-speech)
 
 - Pronunciation/story playback uses the browser's built-in Web Speech API
@@ -428,31 +472,45 @@ secret there.
 - All user-facing text (buttons, form labels, error messages, page copy) stays in
   **Vietnamese** — this app targets Vietnamese speakers learning English. Code (identifiers,
   comments) stays in English.
-- **Dark "Navy Blue" theme, no toggle.** Body is the exact gradient
-  `bg-[linear-gradient(180deg,#0B1220_0%,#111827_100%)] text-white` (set in `layout.tsx`;
-  `globals.css`'s `--background` is `#0b1220`, just a same-tone fallback — no
-  `prefers-color-scheme` branching, this is a firm switch, not a system-preference-based
-  theme). These two hex stops and the card color below (`#1E293B` = Tailwind's `slate-800`)
-  came directly from a user-supplied palette spec — don't "simplify" them back to a generic
-  `slate-950`/`bg-black`; the exact hex on the body gradient is intentional. Everything else
-  uses Tailwind's **slate** scale, not `gray`. Amber stays the single accent color, unchanged
-  from the light theme, since it reads well on both.
-  - **Layered depth — each step is one shade lighter than the last:** body gradient (darkest,
-    custom hex) → inputs/recessed fields `bg-slate-900` → card/surface `bg-slate-800` (the
-    `#1E293B` from the spec) → hover highlight inside a card `bg-slate-700`. A card's border is
-    always one step lighter than its own background (`bg-slate-800` card → `border-slate-700`;
-    `bg-slate-900` input → `border-slate-700` also reads fine since inputs sit inside a
-    lighter card). When adding a new element, place it in this scale by what it visually sits
-    on top of — don't default every surface to the same gray/slate step, that's what produced
-    the flat, low-contrast draft this was corrected from.
-  - Primary text: `text-white`; secondary text: `text-slate-400`; muted/icon text: `text-slate-500`
-  - Amber tinted surfaces (chips, highlighted cards): `bg-amber-500/10` (or `/5`, `/15` for
-    layering) with `border-amber-500/20` and `text-amber-300`/`text-amber-400` (not
-    `amber-700`/`amber-800` — those are light-mode shades, too dark to read here)
-  - Success/error tints: `bg-green-500/10 text-green-400`, `bg-red-500/10 text-red-400`
-  - Primary amber buttons (`bg-amber-400 ... text-slate-900`) are unchanged — dark text on a
-    bright amber button stays correct regardless of what's behind it.
-  Don't introduce other brand colors casually.
+- **Light "Notebook" neo-brutalist theme, no toggle.** This *replaced* the earlier dark
+  "Navy Blue" theme (2026-08-06) — a deliberate full redesign, not a tweak. Don't revert to
+  the old dark navy/amber palette or bring back `prefers-color-scheme` branching; this is a
+  firm switch either way.
+  - Body: `bg-[#FAF7F0] bg-[radial-gradient(#00000017_1.5px,transparent_1.5px)]
+    bg-[length:22px_22px] text-black` (set on `<body>` in `layout.tsx`; `globals.css`'s
+    `--background`/`--foreground` are the same-tone fallback, `#faf7f0`/`#111111`) — a warm
+    cream base with a subtle dot-grid pattern, not a flat color. Keep the dot pattern; it's
+    what keeps the light theme from looking like a bare default page.
+  - Text scale: primary `text-black`, secondary `text-neutral-600`, muted/icon
+    `text-neutral-400` — Tailwind's **neutral** scale, not `slate`/`gray`, for warm-gray tones
+    that sit well on the cream background.
+  - Surfaces are **white cards on a thick black border with a hard offset shadow**, not soft
+    blur shadows: `rounded-2xl border-2 border-black bg-white p-6 shadow-[4px_4px_0_0_#000]`.
+    Highlighted/tinted cards (e.g. the just-generated story, streak banner) use
+    `bg-emerald-50` instead of white, same border+shadow. This "neo-brutalism" hard-shadow
+    look (flat color, no blur, no gradient on cards, offset shadow instead of soft elevation)
+    is the whole point of the redesign — don't soften it back to `shadow-sm`/blurred shadows.
+  - **Green is the single accent color** (Tailwind's `emerald` scale), replacing amber:
+    primary buttons `bg-emerald-300`, tinted surfaces `bg-emerald-50` with
+    `border-emerald-300`/`text-emerald-700`, links `text-emerald-700 hover:text-emerald-800
+    underline`. Don't reintroduce amber or mix in another brand color.
+  - **Buttons are pills with the same hard-shadow treatment**: `rounded-full border-2
+    border-black ... shadow-[3px_3px_0_0_#000] transition-all hover:shadow-none
+    hover:translate-x-[3px] hover:translate-y-[3px]` — hovering "presses" the button into its
+    own shadow instead of just darkening a fill color. Primary = `bg-emerald-300 text-black`,
+    secondary/outline = `bg-white text-black`, danger = `bg-red-300 text-black`. Every button
+    across the app should follow this exact shadow-press pattern; a plain flat button
+    (no border/shadow) reads as visually inconsistent with everything else now.
+  - Inputs: `rounded-lg border-2 border-black bg-white text-black
+    placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2
+    focus:ring-emerald-300` — same thick black border as cards/buttons, not a separate
+    lighter-weight style.
+  - Small pill badges (streak, language switcher, deck flags): `rounded-full border-2
+    border-black bg-white shadow-[2px_2px_0_0_#000]` — same family as buttons, just smaller
+    and non-interactive (or with a lighter shadow if interactive).
+  - Success/error tints: `bg-green-50 text-green-700 border-green-600` /
+    `bg-red-50 text-red-700 border-red-600` — light-mode shades now, not the `/10`
+    dark-mode-style opacity tints from before.
 - No complex loading skeletons/animations — use simple status text (e.g. "Đang tạo câu
   chuyện...") in line with the "simple, clean UI" requirement.
 - Routes that require auth (`/vocabulary`, `/history`) are protected in `src/proxy.ts` via

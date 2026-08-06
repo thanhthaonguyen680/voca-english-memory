@@ -17,6 +17,7 @@ const LINKS = [
   { href: "/review", label: "Ôn tập" },
   { href: "/chat", label: "Luyện nói" },
   { href: "/writing", label: "Luyện viết" },
+  { href: "/grammar", label: "Ngữ pháp" },
   { href: "/history", label: "Lịch sử học" },
 ];
 
@@ -30,7 +31,7 @@ export default function MobileMenu({ loggedIn, streakCurrent, studiedToday }: Mo
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Đóng menu" : "Mở menu"}
         aria-expanded={open}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-300 hover:bg-slate-800"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-black hover:bg-black/5"
       >
         {open ? (
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
@@ -52,7 +53,7 @@ export default function MobileMenu({ loggedIn, streakCurrent, studiedToday }: Mo
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-10 cursor-default"
           />
-          <div className="absolute right-0 top-full z-20 mt-2 w-56 rounded-xl border border-slate-700 bg-slate-800 p-3 shadow-lg">
+          <div className="absolute right-0 top-full z-20 mt-2 w-56 rounded-xl border-2 border-black bg-white p-3 shadow-[4px_4px_0_0_#000]">
             {loggedIn ? (
               <div className="flex flex-col gap-1">
                 {streakCurrent !== null && (
@@ -61,7 +62,7 @@ export default function MobileMenu({ loggedIn, streakCurrent, studiedToday }: Mo
                   </div>
                 )}
                 <div className="mb-1 flex items-center justify-between px-1">
-                  <span className="text-xs text-slate-500">Ngôn ngữ học</span>
+                  <span className="text-xs text-neutral-400">Ngôn ngữ học</span>
                   <LanguageSwitcher />
                 </div>
                 {LINKS.map((link) => (
@@ -69,12 +70,12 @@ export default function MobileMenu({ loggedIn, streakCurrent, studiedToday }: Mo
                     key={link.href}
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"
+                    className="rounded-lg px-3 py-2 text-sm text-black hover:bg-emerald-50"
                   >
                     {link.label}
                   </Link>
                 ))}
-                <div className="mt-1 border-t border-slate-700 px-3 pt-2">
+                <div className="mt-1 border-t-2 border-black px-3 pt-2">
                   <SignOutButton />
                 </div>
               </div>
@@ -82,7 +83,7 @@ export default function MobileMenu({ loggedIn, streakCurrent, studiedToday }: Mo
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className="block rounded-lg bg-amber-400 px-3 py-2 text-center text-sm font-medium text-slate-900 hover:bg-amber-300"
+                className="block rounded-full border-2 border-black bg-emerald-300 px-3 py-2 text-center text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
               >
                 Đăng nhập
               </Link>

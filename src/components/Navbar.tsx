@@ -15,32 +15,35 @@ export default async function Navbar() {
   const streak = user ? await getStudyStreak(supabase, user.id) : null;
 
   return (
-    <header className="relative z-30 border-b border-slate-800 bg-[#0B1220]/80 backdrop-blur-sm">
+    <header className="relative z-30 border-b-2 border-black bg-[#FAF7F0]/95 backdrop-blur-sm">
       <nav className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3.5">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-400 text-sm font-bold text-slate-900">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg border-2 border-black bg-emerald-300 text-sm font-bold text-black">
             V
           </span>
-          <span className="text-sm font-semibold text-white">Voca English Memory</span>
+          <span className="text-sm font-semibold text-black">Voca English Memory</span>
         </Link>
 
         <div className="hidden items-center gap-5 text-sm sm:flex">
           {user ? (
             <>
               {streak && <StreakBadge current={streak.current} studiedToday={streak.studiedToday} />}
-              <Link href="/vocabulary" className="text-slate-400 hover:text-white">
+              <Link href="/vocabulary" className="text-neutral-600 hover:text-black">
                 Nhập từ vựng
               </Link>
-              <Link href="/review" className="text-slate-400 hover:text-white">
+              <Link href="/review" className="text-neutral-600 hover:text-black">
                 Ôn tập
               </Link>
-              <Link href="/chat" className="text-slate-400 hover:text-white">
+              <Link href="/chat" className="text-neutral-600 hover:text-black">
                 Luyện nói
               </Link>
-              <Link href="/writing" className="text-slate-400 hover:text-white">
+              <Link href="/writing" className="text-neutral-600 hover:text-black">
                 Luyện viết
               </Link>
-              <Link href="/history" className="text-slate-400 hover:text-white">
+              <Link href="/grammar" className="text-neutral-600 hover:text-black">
+                Ngữ pháp
+              </Link>
+              <Link href="/history" className="text-neutral-600 hover:text-black">
                 Lịch sử học
               </Link>
               <LanguageSwitcher />
@@ -49,7 +52,7 @@ export default async function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="rounded-lg bg-amber-400 px-3.5 py-1.5 font-medium text-slate-900 hover:bg-amber-300"
+              className="rounded-full border-2 border-black bg-emerald-300 px-3.5 py-1.5 font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
             >
               Đăng nhập
             </Link>
