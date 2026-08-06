@@ -26,11 +26,11 @@ export default function HistoryList({ initialStories }: { initialStories: StoryR
 
   if (stories.length === 0) {
     return (
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-neutral-600">
         Chưa có câu chuyện {LANGUAGE_FLAG[language]} nào. Hãy tạo câu chuyện đầu tiên ở trang{" "}
         <a
           href="/vocabulary"
-          className="font-medium text-amber-400 underline hover:text-amber-300"
+          className="font-medium text-emerald-700 underline hover:text-emerald-800"
         >
           Nhập từ vựng
         </a>

@@ -51,14 +51,14 @@ export default async function ReviewPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
-      <h1 className="mb-1 text-2xl font-semibold text-white">Ôn tập từ vựng</h1>
-      <p className="mb-6 text-sm text-slate-400">
+      <h1 className="mb-1 text-2xl font-bold text-black">Ôn tập từ vựng</h1>
+      <p className="mb-6 text-sm text-neutral-600">
         Chọn 1 câu chuyện để ôn đúng bộ từ trong câu chuyện đó — nhìn từ đoán nghĩa, hoặc nhìn
         nghĩa đoán từ. Có thể luyện phát âm bằng giọng của bạn.
       </p>
 
       {error && (
-        <p className="text-sm text-red-400">Không thể tải danh sách từ vựng. Vui lòng thử lại.</p>
+        <p className="text-sm text-red-600">Không thể tải danh sách từ vựng. Vui lòng thử lại.</p>
       )}
 
       {!error && <ReviewStoryList decks={decks} />}

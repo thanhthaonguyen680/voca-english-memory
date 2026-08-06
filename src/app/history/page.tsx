@@ -32,10 +32,10 @@ export default async function HistoryPage() {
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
-      <h1 className="mb-6 text-2xl font-semibold text-white">Lịch sử học</h1>
+      <h1 className="mb-6 text-2xl font-bold text-black">Lịch sử học</h1>
 
       {error && (
-        <p className="text-sm text-red-400">Không thể tải lịch sử học. Vui lòng thử lại.</p>
+        <p className="text-sm text-red-600">Không thể tải lịch sử học. Vui lòng thử lại.</p>
       )}
 
       {!error && <HistoryList initialStories={(stories as StoryRow[]) ?? []} />}

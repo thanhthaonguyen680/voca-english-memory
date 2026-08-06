@@ -58,14 +58,14 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-16">
-      <div className="rounded-2xl border border-slate-700 bg-slate-800 p-7 shadow-sm">
-        <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 text-base font-bold text-slate-900">
+      <div className="rounded-2xl border-2 border-black bg-white p-7 shadow-[5px_5px_0_0_#000]">
+        <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border-2 border-black bg-emerald-300 text-base font-bold text-black">
           V
         </span>
-        <h1 className="mb-2 text-2xl font-semibold text-white">
+        <h1 className="mb-2 text-2xl font-semibold text-black">
           {mode === "signin" ? "Đăng nhập" : "Tạo tài khoản"}
         </h1>
-        <p className="mb-6 text-sm text-slate-400">
+        <p className="mb-6 text-sm text-neutral-600">
           {mode === "signin"
             ? "Nhập email và mật khẩu để đăng nhập."
             : "Chỉ mất vài giây."}
@@ -78,7 +78,7 @@ export default function LoginPage() {
             placeholder="you@example.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
+            className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
           />
           <input
             type="password"
@@ -87,12 +87,12 @@ export default function LoginPage() {
             placeholder="Mật khẩu (tối thiểu 6 ký tự)"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
+            className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
           />
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-amber-400 px-3.5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300 disabled:opacity-50"
+            className="rounded-full border-2 border-black bg-emerald-300 px-3.5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
           >
             {loading
               ? "Đang xử lý..."
@@ -100,8 +100,8 @@ export default function LoginPage() {
                 ? "Đăng nhập"
                 : "Tạo tài khoản"}
           </button>
-          {error && <p className="text-sm text-red-400">{error}</p>}
-          {info && <p className="text-sm text-amber-400">{info}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {info && <p className="text-sm text-emerald-700">{info}</p>}
         </form>
 
         <button
@@ -111,7 +111,7 @@ export default function LoginPage() {
             setError("");
             setInfo("");
           }}
-          className="mt-4 text-sm text-slate-400 hover:text-white"
+          className="mt-4 text-sm text-neutral-600 hover:text-black"
         >
           {mode === "signin"
             ? "Chưa có tài khoản? Đăng ký"

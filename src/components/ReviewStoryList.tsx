@@ -25,11 +25,11 @@ export default function ReviewStoryList({ decks: allDecks }: { decks: StoryDeck[
 
   if (decks.length === 0) {
     return (
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-neutral-600">
         Chưa có câu chuyện {LANGUAGE_FLAG[language]} nào để ôn tập. Hãy tạo ở trang{" "}
         <a
           href="/vocabulary"
-          className="font-medium text-amber-400 underline hover:text-amber-300"
+          className="font-medium text-emerald-700 underline hover:text-emerald-800"
         >
           Nhập từ vựng
         </a>
@@ -57,26 +57,26 @@ export default function ReviewStoryList({ decks: allDecks }: { decks: StoryDeck[
           key={deck.id}
           type="button"
           onClick={() => setSelectedId(deck.id)}
-          className="rounded-2xl border border-slate-700 bg-slate-800 p-4 text-left shadow-sm transition-colors hover:border-amber-400"
+          className="rounded-2xl border-2 border-black bg-white p-4 text-left shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000]"
         >
-          <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
+          <div className="mb-2 flex items-center justify-between text-xs text-neutral-400">
             <span>
               {LANGUAGE_FLAG[deck.language]} {deck.words.length} từ
             </span>
             <time>{new Date(deck.createdAt).toLocaleString("vi-VN")}</time>
           </div>
-          <p className="mb-2 line-clamp-2 text-sm text-slate-300">{deck.snippet}</p>
+          <p className="mb-2 line-clamp-2 text-sm text-neutral-700">{deck.snippet}</p>
           <div className="flex flex-wrap gap-1">
             {deck.words.slice(0, 6).map((item) => (
               <span
                 key={item.word}
-                className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs text-amber-300"
+                className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800"
               >
                 {item.word}
               </span>
             ))}
             {deck.words.length > 6 && (
-              <span className="px-1 text-xs text-slate-500">+{deck.words.length - 6}</span>
+              <span className="px-1 text-xs text-neutral-400">+{deck.words.length - 6}</span>
             )}
           </div>
         </button>

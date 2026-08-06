@@ -15,7 +15,7 @@ export default function EditableMeaning({
   word,
   meaning,
   onSaved,
-  displayClassName = "font-medium text-white",
+  displayClassName = "font-medium text-black",
 }: EditableMeaningProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(meaning);
@@ -61,7 +61,7 @@ export default function EditableMeaning({
             setEditing(true);
           }}
           title="Sửa nghĩa"
-          className="text-xs text-slate-500 hover:text-amber-400"
+          className="text-xs text-neutral-400 hover:text-emerald-700"
         >
           ✏️
         </button>
@@ -75,24 +75,24 @@ export default function EditableMeaning({
         autoFocus
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
-        className="rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-white outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
+        className="rounded-md border-2 border-black bg-white px-2 py-1 text-sm text-black outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
       />
       <button
         type="button"
         onClick={handleSave}
         disabled={saving}
-        className="rounded-md bg-amber-400 px-2 py-1 text-xs font-semibold text-slate-900 hover:bg-amber-300 disabled:opacity-50"
+        className="rounded-md border-2 border-black bg-emerald-300 px-2 py-1 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none disabled:opacity-50"
       >
         {saving ? "Đang lưu..." : "Lưu"}
       </button>
       <button
         type="button"
         onClick={() => setEditing(false)}
-        className="text-xs text-slate-500 hover:text-slate-300"
+        className="text-xs text-neutral-400 hover:text-neutral-700"
       >
         Huỷ
       </button>
-      {error && <span className="text-xs text-red-400">{error}</span>}
+      {error && <span className="text-xs text-red-600">{error}</span>}
     </span>
   );
 }

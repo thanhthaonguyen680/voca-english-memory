@@ -16,7 +16,7 @@ export default function LanguageSwitcher() {
         onClick={() => setOpen((o) => !o)}
         aria-label="Chọn ngôn ngữ đang học"
         aria-expanded={open}
-        className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-slate-300 hover:bg-slate-800"
+        className="flex items-center gap-1 rounded-full border-2 border-black bg-white px-2 py-1 text-sm text-black shadow-[2px_2px_0_0_#000]"
       >
         <span aria-hidden>{current.flag}</span>
         <svg
@@ -39,7 +39,7 @@ export default function LanguageSwitcher() {
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-10 cursor-default"
           />
-          <div className="absolute right-0 top-full z-20 mt-2 w-44 rounded-xl border border-slate-700 bg-slate-800 p-1.5 shadow-lg">
+          <div className="absolute right-0 top-full z-20 mt-2 w-44 rounded-xl border-2 border-black bg-white p-1.5 shadow-[4px_4px_0_0_#000]">
             {LANGUAGES.map((item) => (
               <button
                 key={item.id}
@@ -50,8 +50,8 @@ export default function LanguageSwitcher() {
                 }}
                 className={
                   item.id === language
-                    ? "flex w-full items-center gap-2 rounded-lg bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-300"
-                    : "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"
+                    ? "flex w-full items-center gap-2 rounded-lg bg-emerald-100 px-3 py-2 text-sm font-medium text-emerald-800"
+                    : "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-black hover:bg-emerald-50"
                 }
               >
                 <span aria-hidden>{item.flag}</span>

@@ -14,7 +14,7 @@ type SubmittedWriting = {
 };
 
 const FIELD_CLASS =
-  "rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30";
+  "rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300";
 
 export default function WritingForm() {
   const { language } = useLanguage();
@@ -76,15 +76,15 @@ export default function WritingForm() {
     <>
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-3 rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm"
+        className="flex flex-col gap-3 rounded-2xl border-2 border-black bg-white p-6 shadow-[5px_5px_0_0_#000]"
       >
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-neutral-400">
           Ngôn ngữ: {LANGUAGES.find((item) => item.id === language)?.flag}{" "}
           {LANGUAGES.find((item) => item.id === language)?.label} — đổi ở góc trên.
         </p>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500">Tiêu đề</label>
+          <label className="text-xs font-medium text-neutral-500">Tiêu đề</label>
           <input
             type="text"
             placeholder="Tiêu đề bài viết"
@@ -95,7 +95,7 @@ export default function WritingForm() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500">Mở bài (tuỳ chọn)</label>
+          <label className="text-xs font-medium text-neutral-500">Mở bài (tuỳ chọn)</label>
           <textarea
             rows={2}
             placeholder="Giới thiệu ngắn gọn về chủ đề..."
@@ -106,7 +106,7 @@ export default function WritingForm() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500">Thân bài</label>
+          <label className="text-xs font-medium text-neutral-500">Thân bài</label>
           <textarea
             rows={8}
             placeholder="Nội dung chính của bài viết..."
@@ -117,7 +117,7 @@ export default function WritingForm() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-medium text-slate-500">Kết luận (tuỳ chọn)</label>
+          <label className="text-xs font-medium text-neutral-500">Kết luận (tuỳ chọn)</label>
           <textarea
             rows={2}
             placeholder="Tóm tắt / kết luận..."
@@ -128,35 +128,35 @@ export default function WritingForm() {
         </div>
 
         {error && (
-          <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">{error}</p>
+          <p className="rounded-lg border-2 border-red-600 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
         )}
 
         <button
           type="submit"
           disabled={loading}
-          className="mt-1 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300 disabled:opacity-50"
+          className="mt-1 rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
         >
           {loading ? "Đang chấm bài..." : "Nộp bài"}
         </button>
       </form>
 
       {result && (
-        <div className="mt-6 rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6">
-          <h2 className="mb-2 text-sm font-medium text-amber-300">
+        <div className="mt-6 rounded-2xl border-2 border-black bg-emerald-50 p-6 shadow-[5px_5px_0_0_#000]">
+          <h2 className="mb-2 text-sm font-semibold text-emerald-800">
             Đã lưu: {result.title}
           </h2>
           {result.feedback ? (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-100">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-black">
               {result.feedback}
             </p>
           ) : (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-neutral-600">
               Đã lưu bài viết, nhưng chưa lấy được nhận xét từ Ran Ran lúc này.
             </p>
           )}
           <Link
             href="/writing/history"
-            className="mt-4 inline-block text-sm font-medium text-amber-400 underline hover:text-amber-300"
+            className="mt-4 inline-block text-sm font-medium text-emerald-700 underline hover:text-emerald-800"
           >
             Xem lịch sử viết →
           </Link>

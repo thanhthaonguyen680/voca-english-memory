@@ -69,8 +69,8 @@ export default function StoryCard({
     <div
       className={
         highlight
-          ? "rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6"
-          : "rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm"
+          ? "rounded-2xl border-2 border-black bg-emerald-50 p-6 shadow-[5px_5px_0_0_#000]"
+          : "rounded-2xl border-2 border-black bg-white p-6 shadow-[4px_4px_0_0_#000]"
       }
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -79,13 +79,13 @@ export default function StoryCard({
             const isOpen = openWords.has(index);
             return (
               <div key={index} className="flex flex-col items-start">
-                <div className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-300">
+                <div className="inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-2.5 py-1 text-xs font-medium text-black">
                   <button
                     type="button"
                     onClick={() => speak(item.word, speechLang)}
                     title="Nghe phát âm"
                     aria-label="Nghe phát âm"
-                    className="hover:text-amber-100"
+                    className="hover:text-emerald-700"
                   >
                     🔊
                   </button>
@@ -96,11 +96,11 @@ export default function StoryCard({
                     className="flex items-center gap-1 hover:underline"
                   >
                     <span>{item.word}</span>
-                    {item.ipa && <span className="text-amber-400/70">{item.ipa}</span>}
+                    {item.ipa && <span className="text-emerald-700/80">{item.ipa}</span>}
                   </button>
                 </div>
                 {isOpen && (
-                  <div className="mt-1 rounded-lg bg-amber-500/15 px-2.5 py-1 text-xs text-amber-200">
+                  <div className="mt-1 rounded-lg border-2 border-black bg-emerald-100 px-2.5 py-1 text-xs text-emerald-900">
                     {item.meaning ?? "Chưa có nghĩa"}
                   </div>
                 )}
@@ -111,7 +111,7 @@ export default function StoryCard({
         {(createdAt || id) && (
           <div className="flex shrink-0 items-center gap-2">
             {createdAt && (
-              <time className="text-xs text-slate-500">
+              <time className="text-xs text-neutral-400">
                 {new Date(createdAt).toLocaleString("vi-VN")}
               </time>
             )}
@@ -122,7 +122,7 @@ export default function StoryCard({
                 disabled={deleting}
                 title="Xoá câu chuyện"
                 aria-label="Xoá câu chuyện"
-                className="rounded-lg px-1.5 py-1 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+                className="rounded-lg px-1.5 py-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
               >
                 🗑️
               </button>
@@ -131,11 +131,11 @@ export default function StoryCard({
         )}
       </div>
 
-      {deleteError && <p className="mb-3 text-xs text-red-400">{deleteError}</p>}
+      {deleteError && <p className="mb-3 text-xs text-red-600">{deleteError}</p>}
 
       <div className="mb-2 flex items-center justify-between gap-2">
         {highlight ? (
-          <h3 className="text-sm font-medium text-amber-300">
+          <h3 className="text-sm font-semibold text-emerald-800">
             {LANGUAGES.find((item) => item.id === language)?.flag} Câu chuyện của bạn
           </h3>
         ) : (
@@ -144,20 +144,20 @@ export default function StoryCard({
         <button
           type="button"
           onClick={() => speak(content.replace(/\*\*/g, ""), speechLang)}
-          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-emerald-50 hover:text-emerald-800"
         >
           <span aria-hidden>🔊</span> Nghe câu chuyện
         </button>
       </div>
 
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-100">
+      <p className="whitespace-pre-wrap text-sm leading-relaxed text-black">
         <BoldText text={content} />
       </p>
 
       {translation && (
-        <div className="mt-4 border-t border-slate-800 pt-3">
-          <p className="mb-1 text-xs font-medium text-slate-500">Bản dịch tiếng Việt</p>
-          <p className="whitespace-pre-wrap text-sm text-slate-400">{translation}</p>
+        <div className="mt-4 border-t-2 border-black pt-3">
+          <p className="mb-1 text-xs font-medium text-neutral-400">Bản dịch tiếng Việt</p>
+          <p className="whitespace-pre-wrap text-sm text-neutral-600">{translation}</p>
         </div>
       )}
 

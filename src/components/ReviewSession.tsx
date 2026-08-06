@@ -139,16 +139,16 @@ export default function ReviewSession({
 
   if (mode === null) {
     return (
-      <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
+      <div className="rounded-2xl border-2 border-black bg-white p-6 shadow-[5px_5px_0_0_#000]">
         <button
           type="button"
           onClick={onExit}
-          className="mb-3 text-xs text-slate-400 hover:text-white"
+          className="mb-3 text-xs text-neutral-600 hover:text-black"
         >
           ← Chọn câu chuyện khác
         </button>
-        <p className="mb-4 text-sm text-slate-400">
-          Có <strong className="text-white">{words.length}</strong> từ để ôn tập. Chọn chế độ
+        <p className="mb-4 text-sm text-neutral-600">
+          Có <strong className="text-black">{words.length}</strong> từ để ôn tập. Chọn chế độ
           kiểm tra:
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -157,7 +157,7 @@ export default function ReviewSession({
               key={m}
               type="button"
               onClick={() => startSession(m)}
-              className="flex-1 rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300"
+              className="flex-1 rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
             >
               {modeLabels[m]}
             </button>
@@ -172,8 +172,8 @@ export default function ReviewSession({
   if (isFinished) {
     const percent = deck.length > 0 ? Math.round((correctCount / deck.length) * 100) : 0;
     return (
-      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-6 text-center">
-        <p className="text-lg font-semibold text-amber-300">
+      <div className="rounded-2xl border-2 border-black bg-emerald-50 p-6 text-center shadow-[5px_5px_0_0_#000]">
+        <p className="text-lg font-semibold text-emerald-800">
           Bạn đúng {correctCount}/{deck.length} câu ({percent}%)
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
@@ -181,7 +181,7 @@ export default function ReviewSession({
             <button
               type="button"
               onClick={retryWrongCards}
-              className="rounded-lg bg-red-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-600"
+              className="rounded-full border-2 border-black bg-red-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
             >
               Luyện lại câu sai ({wrongCards.length})
             </button>
@@ -189,21 +189,21 @@ export default function ReviewSession({
           <button
             type="button"
             onClick={() => startSession(mode)}
-            className="rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm hover:bg-amber-300"
+            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
           >
             Ôn lại
           </button>
           <button
             type="button"
             onClick={() => setMode(null)}
-            className="rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-700"
+            className="rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-medium text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
           >
             Đổi chế độ
           </button>
           <button
             type="button"
             onClick={onExit}
-            className="rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-700"
+            className="rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-medium text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
           >
             Chọn câu chuyện khác
           </button>
@@ -244,12 +244,12 @@ export default function ReviewSession({
   }
 
   return (
-    <div className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
-      <div className="mb-4 flex items-center justify-between text-xs text-slate-500">
+    <div className="rounded-2xl border-2 border-black bg-white p-6 shadow-[5px_5px_0_0_#000]">
+      <div className="mb-4 flex items-center justify-between text-xs text-neutral-400">
         <button
           type="button"
           onClick={() => setMode(null)}
-          className="flex items-center gap-1 hover:text-white"
+          className="flex items-center gap-1 hover:text-black"
         >
           ← Quay lại
         </button>
@@ -259,7 +259,7 @@ export default function ReviewSession({
         <span>Đúng {correctCount}</span>
       </div>
 
-      <p className="mb-1 text-xs font-medium text-slate-500">
+      <p className="mb-1 text-xs font-medium text-neutral-400">
         {current.direction === "en-vi"
           ? language === "zh"
             ? "Từ tiếng Trung"
@@ -268,10 +268,10 @@ export default function ReviewSession({
       </p>
       <div className="mb-4 flex flex-wrap items-center gap-3">
         {current.direction === "en-vi" ? (
-          <p className="flex items-center gap-2 text-2xl font-semibold text-white">
+          <p className="flex items-center gap-2 text-2xl font-semibold text-black">
             <span>{current.word}</span>
             {current.ipa && (
-              <span className="text-base font-normal text-amber-400/70">{current.ipa}</span>
+              <span className="text-base font-normal text-emerald-700/80">{current.ipa}</span>
             )}
           </p>
         ) : (
@@ -280,7 +280,7 @@ export default function ReviewSession({
             word={current.word}
             meaning={current.meaning}
             onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}
-            displayClassName="text-2xl font-semibold text-white"
+            displayClassName="text-2xl font-semibold text-black"
           />
         )}
         {targetWordVisible && (
@@ -289,7 +289,7 @@ export default function ReviewSession({
               type="button"
               onClick={() => speak(targetWordVisible, speechLang)}
               title="Nghe phát âm"
-              className="rounded-full bg-slate-700 px-2.5 py-1 text-xs font-medium text-slate-300 hover:bg-slate-600"
+              className="rounded-full border-2 border-black bg-white px-2.5 py-1 text-xs font-medium text-black shadow-[2px_2px_0_0_#000]"
             >
               🔊
             </button>
@@ -315,11 +315,11 @@ export default function ReviewSession({
                   ? "Nhập Pinyin (không cần dấu thanh)"
                   : "Nhập từ tiếng Anh"
             }
-            className="rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2.5 text-sm text-white outline-none transition-colors focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30"
+            className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
           />
           <button
             type="submit"
-            className="rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300"
+            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
           >
             Kiểm tra
           </button>
@@ -329,13 +329,13 @@ export default function ReviewSession({
           <p
             className={
               lastCorrect
-                ? "text-sm font-medium text-green-400"
-                : "text-sm font-medium text-red-400"
+                ? "text-sm font-medium text-green-700"
+                : "text-sm font-medium text-red-600"
             }
           >
             {lastCorrect ? "✅ Chính xác!" : "❌ Chưa đúng"}
           </p>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-neutral-600">
             Đáp án đúng:{" "}
             {current.direction === "en-vi" ? (
               <EditableMeaning
@@ -345,10 +345,10 @@ export default function ReviewSession({
                 onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}
               />
             ) : (
-              <span className="font-medium text-white">
+              <span className="font-medium text-black">
                 {current.word}
                 {current.ipa && (
-                  <span className="ml-1.5 font-normal text-amber-400/70">{current.ipa}</span>
+                  <span className="ml-1.5 font-normal text-emerald-700/80">{current.ipa}</span>
                 )}
               </span>
             )}
@@ -356,7 +356,7 @@ export default function ReviewSession({
           <button
             type="button"
             onClick={handleNext}
-            className="rounded-lg bg-amber-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:bg-amber-300"
+            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
           >
             {isLast ? "Xem kết quả" : "Câu tiếp theo →"}
           </button>

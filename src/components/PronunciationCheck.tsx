@@ -56,20 +56,20 @@ export default function PronunciationCheck({
         title="Kiểm tra phát âm bằng giọng của bạn"
         className={
           status === "listening"
-            ? "rounded-full bg-red-500/15 px-2.5 py-1 text-xs font-medium text-red-400"
-            : "rounded-full bg-slate-700 px-2.5 py-1 text-xs font-medium text-slate-300 hover:bg-slate-600"
+            ? "rounded-full border-2 border-black bg-red-300 px-2.5 py-1 text-xs font-medium text-black"
+            : "rounded-full border-2 border-black bg-white px-2.5 py-1 text-xs font-medium text-black shadow-[2px_2px_0_0_#000]"
         }
       >
         {status === "listening" ? "🎙️ Đang nghe..." : "🎤 Kiểm tra phát âm"}
       </button>
       {status === "correct" && (
-        <span className="text-xs font-medium text-green-400">✅ Đúng rồi!</span>
+        <span className="text-xs font-medium text-green-700">✅ Đúng rồi!</span>
       )}
       {status === "incorrect" && (
-        <span className="text-xs font-medium text-red-400">❌ Nghe thành &ldquo;{heard}&rdquo;</span>
+        <span className="text-xs font-medium text-red-600">❌ Nghe thành &ldquo;{heard}&rdquo;</span>
       )}
       {status === "unsupported" && (
-        <span className="text-xs text-slate-500">Trình duyệt không hỗ trợ nhận diện giọng nói</span>
+        <span className="text-xs text-neutral-400">Trình duyệt không hỗ trợ nhận diện giọng nói</span>
       )}
     </div>
   );

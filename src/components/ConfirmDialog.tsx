@@ -34,14 +34,14 @@ export default function ConfirmDialog({
         onClick={onCancel}
         className="absolute inset-0 cursor-default bg-black/70 backdrop-blur-sm"
       />
-      <div className="relative w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-xl">
-        <h2 className="text-base font-semibold text-white">{title}</h2>
-        {description && <p className="mt-2 text-sm text-slate-400">{description}</p>}
+      <div className="relative w-full max-w-sm rounded-2xl border-2 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]">
+        <h2 className="text-base font-semibold text-black">{title}</h2>
+        {description && <p className="mt-2 text-sm text-neutral-600">{description}</p>}
         <div className="mt-6 flex justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-slate-600 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-700"
+            className="rounded-full border-2 border-black bg-white px-4 py-2 text-sm font-medium text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
           >
             {cancelLabel}
           </button>
@@ -51,8 +51,8 @@ export default function ConfirmDialog({
             disabled={loading}
             className={
               danger
-                ? "rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50"
-                : "rounded-lg bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-300 disabled:opacity-50"
+                ? "rounded-full border-2 border-black bg-red-300 px-4 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
+                : "rounded-full border-2 border-black bg-emerald-300 px-4 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
             }
           >
             {loading ? "Đang xử lý..." : confirmLabel}

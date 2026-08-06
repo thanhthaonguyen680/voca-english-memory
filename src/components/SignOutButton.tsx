@@ -14,7 +14,7 @@ export default function SignOutButton() {
   }
 
   return (
-    <button onClick={handleSignOut} className="text-slate-400 hover:text-white">
+    <button onClick={handleSignOut} className="text-neutral-600 hover:text-black">
       Đăng xuất
     </button>
   );

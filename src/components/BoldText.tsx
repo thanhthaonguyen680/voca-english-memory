@@ -5,7 +5,7 @@ export default function BoldText({ text }: { text: string }) {
     <>
       {parts.map((part, index) =>
         part.startsWith("**") && part.endsWith("**") ? (
-          <strong key={index} className="font-semibold text-amber-400">
+          <strong key={index} className="font-semibold text-emerald-700">
             {part.slice(2, -2)}
           </strong>
         ) : (

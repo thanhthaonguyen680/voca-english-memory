@@ -57,11 +57,11 @@ export default function WritingHistoryList({
 
   if (writings.length === 0) {
     return (
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-neutral-600">
         Chưa có bài viết {LANGUAGE_FLAG[language]} nào. Hãy viết bài đầu tiên ở trang{" "}
         <a
           href="/writing"
-          className="font-medium text-amber-400 underline hover:text-amber-300"
+          className="font-medium text-emerald-700 underline hover:text-emerald-800"
         >
           Luyện viết
         </a>
@@ -72,26 +72,26 @@ export default function WritingHistoryList({
 
   return (
     <div className="flex flex-col gap-4">
-      {deleteError && <p className="text-sm text-red-400">{deleteError}</p>}
+      {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
 
       {writings.map((writing) => {
         const isOpen = expandedId === writing.id;
         return (
           <div
             key={writing.id}
-            className="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-sm"
+            className="rounded-2xl border-2 border-black bg-white p-6 shadow-[4px_4px_0_0_#000]"
           >
             <div className="mb-2 flex items-start justify-between gap-3">
               <button
                 type="button"
                 onClick={() => setExpandedId(isOpen ? null : writing.id)}
-                className="text-left text-sm font-semibold text-white hover:text-amber-300"
+                className="text-left text-sm font-semibold text-black hover:text-emerald-800"
               >
                 {LANGUAGE_FLAG[isLanguage(writing.language) ? writing.language : DEFAULT_LANGUAGE]}{" "}
                 {writing.title}
               </button>
               <div className="flex shrink-0 items-center gap-2">
-                <time className="text-xs text-slate-500">
+                <time className="text-xs text-neutral-400">
                   {new Date(writing.created_at).toLocaleString("vi-VN")}
                 </time>
                 <button
@@ -99,7 +99,7 @@ export default function WritingHistoryList({
                   onClick={() => setConfirmId(writing.id)}
                   title="Xoá bài viết"
                   aria-label="Xoá bài viết"
-                  className="rounded-lg px-1.5 py-1 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+                  className="rounded-lg px-1.5 py-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600"
                 >
                   🗑️
                 </button>
@@ -110,7 +110,7 @@ export default function WritingHistoryList({
               <button
                 type="button"
                 onClick={() => setExpandedId(writing.id)}
-                className="line-clamp-2 text-left text-sm text-slate-400 hover:text-slate-300"
+                className="line-clamp-2 text-left text-sm text-neutral-600 hover:text-neutral-800"
               >
                 {writing.body}
               </button>
@@ -118,30 +118,30 @@ export default function WritingHistoryList({
               <div className="flex flex-col gap-3 text-sm">
                 {writing.overview && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-slate-500">Mở bài</p>
-                    <p className="whitespace-pre-wrap text-slate-200">{writing.overview}</p>
+                    <p className="mb-1 text-xs font-medium text-neutral-400">Mở bài</p>
+                    <p className="whitespace-pre-wrap text-neutral-800">{writing.overview}</p>
                   </div>
                 )}
                 <div>
-                  <p className="mb-1 text-xs font-medium text-slate-500">Thân bài</p>
-                  <p className="whitespace-pre-wrap text-slate-200">{writing.body}</p>
+                  <p className="mb-1 text-xs font-medium text-neutral-400">Thân bài</p>
+                  <p className="whitespace-pre-wrap text-neutral-800">{writing.body}</p>
                 </div>
                 {writing.conclusion && (
                   <div>
-                    <p className="mb-1 text-xs font-medium text-slate-500">Kết luận</p>
-                    <p className="whitespace-pre-wrap text-slate-200">{writing.conclusion}</p>
+                    <p className="mb-1 text-xs font-medium text-neutral-400">Kết luận</p>
+                    <p className="whitespace-pre-wrap text-neutral-800">{writing.conclusion}</p>
                   </div>
                 )}
                 {writing.feedback && (
-                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
-                    <p className="mb-1 text-xs font-medium text-amber-300">Nhận xét từ Ran Ran</p>
-                    <p className="whitespace-pre-wrap text-slate-100">{writing.feedback}</p>
+                  <div className="rounded-lg border-2 border-black bg-emerald-50 p-3">
+                    <p className="mb-1 text-xs font-medium text-emerald-800">Nhận xét từ Ran Ran</p>
+                    <p className="whitespace-pre-wrap text-black">{writing.feedback}</p>
                   </div>
                 )}
                 <button
                   type="button"
                   onClick={() => setExpandedId(null)}
-                  className="self-start text-xs text-slate-500 hover:text-white"
+                  className="self-start text-xs text-neutral-400 hover:text-black"
                 >
                   Thu gọn
                 </button>
