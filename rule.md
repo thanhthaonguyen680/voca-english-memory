@@ -210,6 +210,16 @@ a confusing error like
   sample rather than always the first N — so regenerating from a large, long-lived topic
   actually surfaces different words each time instead of being stuck on the same subset
   forever.
+- **Optional `{ wordIds }`** in the same request scopes the story to one specific batch of
+  words instead of sampling from the whole topic (still `.eq("topic_id", ...).eq("user_id", ...)`
+  first, `wordIds` only narrows further — never a way to reach another user's or another
+  topic's words). This exists so a topic can keep accumulating words indefinitely (many scans
+  over time) while each scanned batch can still get its *own* dedicated story instead of every
+  generation mixing the whole growing pool together. `TopicDetail.tsx` uses this right after
+  `handleSavePending()`: the just-inserted rows' ids become `lastBatchIds`, surfaced as a
+  one-off amber banner ("🪄 Tạo câu chuyện riêng cho batch này") that disappears once used or
+  dismissed. The plain "Tạo câu chuyện từ chủ đề này" / "Tạo câu chuyện khác" buttons still
+  call `generate-story` with no `wordIds`, keeping the existing whole-topic-sample behavior.
 - Adding words to a topic happens two ways, both inserting directly into `vocabulary_entries`
   from the client (RLS-protected, no API route needed — same pattern as deleting a story):
   - **Manual add** (`TopicDetail`'s "+ Thêm từ" form): one word + optional meaning at a time,

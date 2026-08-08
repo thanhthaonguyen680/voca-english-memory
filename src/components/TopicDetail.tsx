@@ -36,6 +36,7 @@ export default function TopicDetail({
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [lastBatchIds, setLastBatchIds] = useState<string[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [generating, setGenerating] = useState(false);
@@ -127,6 +128,7 @@ export default function TopicDetail({
         .filter((w) => !isDuplicate(w.word, words) && !isDuplicate(w.word, pending))
         .map((w) => ({ word: w.word, meaning: w.meaning ?? "" }));
       setPending((prev) => [...prev, ...scanned]);
+      setLastBatchIds(null);
     } catch {
       setScanError("Không thể xử lý ảnh. Vui lòng thử lại.");
     } finally {
@@ -176,11 +178,12 @@ export default function TopicDetail({
       ...prev,
       ...data.map((d) => ({ id: d.id, word: d.word, meaning: d.meaning })),
     ]);
+    setLastBatchIds(data.map((d) => d.id));
     setPending([]);
     setSaving(false);
   }
 
-  async function handleGenerate() {
+  async function handleGenerate(wordIds?: string[]) {
     setGenerating(true);
     setGenerateError("");
     setStory(null);
@@ -188,7 +191,7 @@ export default function TopicDetail({
       const res = await fetch("/api/generate-story", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topicId: topic.id }),
+        body: JSON.stringify({ topicId: topic.id, ...(wordIds ? { wordIds } : {}) }),
       });
       const data = await res.json();
 
@@ -202,6 +205,7 @@ export default function TopicDetail({
         translation: (data.story.translation as string | null) ?? null,
         vocabulary_used: (data.story.vocabulary_used as VocabularyItem[]) ?? [],
       });
+      if (wordIds) setLastBatchIds(null);
     } catch {
       setGenerateError("Không thể kết nối tới server.");
     } finally {
@@ -311,6 +315,30 @@ export default function TopicDetail({
         </div>
       )}
 
+      {pending.length === 0 && lastBatchIds && lastBatchIds.length > 0 && (
+        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-black bg-amber-50 p-4 shadow-[4px_4px_0_0_#000]">
+          <p className="text-sm text-amber-900">
+            ✅ Đã lưu {lastBatchIds.length} từ vừa quét vào chủ đề. Tạo riêng 1 câu chuyện chỉ
+            dùng đúng {lastBatchIds.length} từ này?
+          </p>
+          <button
+            type="button"
+            onClick={() => handleGenerate(lastBatchIds)}
+            disabled={generating}
+            className="rounded-full border-2 border-black bg-emerald-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
+          >
+            {generating ? "Đang tạo..." : "🪄 Tạo câu chuyện riêng cho batch này"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLastBatchIds(null)}
+            className="text-xs text-amber-800 hover:underline"
+          >
+            Bỏ qua
+          </button>
+        </div>
+      )}
+
       {showAddForm && (
         <form
           onSubmit={handleAddWord}
@@ -386,7 +414,7 @@ export default function TopicDetail({
 
       <button
         type="button"
-        onClick={handleGenerate}
+        onClick={() => handleGenerate()}
         disabled={generating || words.length === 0}
         className="mb-6 rounded-full border-2 border-black bg-emerald-300 px-5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
       >
@@ -411,7 +439,7 @@ export default function TopicDetail({
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <button
               type="button"
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={generating}
               className="inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-white px-3.5 py-2 text-sm font-medium text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
             >

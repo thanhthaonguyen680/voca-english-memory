@@ -104,6 +104,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu chủ đề." }, { status: 400 });
   }
 
+  // Optional: scope the story to a specific batch of words (e.g. the ones just scanned from
+  // one photo) instead of sampling from the whole topic — lets a topic accumulate words over
+  // many scans while still producing one story per batch, not one giant mixed-up story.
+  const rawWordIds = (body as { wordIds?: unknown })?.wordIds;
+  const wordIds = Array.isArray(rawWordIds)
+    ? rawWordIds.map((id) => String(id)).filter(Boolean)
+    : [];
+
   const { data: topic, error: topicError } = await supabase
     .from("vocabulary_topics")
     .select("id, language")
@@ -117,11 +125,15 @@ export async function POST(request: Request) {
 
   const language: Language = isLanguage(topic.language) ? topic.language : DEFAULT_LANGUAGE;
 
-  const { data: topicWords, error: wordsError } = await supabase
+  let topicWordsQuery = supabase
     .from("vocabulary_entries")
     .select("word, meaning")
     .eq("topic_id", topicId)
     .eq("user_id", user.id);
+  if (wordIds.length > 0) {
+    topicWordsQuery = topicWordsQuery.in("id", wordIds);
+  }
+  const { data: topicWords, error: wordsError } = await topicWordsQuery;
 
   if (wordsError) {
     return NextResponse.json({ error: "Không thể tải từ vựng của chủ đề." }, { status: 500 });
@@ -136,6 +148,8 @@ export async function POST(request: Request) {
 
   // Large topics accumulate more words than fit in one story — sample randomly so repeated
   // generations from the same topic surface different words instead of always the first N.
+  // When `wordIds` scopes this to one specific batch, shuffling just randomizes their order
+  // in the prompt (harmless) since the batch is already expected to fit under the cap.
   const words: VocabularyItem[] = shuffle(
     topicWords.map((entry) => ({
       word: entry.word,
