@@ -8,8 +8,9 @@
 > biến thành câu chuyện riêng để nhớ sâu, nhớ lâu. Ngoài ra còn có ôn tập từ vựng 2 chiều,
 > luyện phát âm, luyện nói, luyện viết, và ngữ pháp — tất cả đều miễn phí. Ban đầu mình định
 > làm cho bản thân, sau mở ra cho vài người bạn cùng mục tiêu học từ vựng tiếng Anh. Giao diện
-> app hoàn toàn bằng tiếng Việt; phần còn lại của README này viết bằng tiếng Anh theo thông lệ
-> GitHub.
+> app hoàn toàn bằng tiếng Việt.
+
+**English below** 👇
 
 This is a personal project I built to scratch my own itch: learning English vocabulary
 through **"super memory" story-based recall** — instead of memorizing words in isolation, I
