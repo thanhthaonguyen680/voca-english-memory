@@ -1,5 +1,12 @@
 # Voca English Memory
 
+> 🇻🇳 **Giới thiệu nhanh (tiếng Việt):** Đây là dự án cá nhân để học từ vựng tiếng Anh (và
+> tiếng Trung) theo phương pháp Siêu trí nhớ — tạo chủ đề, thêm từ vựng (gõ tay hoặc chụp ảnh
+> để AI tự quét), rồi biến thành câu chuyện riêng để nhớ sâu, nhớ lâu. Ngoài ra còn có ôn tập
+> từ vựng, luyện nói, luyện viết, và ngữ pháp — tất cả miễn phí. Ban đầu làm cho bản thân, sau
+> mở ra cho vài người bạn cùng mục tiêu học tiếng Anh. Giao diện app hoàn toàn bằng tiếng
+> Việt; phần còn lại của README này viết bằng tiếng Anh theo thông lệ GitHub.
+
 This is a personal project I built to scratch my own itch: learning English vocabulary
 through **"super memory" story-based recall** — instead of memorizing words in isolation, I
 enter a list of words and AI weaves them into a short, meaningful story that's much easier to
