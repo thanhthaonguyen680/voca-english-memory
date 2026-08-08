@@ -83,7 +83,7 @@ export default function MobileMenu({ loggedIn, streakCurrent, studiedToday }: Mo
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className="block rounded-full border-2 border-black bg-emerald-300 px-3 py-2 text-center text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
+                className="block rounded-full border-2 border-black bg-amber-300 px-3 py-2 text-center text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
               >
                 Đăng nhập
               </Link>

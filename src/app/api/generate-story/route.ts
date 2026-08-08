@@ -6,6 +6,15 @@ import { generateWithKeyPool } from "@/lib/gemini/pool";
 import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE, isLanguage, type Language } from "@/lib/constants";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
+function shuffle<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 const LANGUAGE_NAME: Record<Language, string> = {
   en: "English",
   zh: "Chinese (Simplified)",
@@ -26,7 +35,10 @@ function buildStoryResponseSchema(language: Language) {
       },
       translation: {
         type: Type.STRING,
-        description: "A natural Vietnamese translation of the whole story.",
+        description:
+          "A natural Vietnamese translation of the whole story. Wrap the Vietnamese words/" +
+          "phrases that correspond to each bolded vocabulary word in the story in **bold** " +
+          "markdown too, at the same position they naturally occur in the translated sentence.",
       },
       words: {
         type: Type.ARRAY,
@@ -87,30 +99,49 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Dữ liệu gửi lên không hợp lệ." }, { status: 400 });
   }
 
-  const rawLanguage = (body as { language?: unknown })?.language;
-  const language: Language = isLanguage(rawLanguage) ? rawLanguage : DEFAULT_LANGUAGE;
+  const topicId = String((body as { topicId?: unknown })?.topicId ?? "").trim();
+  if (!topicId) {
+    return NextResponse.json({ error: "Thiếu chủ đề." }, { status: 400 });
+  }
 
-  const rawWords = Array.isArray((body as { words?: unknown })?.words)
-    ? ((body as { words: unknown[] }).words)
-    : [];
+  const { data: topic, error: topicError } = await supabase
+    .from("vocabulary_topics")
+    .select("id, language")
+    .eq("id", topicId)
+    .eq("user_id", user.id)
+    .single();
 
-  const words: VocabularyItem[] = rawWords
-    .map((entry) => {
-      const record = entry as { word?: unknown; meaning?: unknown };
-      return {
-        word: String(record.word ?? "").trim(),
-        meaning: record.meaning ? String(record.meaning).trim() : undefined,
-      };
-    })
-    .filter((entry) => entry.word.length > 0)
-    .slice(0, MAX_WORDS_PER_STORY);
+  if (topicError || !topic) {
+    return NextResponse.json({ error: "Không tìm thấy chủ đề." }, { status: 404 });
+  }
 
-  if (words.length === 0) {
+  const language: Language = isLanguage(topic.language) ? topic.language : DEFAULT_LANGUAGE;
+
+  const { data: topicWords, error: wordsError } = await supabase
+    .from("vocabulary_entries")
+    .select("word, meaning")
+    .eq("topic_id", topicId)
+    .eq("user_id", user.id);
+
+  if (wordsError) {
+    return NextResponse.json({ error: "Không thể tải từ vựng của chủ đề." }, { status: 500 });
+  }
+
+  if (!topicWords || topicWords.length === 0) {
     return NextResponse.json(
-      { error: "Vui lòng nhập ít nhất 1 từ vựng." },
+      { error: "Chủ đề này chưa có từ vựng nào. Vui lòng thêm từ trước khi tạo câu chuyện." },
       { status: 400 },
     );
   }
+
+  // Large topics accumulate more words than fit in one story — sample randomly so repeated
+  // generations from the same topic surface different words instead of always the first N.
+  const words: VocabularyItem[] = shuffle(
+    topicWords.map((entry) => ({
+      word: entry.word,
+      meaning: entry.meaning ?? undefined,
+    })),
+  ).slice(0, MAX_WORDS_PER_STORY);
 
   const { count, error: countError } = await supabase
     .from("stories")
@@ -165,9 +196,12 @@ export async function POST(request: Request) {
           "long, that naturally fits ALL of the given vocabulary words in context so a " +
           "learner can remember them through the story. Don't pad the story past that " +
           "length. Vary the setting, characters, and plot each time so repeated requests " +
-          "don't feel like a continuation of a previous story. Also provide a natural " +
-          `Vietnamese translation of the story, ${phoneticInstruction}, and a short ` +
-          "Vietnamese meaning for each vocabulary word.",
+          "don't feel like a continuation of a previous story. Wrap each vocabulary word in " +
+          "**bold** markdown the first time it appears in the story. Also provide a natural " +
+          "Vietnamese translation of the story — in the translation, wrap the Vietnamese " +
+          "word/phrase corresponding to each bolded vocabulary word in **bold** markdown too " +
+          `(same words, same story, just the translated language), ${phoneticInstruction}, ` +
+          "and a short Vietnamese meaning for each vocabulary word.",
       },
     });
 
@@ -209,6 +243,7 @@ export async function POST(request: Request) {
       translation: result.translation?.trim() || null,
       vocabulary_used: enrichedWords,
       language,
+      topic_id: topicId,
     })
     .select()
     .single();
@@ -218,18 +253,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Không thể lưu câu chuyện." }, { status: 500 });
   }
 
-  // Best-effort: keep a record of the words the user has studied.
-  const { error: vocabError } = await supabase.from("vocabulary_entries").insert(
-    enrichedWords.map((entry) => ({
-      user_id: user.id,
-      word: entry.word,
-      meaning: entry.meaning ?? null,
-      language,
-    })),
+  // Best-effort: if a topic word had no meaning yet, backfill it with the one Gemini just
+  // generated for the story, so the topic's word list reads better next time it's viewed.
+  await Promise.all(
+    enrichedWords
+      .filter((entry) => entry.meaning)
+      .map((entry) =>
+        supabase
+          .from("vocabulary_entries")
+          .update({ meaning: entry.meaning })
+          .eq("topic_id", topicId)
+          .eq("user_id", user.id)
+          .eq("word", entry.word)
+          .is("meaning", null),
+      ),
   );
-  if (vocabError) {
-    console.error("Failed to save vocabulary entries", vocabError);
-  }
 
   return NextResponse.json({ story });
 }

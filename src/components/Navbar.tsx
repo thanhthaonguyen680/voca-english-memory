@@ -52,7 +52,7 @@ export default async function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="rounded-full border-2 border-black bg-emerald-300 px-3.5 py-1.5 font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
+              className="rounded-full border-2 border-black bg-amber-300 px-3.5 py-1.5 font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
             >
               Đăng nhập
             </Link>

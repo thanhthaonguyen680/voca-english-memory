@@ -15,11 +15,17 @@ export default async function ReviewPage() {
     redirect("/login");
   }
 
-  const { data: stories, error } = await supabase
-    .from("stories")
-    .select("id, content, vocabulary_used, language, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const [{ data: stories, error }, { data: topics }] = await Promise.all([
+    supabase
+      .from("stories")
+      .select("id, content, vocabulary_used, language, topic_id, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("vocabulary_topics")
+      .select("id, name, icon")
+      .eq("user_id", user.id),
+  ]);
 
   // Each story is its own deck — words are never merged across stories, and deleting a
   // story (which also deletes its vocabulary_used) automatically removes it from here too.
@@ -44,6 +50,7 @@ export default async function ReviewPage() {
         snippet: story.content.replace(/\*\*/g, ""),
         createdAt: story.created_at,
         language: isLanguage(story.language) ? story.language : DEFAULT_LANGUAGE,
+        topicId: story.topic_id,
         words,
       };
     })
@@ -61,7 +68,7 @@ export default async function ReviewPage() {
         <p className="text-sm text-red-600">Không thể tải danh sách từ vựng. Vui lòng thử lại.</p>
       )}
 
-      {!error && <ReviewStoryList decks={decks} />}
+      {!error && <ReviewStoryList decks={decks} topics={topics ?? []} />}
     </main>
   );
 }

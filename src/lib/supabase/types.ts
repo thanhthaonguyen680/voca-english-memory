@@ -14,6 +14,7 @@ export type Database = {
           word: string;
           meaning: string | null;
           language: string;
+          topic_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -22,6 +23,7 @@ export type Database = {
           word: string;
           meaning?: string | null;
           language?: string;
+          topic_id?: string | null;
           created_at?: string;
         };
         Update: Partial<{
@@ -30,6 +32,37 @@ export type Database = {
           word: string;
           meaning: string | null;
           language: string;
+          topic_id: string | null;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
+      vocabulary_topics: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          description: string | null;
+          language: string;
+          icon: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          description?: string | null;
+          language?: string;
+          icon?: string;
+          created_at?: string;
+        };
+        Update: Partial<{
+          id: string;
+          user_id: string;
+          name: string;
+          description: string | null;
+          language: string;
+          icon: string;
           created_at: string;
         }>;
         Relationships: [];
@@ -42,6 +75,7 @@ export type Database = {
           translation: string | null;
           vocabulary_used: VocabularyItem[];
           language: string;
+          topic_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -51,6 +85,7 @@ export type Database = {
           translation?: string | null;
           vocabulary_used: VocabularyItem[];
           language?: string;
+          topic_id?: string | null;
           created_at?: string;
         };
         Update: Partial<{
@@ -60,6 +95,7 @@ export type Database = {
           translation: string | null;
           vocabulary_used: VocabularyItem[];
           language: string;
+          topic_id: string | null;
           created_at: string;
         }>;
         Relationships: [];

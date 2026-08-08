@@ -112,12 +112,13 @@ a confusing error like
 - Never expose `GEMINI_API_KEY` or any secret on the client — only use it inside a Route
   Handler (server-side).
 - The per-story word cap (`MAX_WORDS_PER_STORY`) lives in `src/lib/constants.ts` — a shared
-  file, not duplicated between the API route and the client form, since both must enforce the
-  same limit. Update it there if the limit changes.
+  file, since both `generate-story` (sampling from a topic) and `scan-vocabulary`/manual add
+  (capping how much can be scanned/added) need the same limit. Update it there if the limit
+  changes.
 - The story generation call uses `responseMimeType: "application/json"` +
-  `responseSchema` (see `STORY_RESPONSE_SCHEMA` in `src/app/api/generate-story/route.ts`) to
-  get the story, Vietnamese translation, and per-word IPA + meaning in one structured call
-  instead of separate prompts/requests. Prefer this pattern over parsing free-form text
+  `responseSchema` (see `buildStoryResponseSchema()` in `src/app/api/generate-story/route.ts`)
+  to get the story, Vietnamese translation, and per-word IPA/Pinyin + meaning in one structured
+  call instead of separate prompts/requests. Prefer this pattern over parsing free-form text
   whenever a new AI feature needs more than one field back.
 - Story length scales with word count (`minWords`/`maxWords` in the route, roughly
   12–20 words of story per vocabulary word, floored at 40–90) instead of a fixed range —
@@ -127,12 +128,16 @@ a confusing error like
 - Each generation call is a fresh, stateless `generateContent` request — Gemini does **not**
   see previous stories, so any recurring theme across stories is coincidence, not memory. The
   system instruction explicitly asks it to vary setting/characters/plot per call to reduce
-  that. `VocabularyForm`'s "Tạo câu chuyện khác" button re-calls the API with the same word
-  list (stored in `lastWords`) to get a different story on demand — it's a real new API call
-  (counts against `MAX_STORIES_PER_DAY`), not a client-side reshuffle.
-- Per-word `meaning`: a user-entered meaning always wins; the AI-generated one only fills the
-  gap when the user left it blank (see the merge in the route, `entry.meaning || ai?.meaning`).
-  Don't overwrite a user's own input with the AI's.
+  that. `TopicDetail`'s "Tạo câu chuyện khác" button re-calls the API with the same `topicId`
+  to get a different story on demand — it's a real new API call (counts against
+  `MAX_STORIES_PER_DAY`), not a client-side reshuffle; if the topic has more words than
+  `MAX_WORDS_PER_STORY`, the route also re-samples a fresh random subset each call (see
+  "Vocabulary topics" below), so a regenerate can genuinely use a different set of words too.
+- Per-word `meaning`: a user-entered meaning (saved on the topic word) always wins; the
+  AI-generated one only fills the gap when the word had no meaning yet (see the merge in the
+  route, `entry.meaning || ai?.meaning`) — and that AI-filled meaning is then best-effort
+  written back onto the topic's word row so it doesn't stay blank next time. Don't overwrite a
+  user's own input with the AI's.
 
 ## Gemini API key pool (replaces per-user keys)
 
@@ -179,10 +184,81 @@ a confusing error like
   read or written by any current code path. Don't delete the table or `src/lib/crypto.ts`'s
   `maskKey` (still used by the CLI script's confirmation output) without discussing first.
 
+## Vocabulary topics (`/vocabulary`, `/vocabulary/[topicId]`)
+
+- **Replaced (2026-08-08) the old flow of typing a fresh word list and immediately generating
+  one story from it.** `/vocabulary` is now a topic list (`TopicList.tsx`): create a "chủ đề"
+  (icon + name + optional description, language fixed at creation time from the active
+  `useLanguage()` toggle), then open it (`/vocabulary/[topicId]`, `TopicDetail.tsx`) to
+  accumulate words into it over time — via the manual add form or the photo scanner — and
+  generate a story from however many words it currently holds, whenever you want. Don't bring
+  back a "type words → generate immediately" page; that's what this replaced and why.
+- Topic creation is a **modal**, not an inline expanding form — picked emoji icon
+  (`TOPIC_ICONS` in `TopicList.tsx`, stored in the `vocabulary_topics.icon` column, default
+  `📚`) shown as a live preview badge next to the modal title, uppercase field labels
+  (`TÊN CHỦ ĐỀ *` / `MÔ TẢ`), Hủy/submit footer. The icon is purely decorative (shown on the
+  topic card and the topic detail header) — don't read anything into it server-side.
+- `vocabulary_entries` gained a `topic_id` column (migration
+  `20260808101216_add_vocabulary_topics.sql`) and is now the live word bank a topic's words are
+  read from — see the note about this in "Vocabulary review" below. Old rows from before this
+  migration keep `topic_id = null` and are simply invisible to every new query (all of which
+  filter on `topic_id`); they're intentionally not backfilled or deleted.
+- `generate-story` takes `{ topicId }` in its POST body — **not** a `words` array or
+  `language` anymore. It looks up the topic (ownership-checked via `.eq("user_id", user.id)`),
+  reads the topic's own `language` column, and fetches every `vocabulary_entries` row with
+  that `topic_id`. If the topic has more words than `MAX_WORDS_PER_STORY`, it takes a random
+  sample rather than always the first N — so regenerating from a large, long-lived topic
+  actually surfaces different words each time instead of being stuck on the same subset
+  forever.
+- Adding words to a topic happens two ways, both inserting directly into `vocabulary_entries`
+  from the client (RLS-protected, no API route needed — same pattern as deleting a story):
+  - **Manual add** (`TopicDetail`'s "+ Thêm từ" form): one word + optional meaning at a time,
+    inserted immediately on submit.
+  - **Photo scan**: reuses `/api/scan-vocabulary` unchanged (it just extracts words from an
+    image; it doesn't know about topics), but the *client-side* handling is different from the
+    old `VocabularyForm` — see "Scan vocabulary from a photo" below for the review-before-save
+    step.
+  Both paths de-duplicate case-insensitively against words already in the topic
+  (`isDuplicate()` in `TopicDetail.tsx`) before inserting, so re-scanning a page you already
+  added doesn't create duplicate word chips.
+- Removing a single word from a topic (`handleDeleteWord`) does **not** go through
+  `ConfirmDialog`, unlike every other delete in the app — deliberately: a single word is
+  trivial to re-add (unlike losing an entire story or writing), so a confirmation prompt would
+  just be friction. Deleting an entire **topic** (`TopicList`) *does* use `ConfirmDialog`,
+  since that cascades (`on delete cascade` on `vocabulary_entries.topic_id`) and destroys every
+  word in it at once — a much higher-stakes action.
+- A topic word getting a meaning backfilled by a story-generation call (see the note in "API
+  routes calling Gemini" above) means the topic's own word list can end up more complete over
+  time purely from generating stories — that's intentional, not a side effect to prevent.
+
+## First-visit onboarding hint (`src/components/OnboardingHint.tsx`)
+
+- A one-time spotlight tooltip (dashed highlight ring + amber callout bubble, arrow pointing
+  at the target) for first-time visitors, currently wrapped around `TopicList`'s "+ Tạo chủ đề"
+  button — the very first action a new user needs on the redesigned `/vocabulary`. Persisted
+  per-browser in `localStorage` (`voca:onboarding-seen`), same reasoning as the language
+  toggle: a personal "have I seen this" flag, not account data, so it deliberately has no DB
+  column and doesn't sync across devices/resets on a fresh browser.
+- Dismisses permanently three ways: the ✕ button, "Bỏ qua hướng dẫn", or simply clicking the
+  highlighted target itself (`onClickCapture` on the wrapper — using the feature is as good as
+  reading about it, don't make the user dismiss it separately after they've already acted).
+- `TopicList` only renders it while `topics.length === 0` — this both targets genuinely new
+  users (nothing created yet) and automatically skips it for anyone who already has topics
+  (existing users from before this feature shipped, or someone who created a topic in a
+  previous session before ever seeing/dismissing the hint), without needing extra logic beyond
+  the render condition already there.
+- `OnboardingHint` is written as a generic reusable wrapper (`title`/`description`/`children`),
+  not hardcoded to this one button — reuse it for future onboarding call-outs rather than
+  building a second one-off tooltip component. It intentionally does **not** attempt a
+  multi-step guided tour (no shared "which step" state, no cross-page persistence of tour
+  progress) — that's a meaningfully bigger feature than what was asked for; if a multi-step
+  tour is wanted later, that's worth discussing as its own design rather than bolting onto
+  this component.
+
 ## Scan vocabulary from a photo (`/api/scan-vocabulary`)
 
 - Lets a learner photograph or upload an image (notebook page, textbook, flashcards) instead
-  of typing words by hand. `VocabularyForm`'s hidden file input (`accept="image/*"
+  of typing words by hand. `TopicDetail`'s hidden file input (`accept="image/*"
   capture="environment"`) opens the phone camera directly on mobile while still falling back
   to a normal file picker (with gallery access) on desktop/unsupported browsers — don't remove
   `capture`, it's what makes "chụp ảnh" the default action instead of "chọn file".
@@ -203,10 +279,12 @@ a confusing error like
   list); otherwise the model must return an empty string. Don't relax this to "guess a
   reasonable meaning" — that would silently produce wrong meanings the learner didn't ask for
   (the AI-generated meaning during actual story generation is a different, intentional case).
-- Scanned words are **merged into**, not replacing, whatever the learner already typed
-  (`mergeScannedWords` in `VocabularyForm.tsx` keeps non-empty existing rows and appends the
-  scan results, capped at `MAX_WORDS_PER_STORY`) — scanning a second photo (or a photo after
-  typing a few words by hand) shouldn't discard prior input.
+- The route itself just extracts words from an image — it doesn't know about topics. Scanned
+  words come back to `TopicDetail` as a **pending review list** (editable word/meaning,
+  removable per row) rather than being saved immediately; the learner reviews for OCR mistakes
+  and clicks "Lưu N từ vào chủ đề" to bulk-insert them into `vocabulary_entries`. Don't skip
+  this review step — the whole point is catching bad OCR before it permanently pollutes a
+  topic's word bank.
 - Scanning is language-aware like every other content-generating feature: it sends the
   app-wide `language` from `useLanguage()` and asks the model to extract that language's words
   specifically, so scanning a Chinese vocabulary list while in English mode won't happen.
@@ -324,14 +402,15 @@ a confusing error like
   client via `@/lib/supabase/client`'s browser client (RLS's `stories_delete_own` policy is
   the only thing enforcing ownership — no API route needed for a plain delete-your-own-row).
   `StoryCard` only shows the 🗑️ button when an `id` prop is passed, so the same component
-  stays usable for the just-generated result on `/vocabulary` (no `id` yet, no delete button)
+  stays usable for the just-generated result on a topic page (no `id` yet, no delete button)
   and for `/history` rows (has `id`). `HistoryList` (client) owns the list state so a delete
   updates the UI immediately without a refetch — the same
-  Server-Component-fetches/Client-Component-mutates split as `VocabularyForm`.
+  Server-Component-fetches/Client-Component-mutates split as `TopicDetail`.
 - Destructive confirmations use `src/components/ConfirmDialog.tsx`, not the browser's native
   `window.confirm()` — the native dialog can't be styled and looks jarringly out of place
-  against a custom dark theme. Reuse `ConfirmDialog` for any future destructive action instead
-  of reaching for `window.confirm`/`window.alert` again.
+  against the app's custom theme. Reuse `ConfirmDialog` for any future destructive action
+  instead of reaching for `window.confirm`/`window.alert` again. Not every deletion needs it,
+  though — see "Vocabulary topics" below for the one deliberate exception.
 
 ## Study streak
 
@@ -343,10 +422,11 @@ a confusing error like
   `MAX_STORIES_PER_DAY` rate limiting already defines "today" — keep both conventions in sync
   if either changes.
 - Server Components that need the streak call `getStudyStreak(supabase, user.id)` directly
-  (see `Navbar.tsx`, `vocabulary/page.tsx`). Pages needing both server-fetched data (streak)
-  and client interactivity (a form) split into `page.tsx` (Server Component, fetches data) +
-  a `"use client"` component for the interactive part (see `VocabularyForm.tsx`) — don't make
-  the whole page a Client Component just because part of it needs `useState`.
+  (see `Navbar.tsx`, `vocabulary/page.tsx`). Pages needing both server-fetched data (streak,
+  topic list) and client interactivity (forms, buttons) split into `page.tsx` (Server
+  Component, fetches data) + a `"use client"` component for the interactive part (see
+  `TopicList.tsx`, `TopicDetail.tsx`) — don't make the whole page a Client Component just
+  because part of it needs `useState`.
 
 ## Vocabulary review (`/review`)
 
@@ -363,9 +443,24 @@ a confusing error like
   deletion. If a future feature needs a "words from every story combined" view, derive it by
   reading all `stories` rows and flattening client/server-side — don't reintroduce a
   denormalized word table to get there.
-- `vocabulary_entries` (and its migration/RLS) still exists and is still written to on every
-  `generate-story` call, but as of this design nothing reads it anymore. Don't delete it
-  without discussing first — treat it as dormant, not required, not necessarily permanent.
+- **`stories.topic_id`** (migration `20260808174434_add_story_topic.sql`) tags which topic a
+  story was generated from, purely so `/history` and `/review` can filter/find things by topic
+  once a user has several — it does **not** change the "decks are never merged" rule above;
+  filtering by topic just narrows *which* one-per-story decks are shown in the picker, it
+  never combines their words. `on delete set null` (not cascade) on this column is deliberate:
+  deleting a topic must not delete the stories already generated from it, same reasoning as
+  why review reads each story's frozen `vocabulary_used` snapshot instead of the live topic —
+  a past story stays reviewable even after its source topic is gone, just shown under the
+  "Khác" filter pill instead of a named one. `HistoryList.tsx`/`ReviewStoryList.tsx` both
+  render the same topic-filter-pills pattern (`Tất cả` / one pill per topic actually in use /
+  `Khác` for untagged stories) — reuse that pattern, don't build a different filter UI for a
+  third list if one's ever added.
+- `vocabulary_entries` is **no longer dormant** — since the topic redesign (see "Vocabulary
+  topics" below) it's the live per-topic word bank that `generate-story` reads *from*. Review
+  itself still only reads each story's own frozen `vocabulary_used` snapshot, not
+  `vocabulary_entries` directly — a story's deck doesn't change retroactively if its source
+  topic's words are edited/deleted afterward, which is the correct behavior (a past story
+  should stay reviewable exactly as it was generated).
 - Within a deck, words are deduped by lowercased word and filtered to ones with a non-empty
   `meaning` (both quiz directions need one to grade against) — same rules as before, just
   scoped per-story now (`review/page.tsx`).
@@ -383,8 +478,9 @@ a confusing error like
   (wired to "← Chọn câu chuyện khác" / "Chọn câu chuyện khác") to pop back up to
   `ReviewStoryList`'s picker — a third navigation level above `setMode(null)` (back to mode
   picker) and `beginDeck` (back to card 1 of the same deck).
-- If a card's meaning is wrong (typically a mistyped meaning from bulk-adding words on
-  `/vocabulary`), `EditableMeaning` lets the user fix it inline wherever the meaning is shown
+- If a card's meaning is wrong (typically a mistyped meaning from adding words into a topic,
+  or an AI-filled one that wasn't quite right), `EditableMeaning` lets the user fix it inline
+  wherever the meaning is shown
   (the vi-en prompt, or the revealed en-vi answer) — saves via
   `PATCH /api/stories/[id]/vocabulary` (`storyId` in the URL, `{word, meaning}` in the body),
   which finds the matching entry inside *that one story's* `vocabulary_used` array and updates
@@ -447,10 +543,13 @@ a confusing error like
   (`voca:language`) — this is a personal UI preference, not account data, so it deliberately
   has no DB column and doesn't sync across devices. `LanguageSwitcher.tsx` (a flag + dropdown)
   is the only place it's changed, rendered in both `Navbar` (desktop) and `MobileMenu`. Every
-  language-aware form (`VocabularyForm`, `ChatSession`, `WritingForm`) reads it via
-  `useLanguage()` and sends it in its POST body — don't reintroduce a local per-form language
-  picker; that was the first version of this feature and was replaced because switching
-  languages separately on every page was repetitive and confusing about which one was "active".
+  language-aware form (`TopicList` when creating a topic, `ChatSession`, `WritingForm`) reads
+  it via `useLanguage()` — don't reintroduce a local per-form language picker; that was the
+  first version of this feature and was replaced because switching languages separately on
+  every page was repetitive and confusing about which one was "active". Note that
+  `generate-story` no longer takes `language` in its request body at all — a topic's
+  `language` is fixed at topic-creation time and the route reads it from the topic row itself
+  (see "Vocabulary topics" below), so there's nothing to pass per-generation.
   `StoryCard`, `ReviewStoryList`'s deck picker, and `WritingHistoryList` are the exception:
   they show a *specific past story/writing's own* stored `language` (fixed at creation time),
   not the live global toggle, so mixed-language history stays visually distinguishable.
@@ -490,10 +589,21 @@ secret there.
     `bg-emerald-50` instead of white, same border+shadow. This "neo-brutalism" hard-shadow
     look (flat color, no blur, no gradient on cards, offset shadow instead of soft elevation)
     is the whole point of the redesign — don't soften it back to `shadow-sm`/blurred shadows.
-  - **Green is the single accent color** (Tailwind's `emerald` scale), replacing amber:
-    primary buttons `bg-emerald-300`, tinted surfaces `bg-emerald-50` with
-    `border-emerald-300`/`text-emerald-700`, links `text-emerald-700 hover:text-emerald-800
-    underline`. Don't reintroduce amber or mix in another brand color.
+  - **Two accent colors, each with a specific job** (2026-08-08, revised from the initial
+    single-green redesign): **emerald is primary** — main/default actions (`bg-emerald-300`),
+    tinted surfaces (`bg-emerald-50` with `border-emerald-300`/`text-emerald-700`), links
+    (`text-emerald-700 hover:text-emerald-800 underline`). **Amber is the secondary accent**,
+    used for: the streak badge (`StreakBadge.tsx`, 🔥 reads more naturally in fire-colored
+    amber than green); the standalone "Đăng nhập" nav pill (`Navbar.tsx`/`MobileMenu.tsx` — an
+    entry-point action, distinct from primary in-flow actions like form submit buttons, which
+    stay emerald); and **bold vocabulary words inside story text** (`BoldText.tsx`,
+    `text-amber-700`) — these needed amber specifically because emerald text on the
+    `bg-emerald-50` highlighted-story background had too little contrast to read as
+    "bolded/important" (emerald-on-emerald visually sinks into the card). Don't use amber for
+    primary CTAs/submit buttons, and don't introduce a third brand color — pick emerald or
+    amber for anything new based on whether it's a primary action/surface (emerald) or a
+    secondary highlight/something that needs to visually pop off an emerald-tinted surface
+    (amber), not on preference.
   - **Buttons are pills with the same hard-shadow treatment**: `rounded-full border-2
     border-black ... shadow-[3px_3px_0_0_#000] transition-all hover:shadow-none
     hover:translate-x-[3px] hover:translate-y-[3px]` — hovering "presses" the button into its
@@ -518,8 +628,20 @@ secret there.
   to that array instead of checking `user` ad hoc in multiple places.
 - Story rendering (bold vocabulary, translation block, per-word IPA, voice buttons) is
   centralized in `src/components/StoryCard.tsx` + `src/components/BoldText.tsx`, used by both
-  `/vocabulary` (just-generated result) and `/history` (past stories). Extend that component
+  a topic page's just-generated result and `/history` (past stories). Extend that component
   rather than duplicating story markup in a page.
+- The Vietnamese translation block is **collapsed by default** (`showTranslation` state in
+  `StoryCard.tsx`, toggle button "▸ Bản dịch tiếng Việt (thử tự dịch trước nhé!)") — the
+  learner is meant to try reading/translating the English story themselves first, using the
+  translation as an answer key rather than something shown alongside the story by default.
+  Don't default it to open.
+- The translation also gets **bolded vocabulary words**, same as the story itself — the
+  `translation` field's prompt (`buildStoryResponseSchema` description *and* the
+  `systemInstruction`, both, since a schema description alone isn't reliably followed) asks
+  Gemini to wrap the Vietnamese word/phrase corresponding to each bolded story word in
+  `**bold**` markdown too, at its natural position in the translated sentence. `StoryCard`
+  renders the translation through the same `<BoldText>` component used for the story text, so
+  no separate parsing logic was needed — just reuse it.
 
 ## Before reporting a task "done"
 

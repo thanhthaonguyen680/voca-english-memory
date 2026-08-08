@@ -100,7 +100,11 @@ export default function GrammarTranslationPractice({
   return (
     <div className="rounded-2xl border-2 border-black bg-white p-6 shadow-[5px_5px_0_0_#000]">
       <div className="mb-4 flex items-center justify-between text-xs text-neutral-400">
-        <button type="button" onClick={onExit} className="flex items-center gap-1 hover:text-black">
+        <button
+          type="button"
+          onClick={onExit}
+          className="flex items-center gap-1 font-semibold text-black hover:text-emerald-700"
+        >
           ← Chọn thì khác
         </button>
         <span>{scopeLabel}</span>

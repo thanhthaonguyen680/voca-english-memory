@@ -34,6 +34,7 @@ export default function StoryCard({
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
 
   function toggleWord(index: number) {
     setOpenWords((prev) => {
@@ -156,8 +157,19 @@ export default function StoryCard({
 
       {translation && (
         <div className="mt-4 border-t-2 border-black pt-3">
-          <p className="mb-1 text-xs font-medium text-neutral-400">Bản dịch tiếng Việt</p>
-          <p className="whitespace-pre-wrap text-sm text-neutral-600">{translation}</p>
+          <button
+            type="button"
+            onClick={() => setShowTranslation((s) => !s)}
+            className="text-xs font-medium text-neutral-500 hover:text-black"
+          >
+            {showTranslation ? "▾" : "▸"} Bản dịch tiếng Việt{" "}
+            {!showTranslation && "(thử tự dịch trước nhé!)"}
+          </button>
+          {showTranslation && (
+            <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-600">
+              <BoldText text={translation} />
+            </p>
+          )}
         </div>
       )}
 

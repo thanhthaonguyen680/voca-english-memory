@@ -143,7 +143,7 @@ export default function ReviewSession({
         <button
           type="button"
           onClick={onExit}
-          className="mb-3 text-xs text-neutral-600 hover:text-black"
+          className="mb-3 inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
         >
           ← Chọn câu chuyện khác
         </button>
@@ -249,7 +249,7 @@ export default function ReviewSession({
         <button
           type="button"
           onClick={() => setMode(null)}
-          className="flex items-center gap-1 hover:text-black"
+          className="flex items-center gap-1 font-semibold text-black hover:text-emerald-700"
         >
           ← Quay lại
         </button>
