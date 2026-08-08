@@ -10,7 +10,7 @@ export default async function Home() {
   return (
     <main className="flex w-full flex-1 flex-col items-center justify-center px-4 py-20 text-center">
       <span className="mb-5 inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-white px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-black shadow-[3px_3px_0_0_#000]">
-        <span aria-hidden>✨</span> Đây là sản phẩm của sự kỷ luật
+        <span aria-hidden>✨</span> Sản phẩm của sự kỷ luật
       </span>
 
       <span className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black bg-emerald-300 text-2xl font-bold text-black shadow-[4px_4px_0_0_#000]">
