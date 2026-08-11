@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getStudyStreak } from "@/lib/streak";
+import { getStudyStreak } from "@/lib/utils/streak";
 import TopicList from "@/components/TopicList";
-import type { Language } from "@/lib/constants";
+import type { Language } from "@/lib/types";
 
 export type TopicRow = {
   id: string;
@@ -60,8 +60,10 @@ export default async function VocabularyPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
       <h1 className="mb-1 text-2xl font-bold text-black">Nhập từ vựng</h1>
       <p className="mb-6 text-sm text-neutral-600">
-        Tạo chủ đề, thêm từ vựng vào đó (gõ tay hoặc chụp ảnh), rồi tạo câu chuyện từ toàn bộ
-        từ trong chủ đề để giúp bạn ghi nhớ qua ngữ cảnh.
+        Tạo một chủ đề để gom các từ cùng chủ điểm (ví dụ: Du lịch, Công việc), rồi thêm từ vào
+        đó — gõ tay hoặc chụp ảnh đều được. Sau đó, ôn từ theo 2 cách: đọc một câu chuyện có
+        lồng ghép các từ đó, hoặc dạo qua Cung điện trí nhớ — nơi mỗi từ được gắn vào một căn
+        phòng để nhớ sâu và lâu hơn.
       </p>
 
       <div className="mb-6 flex items-center gap-3 rounded-2xl border-2 border-black bg-emerald-50 px-5 py-4 shadow-[4px_4px_0_0_#000]">

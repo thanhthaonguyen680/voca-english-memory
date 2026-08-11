@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import StoryCard from "@/components/StoryCard";
-import { LANGUAGES, type Language } from "@/lib/constants";
+import { LANGUAGES } from "@/lib/constants";
+import type { Language } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 import type { TopicOption } from "@/app/history/page";
 import type { VocabularyItem } from "@/lib/supabase/types";

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { speak } from "@/lib/speech";
-import { normalizeForCompare, normalizePinyin } from "@/lib/pronunciation";
-import { SPEECH_LANG, DEFAULT_LANGUAGE, type Language } from "@/lib/constants";
+import { speak } from "@/lib/utils/speech";
+import { normalizeForCompare, normalizePinyin } from "@/lib/utils/pronunciation";
+import { SPEECH_LANG, DEFAULT_LANGUAGE } from "@/lib/constants";
+import type { Language } from "@/lib/types";
 import PronunciationCheck from "@/components/PronunciationCheck";
 import EditableMeaning from "@/components/EditableMeaning";
 
@@ -66,10 +67,14 @@ function getModeLabels(language: Language): Record<Mode, string> {
 }
 
 type ReviewSessionProps = {
-  storyId: string;
+  // Omitted when reviewing a topic's live word list directly (no story exists yet) — in that
+  // case inline meaning-editing is disabled, since EditableMeaning saves to a specific story's
+  // snapshot via storyId and there's no snapshot to save to.
+  storyId?: string;
   words: WordPair[];
   language?: Language;
   onExit: () => void;
+  exitLabel?: string;
 };
 
 export default function ReviewSession({
@@ -77,6 +82,7 @@ export default function ReviewSession({
   words,
   language = DEFAULT_LANGUAGE,
   onExit,
+  exitLabel = "Chọn câu chuyện khác",
 }: ReviewSessionProps) {
   const speechLang = SPEECH_LANG[language];
   const modeLabels = getModeLabels(language);
@@ -145,7 +151,7 @@ export default function ReviewSession({
           onClick={onExit}
           className="mb-3 inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
         >
-          ← Chọn câu chuyện khác
+          ← {exitLabel}
         </button>
         <p className="mb-4 text-sm text-neutral-600">
           Có <strong className="text-black">{words.length}</strong> từ để ôn tập. Chọn chế độ
@@ -205,7 +211,7 @@ export default function ReviewSession({
             onClick={onExit}
             className="rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-medium text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
           >
-            Chọn câu chuyện khác
+            {exitLabel}
           </button>
         </div>
       </div>
@@ -274,7 +280,7 @@ export default function ReviewSession({
               <span className="text-base font-normal text-emerald-700/80">{current.ipa}</span>
             )}
           </p>
-        ) : (
+        ) : storyId ? (
           <EditableMeaning
             storyId={storyId}
             word={current.word}
@@ -282,6 +288,8 @@ export default function ReviewSession({
             onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}
             displayClassName="text-2xl font-semibold text-black"
           />
+        ) : (
+          <p className="text-2xl font-semibold text-black">{current.meaning}</p>
         )}
         {targetWordVisible && (
           <>
@@ -338,12 +346,16 @@ export default function ReviewSession({
           <p className="text-sm text-neutral-600">
             Đáp án đúng:{" "}
             {current.direction === "en-vi" ? (
-              <EditableMeaning
-                storyId={storyId}
-                word={current.word}
-                meaning={current.meaning}
-                onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}
-              />
+              storyId ? (
+                <EditableMeaning
+                  storyId={storyId}
+                  word={current.word}
+                  meaning={current.meaning}
+                  onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}
+                />
+              ) : (
+                <span className="font-medium text-black">{current.meaning}</span>
+              )
             ) : (
               <span className="font-medium text-black">
                 {current.word}

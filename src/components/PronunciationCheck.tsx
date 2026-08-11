@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { getSpeechRecognitionConstructor, normalizeForCompare } from "@/lib/pronunciation";
+import { getSpeechRecognitionConstructor, normalizeForCompare } from "@/lib/utils/pronunciation";
 
 type Status = "idle" | "listening" | "correct" | "incorrect" | "unsupported";
 

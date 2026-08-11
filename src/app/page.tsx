@@ -23,9 +23,10 @@ export default async function Home() {
         không còn nhàm chán
       </h1>
       <p className="mt-4 max-w-md text-neutral-600">
-        Học từ vựng theo từng chủ đề, biến chúng thành câu chuyện của riêng bạn — áp dụng
-        nguyên lý <span className="font-semibold text-black">Cung điện trí nhớ</span> mà các
-        nhà vô địch trí nhớ vẫn dùng, để nhớ sâu, nhớ lâu và không bao giờ quên.
+        Biến từ vựng khô khan thành câu chuyện của riêng bạn bằng kỹ thuật{" "}
+        <span className="font-semibold text-black">Storytelling</span> và{" "}
+        <span className="font-semibold text-black">Memory Palace</span> — nhớ nhanh, nhớ sâu,
+        không bao giờ quên.
       </p>
       <Link
         href={user ? "/vocabulary" : "/login"}

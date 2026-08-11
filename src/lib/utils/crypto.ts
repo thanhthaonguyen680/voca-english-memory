@@ -29,8 +29,3 @@ export function decrypt(payload: string): string {
   ]);
   return decrypted.toString("utf8");
 }
-
-export function maskKey(plainText: string): string {
-  const tail = plainText.slice(-4);
-  return `••••••••${tail}`;
-}

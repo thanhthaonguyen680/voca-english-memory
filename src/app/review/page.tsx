@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ReviewStoryList, { type StoryDeck } from "@/components/ReviewStoryList";
-import { DEFAULT_LANGUAGE, isLanguage } from "@/lib/constants";
+import { DEFAULT_LANGUAGE } from "@/lib/constants";
+import { isLanguage } from "@/lib/utils/language";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
 export default async function ReviewPage() {

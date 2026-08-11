@@ -3,7 +3,8 @@
 import { useState } from "react";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { createClient } from "@/lib/supabase/client";
-import { LANGUAGES, DEFAULT_LANGUAGE, isLanguage } from "@/lib/constants";
+import { LANGUAGES, DEFAULT_LANGUAGE } from "@/lib/constants";
+import { isLanguage } from "@/lib/utils/language";
 import { useLanguage } from "@/lib/language-context";
 
 type Writing = {

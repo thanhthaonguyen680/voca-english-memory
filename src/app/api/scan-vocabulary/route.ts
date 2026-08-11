@@ -3,7 +3,9 @@ import { Type } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
 import { STORY_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
-import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE, isLanguage, type Language } from "@/lib/constants";
+import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE } from "@/lib/constants";
+import type { Language } from "@/lib/types";
+import { isLanguage } from "@/lib/utils/language";
 
 const MAX_VOCAB_SCANS_PER_DAY = Number(process.env.MAX_VOCAB_SCANS_PER_DAY ?? 10);
 // Base64 length ≈ raw bytes × 4/3 — this keeps the raw image under ~4.5MB, comfortably below
@@ -32,15 +34,22 @@ const SCAN_RESPONSE_SCHEMA = {
               "The Vietnamese meaning, ONLY if it is also clearly written next to the word " +
               "in the image itself. Empty string if no meaning is visible — never invent one.",
           },
+          type: {
+            type: Type.STRING,
+            description:
+              "The word's most common part of speech, as a short abbreviation: n, v, adj, " +
+              "adv, or phrase. Unlike meaning, this is safe to infer from general knowledge " +
+              "of the word even if not written in the image.",
+          },
         },
-        required: ["word", "meaning"],
+        required: ["word", "meaning", "type"],
       },
     },
   },
   required: ["words"],
 };
 
-type ScanResult = { words: { word: string; meaning: string }[] };
+type ScanResult = { words: { word: string; meaning: string; type: string }[] };
 
 function startOfTodayISO() {
   const start = new Date();
@@ -123,7 +132,8 @@ export async function POST(request: Request) {
                 "Ignore unrelated text such as page numbers, dates, or sentences that aren't " +
                 "vocabulary entries. If a Vietnamese meaning is also clearly written right " +
                 `next to a word, include it — otherwise leave meaning as an empty string, ` +
-                `never guess one. Return at most ${MAX_WORDS_PER_STORY} words.`,
+                "never guess one. Also give each word's most common part of speech (n, v, " +
+                `adj, adv, or phrase). Return at most ${MAX_WORDS_PER_STORY} words.`,
             },
             { inlineData: { mimeType, data: imageBase64 } },
           ],
@@ -150,6 +160,7 @@ export async function POST(request: Request) {
     .map((entry) => ({
       word: String(entry.word ?? "").trim(),
       meaning: String(entry.meaning ?? "").trim() || undefined,
+      type: String(entry.type ?? "").trim() || undefined,
     }))
     .filter((entry) => entry.word.length > 0)
     .slice(0, MAX_WORDS_PER_STORY);

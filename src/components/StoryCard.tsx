@@ -3,9 +3,10 @@
 import { useState } from "react";
 import BoldText from "@/components/BoldText";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { speak } from "@/lib/speech";
+import { speak } from "@/lib/utils/speech";
 import { createClient } from "@/lib/supabase/client";
-import { SPEECH_LANG, DEFAULT_LANGUAGE, LANGUAGES, type Language } from "@/lib/constants";
+import { SPEECH_LANG, DEFAULT_LANGUAGE, LANGUAGES } from "@/lib/constants";
+import type { Language } from "@/lib/types";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
 type StoryCardProps = {

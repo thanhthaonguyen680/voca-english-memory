@@ -3,7 +3,7 @@
 //
 // Reads NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and ENCRYPTION_KEY from
 // .env.local (parsed manually — no dotenv dependency). Encrypts the key the same way
-// src/lib/crypto.ts does (AES-256-GCM, key derived via SHA-256 of ENCRYPTION_KEY) so
+// src/lib/utils/crypto.ts does (AES-256-GCM, key derived via SHA-256 of ENCRYPTION_KEY) so
 // the app's decrypt() can read it back at request time.
 
 import { readFileSync } from "node:fs";

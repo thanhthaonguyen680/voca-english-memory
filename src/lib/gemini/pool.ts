@@ -4,7 +4,7 @@ import {
   type GenerateContentResponse,
 } from "@google/genai";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { decrypt } from "@/lib/crypto";
+import { decrypt } from "@/lib/utils/crypto";
 import { gemini as fallbackClient } from "@/lib/gemini/client";
 
 // A key gets a chance to retry this long after being invalidated — Gemini's free-tier daily

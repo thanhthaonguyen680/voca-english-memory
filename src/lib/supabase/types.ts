@@ -13,8 +13,15 @@ export type Database = {
           user_id: string;
           word: string;
           meaning: string | null;
+          word_type: string | null;
           language: string;
           topic_id: string | null;
+          palace_room: string | null;
+          palace_imagery: string | null;
+          palace_mastery: number;
+          ipa: string | null;
+          usage_note: string | null;
+          example_sentence: string | null;
           created_at: string;
         };
         Insert: {
@@ -22,8 +29,15 @@ export type Database = {
           user_id: string;
           word: string;
           meaning?: string | null;
+          word_type?: string | null;
           language?: string;
           topic_id?: string | null;
+          palace_room?: string | null;
+          palace_imagery?: string | null;
+          palace_mastery?: number;
+          ipa?: string | null;
+          usage_note?: string | null;
+          example_sentence?: string | null;
           created_at?: string;
         };
         Update: Partial<{
@@ -31,9 +45,40 @@ export type Database = {
           user_id: string;
           word: string;
           meaning: string | null;
+          word_type: string | null;
           language: string;
           topic_id: string | null;
+          palace_room: string | null;
+          palace_imagery: string | null;
+          palace_mastery: number;
+          ipa: string | null;
+          usage_note: string | null;
+          example_sentence: string | null;
           created_at: string;
+        }>;
+        Relationships: [];
+      };
+      palace_room_stories: {
+        Row: {
+          topic_id: string;
+          room_id: string;
+          user_id: string;
+          story: string;
+          updated_at: string;
+        };
+        Insert: {
+          topic_id: string;
+          room_id: string;
+          user_id: string;
+          story: string;
+          updated_at?: string;
+        };
+        Update: Partial<{
+          topic_id: string;
+          room_id: string;
+          user_id: string;
+          story: string;
+          updated_at: string;
         }>;
         Relationships: [];
       };
@@ -168,6 +213,51 @@ export type Database = {
         Update: Partial<{
           id: string;
           user_id: string;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
+      palace_generations: {
+        Row: {
+          id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: Partial<{
+          id: string;
+          user_id: string;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
+      palace_rooms: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          icon: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          icon?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: Partial<{
+          id: string;
+          user_id: string;
+          name: string;
+          icon: string;
+          sort_order: number;
           created_at: string;
         }>;
         Relationships: [];

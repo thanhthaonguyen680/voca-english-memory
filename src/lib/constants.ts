@@ -1,7 +1,8 @@
+import type { Language } from "@/lib/types";
+
 export const MAX_WORDS_PER_STORY = 30;
 export const CHAT_AI_NAME = "Ran Ran";
 
-export type Language = "en" | "zh";
 export const DEFAULT_LANGUAGE: Language = "en";
 
 export const LANGUAGES: { id: Language; label: string; flag: string }[] = [
@@ -14,7 +15,3 @@ export const SPEECH_LANG: Record<Language, string> = {
   en: "en-US",
   zh: "zh-CN",
 };
-
-export function isLanguage(value: unknown): value is Language {
-  return value === "en" || value === "zh";
-}

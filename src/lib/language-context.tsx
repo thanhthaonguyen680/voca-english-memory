@@ -1,7 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { DEFAULT_LANGUAGE, isLanguage, type Language } from "@/lib/constants";
+import { DEFAULT_LANGUAGE } from "@/lib/constants";
+import type { Language } from "@/lib/types";
+import { isLanguage } from "@/lib/utils/language";
 
 const STORAGE_KEY = "voca:language";
 

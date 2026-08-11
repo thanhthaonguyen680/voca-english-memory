@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import HistoryList from "@/components/HistoryList";
-import type { Language } from "@/lib/constants";
+import type { Language } from "@/lib/types";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
 type StoryRow = {

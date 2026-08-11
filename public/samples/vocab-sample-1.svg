@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#FDFBF6"/>
+  <line x1="0" y1="60" x2="400" y2="60" stroke="#E5E0D5" stroke-width="2"/>
+  <line x1="0" y1="110" x2="400" y2="110" stroke="#E5E0D5" stroke-width="2"/>
+  <line x1="0" y1="160" x2="400" y2="160" stroke="#E5E0D5" stroke-width="2"/>
+  <line x1="0" y1="210" x2="400" y2="210" stroke="#E5E0D5" stroke-width="2"/>
+  <line x1="0" y1="260" x2="400" y2="260" stroke="#E5E0D5" stroke-width="2"/>
+  <text x="20" y="38" font-family="Georgia, serif" font-size="20" font-weight="bold" fill="#111">Đồ vật hằng ngày</text>
+  <text x="20" y="90" font-family="Georgia, serif" font-size="19" fill="#222">Apple <tspan fill="#777">— quả táo</tspan></text>
+  <text x="20" y="140" font-family="Georgia, serif" font-size="19" fill="#222">Book <tspan fill="#777">— quyển sách</tspan></text>
+  <text x="20" y="190" font-family="Georgia, serif" font-size="19" fill="#222">Water <tspan fill="#777">— nước</tspan></text>
+  <text x="20" y="240" font-family="Georgia, serif" font-size="19" fill="#222">Chair <tspan fill="#777">— cái ghế</tspan></text>
+  <text x="20" y="288" font-family="Georgia, serif" font-size="19" fill="#222">Phone <tspan fill="#777">— điện thoại</tspan></text>
+</svg>

@@ -14,6 +14,27 @@ Mandatory rules for this project. Read before adding any new feature.
 - Deploy: Vercel free tier
 - Styling: plain Tailwind CSS, no component library (shadcn, MUI...) unless explicitly asked
 - Package manager: npm (don't add `yarn.lock` / `pnpm-lock.yaml`)
+- **Pure helper modules live in `src/lib/utils/`** (added 2026-08-09 — `crypto.ts`, `image.ts`,
+  `pronunciation.ts`, `speech.ts`, `streak.ts`, `language.ts`), not loose directly under
+  `src/lib/`. This is for generic, mostly-stateless helper *functions* only — it does **not**
+  include data modules (`grammar-data.ts`, `palace-data.ts`), shared constants (`constants.ts`),
+  React context (`language-context.tsx`), or service clients (`gemini/`, `supabase/` — these
+  follow their own documented, path-significant conventions below and must **not** be moved
+  into `utils/`). When adding a new stateless helper function, put it in `src/lib/utils/`; when
+  in doubt about whether something is a "util" vs one of the excluded categories, leave it
+  where files of that same kind already live rather than guessing.
+- **Shared cross-cutting domain types live in `src/lib/types.ts`** (added 2026-08-09 —
+  currently just `Language`). This is distinct from `src/lib/supabase/types.ts` (the generated
+  Supabase `Database` schema type — don't confuse the two or merge them). The bar for landing
+  in `src/lib/types.ts` is "used across many unrelated files as a standalone type," the way
+  `Language` is imported by ~20 files spanning routes/components/lib. A type that only
+  describes the shape of data defined right next to it in the same file (e.g. `Room` in
+  `palace-data.ts`, `Tense`/`GrammarQuestion` in `grammar-data.ts`, `StudyStreak` in
+  `utils/streak.ts`) should **stay co-located with that data**, not move here — splitting a
+  type away from the one constant/function it describes fragments a single cohesive concept
+  for no benefit. `constants.ts` still owns the actual *values* tied to `Language`
+  (`DEFAULT_LANGUAGE`, `LANGUAGES`, `SPEECH_LANG`) and imports the type from `types.ts` like
+  everyone else — it does not re-export it.
 
 ## Next.js 16 — common pitfalls
 
@@ -167,7 +188,7 @@ a confusing error like
   (`src/lib/gemini/client.ts`) as a last resort — keep that fallback, don't remove it even
   though the pool is meant to be the normal path.
 - Each pooled key is **encrypted before it ever reaches the database**
-  (`src/lib/crypto.ts`, AES-256-GCM, keyed off the server-only `ENCRYPTION_KEY` env var) and
+  (`src/lib/utils/crypto.ts`, AES-256-GCM, keyed off the server-only `ENCRYPTION_KEY` env var) and
   only decrypted server-side, inside `generateWithKeyPool()`, right before use.
 - `gemini_api_key_pool` is read/written exclusively via `createAdminClient()`
   (`src/lib/supabase/admin.ts`), a Supabase client built with `SUPABASE_SERVICE_ROLE_KEY` that
@@ -177,12 +198,15 @@ a confusing error like
   `createAdminClient` from anything that runs in the browser.
 - Add a key to the pool with `node scripts/add-gemini-key.mjs <api-key> [label]` — it
   reimplements the same AES-256-GCM encryption inline (a plain `.mjs` script can't import
-  `src/lib/crypto.ts`'s TypeScript) and auto-assigns the next `sort_order`. Don't insert keys
+  `src/lib/utils/crypto.ts`'s TypeScript) and auto-assigns the next `sort_order`. Don't insert keys
   by hand through the SQL editor — the encryption has to match `decrypt()`'s exact format
   (`iv:authTag:ciphertext`, each base64) or the pool will silently fail to decrypt that row.
 - `user_settings.gemini_api_key` and its migration/RLS are left in place but **dormant** — not
-  read or written by any current code path. Don't delete the table or `src/lib/crypto.ts`'s
-  `maskKey` (still used by the CLI script's confirmation output) without discussing first.
+  read or written by any current code path. Don't delete this table without discussing first.
+  (`src/lib/utils/crypto.ts`'s `maskKey` — originally for that dormant feature's settings UI —
+  was removed 2026-08-09 as unused dead code; `scripts/add-gemini-key.mjs` has always had its
+  own local copy for its confirmation output, since a plain `.mjs` script can't import
+  TypeScript, so nothing else depended on the exported one.)
 
 ## Vocabulary topics (`/vocabulary`, `/vocabulary/[topicId]`)
 
@@ -222,15 +246,30 @@ a confusing error like
   call `generate-story` with no `wordIds`, keeping the existing whole-topic-sample behavior.
 - Adding words to a topic happens two ways, both inserting directly into `vocabulary_entries`
   from the client (RLS-protected, no API route needed — same pattern as deleting a story):
-  - **Manual add** (`TopicDetail`'s "+ Thêm từ" form): one word + optional meaning at a time,
-    inserted immediately on submit.
-  - **Photo scan**: reuses `/api/scan-vocabulary` unchanged (it just extracts words from an
-    image; it doesn't know about topics), but the *client-side* handling is different from the
-    old `VocabularyForm` — see "Scan vocabulary from a photo" below for the review-before-save
-    step.
+  - **Manual add** (`TopicDetail`'s "+ Thêm từ" form): word + optional meaning + optional word
+    type (`<select>` over `WORD_TYPES`) at a time, inserted immediately on submit.
+  - **Photo scan**: reuses `/api/scan-vocabulary` (now also returning an inferred `type` per
+    word — see "Scan vocabulary from a photo" below), routed through `ScanPhotoModal.tsx`
+    rather than a direct file-input click — see that section for the modal/sample-set details.
   Both paths de-duplicate case-insensitively against words already in the topic
   (`isDuplicate()` in `TopicDetail.tsx`) before inserting, so re-scanning a page you already
-  added doesn't create duplicate word chips.
+  added doesn't create duplicate word cards.
+- **The saved word list renders as vertical cards, not wrapping pill chips** (redesigned
+  2026-08-09, matching a reference screenshot) — each card: word + a small circular badge
+  showing `word_type` (only rendered if set), the meaning underneath (or "Chưa có nghĩa"), and
+  three icon buttons — ✏️ edit, 🔊 listen, 🗑️ delete. The pill-chip layout couldn't fit a
+  part-of-speech badge or per-word actions cleanly, which is why this replaced it outright
+  rather than bolting the new fields onto the old chip.
+  - ✏️ **edit** (`handleStartEdit`/`handleSaveEdit`) opens an inline meaning input + word-type
+    `<select>` in place of the meaning line — a direct `.update({ meaning, word_type })` call,
+    same low-stakes-CRUD-from-the-client pattern as everything else on this page. Only meaning
+    and type are editable this way; the word text itself is not (renaming the word is not a
+    supported action — delete and re-add instead, consistent with how words work everywhere
+    else in the app).
+  - 🔊 **listen** calls the shared `speak()` helper with `SPEECH_LANG[topic.language]` — never
+    hardcode a language code here, same rule as every other TTS call site in the app.
+  - 🗑️ **delete** is the pre-existing `handleDeleteWord`, unchanged — still no `ConfirmDialog`
+    (see below), just relocated into the card's icon row instead of being the chip's "✕".
 - Removing a single word from a topic (`handleDeleteWord`) does **not** go through
   `ConfirmDialog`, unlike every other delete in the app — deliberately: a single word is
   trivial to re-add (unlike losing an entire story or writing), so a confirmation prompt would
@@ -240,6 +279,13 @@ a confusing error like
 - A topic word getting a meaning backfilled by a story-generation call (see the note in "API
   routes calling Gemini" above) means the topic's own word list can end up more complete over
   time purely from generating stories — that's intentional, not a side effect to prevent.
+- **"🪄 Tạo câu chuyện từ chủ đề này" and "🏰 Cung điện trí nhớ" live right under the topic
+  header** (moved 2026-08-09), above the scan/add-word controls and the word list — these are
+  the two highest-value actions on the page (generate a story, review via Memory Palace), and
+  they used to sit *below* the entire word list, meaning a topic with many words pushed them
+  out of view. Don't move them back below the word list; if new topic-level actions are added,
+  keep the "do something with this topic" buttons above the "manage this topic's raw word
+  list" controls, not after them.
 
 ## First-visit onboarding hint (`src/components/OnboardingHint.tsx`)
 
@@ -265,14 +311,189 @@ a confusing error like
   tour is wanted later, that's worth discussing as its own design rather than bolting onto
   this component.
 
+## Memory Palace (`/vocabulary/[topicId]/palace`, `/api/palace/generate`)
+
+- The homepage copy claims "Memory Palace" as one of the two techniques the app uses (the
+  other being Storytelling/`generate-story`) — this feature is what actually makes that claim
+  true, rather than the app only ever doing Storytelling. It shipped as a **simple first
+  version** (2026-08-08) and was then extended, at the user's explicit request, with
+  customizable rooms and a visual floor-plan map (both 2026-08-09) — see below. Still no
+  per-user multiple palaces (one room list per user, shared across every topic) and no true
+  hand-drawn architectural layout (the "floor plan" is a CSS grid of room tiles, not literal
+  room geometry) — those remain out of scope unless asked for explicitly.
+- **Rooms are per-user and customizable (added 2026-08-09)** — `palace_rooms` table (migration
+  `20260809122118_add_palace_rooms.sql`, composite PK `(user_id, id)`, RLS `auth.uid() =
+  user_id` on all 4 operations). This replaced the original fixed shared 8-room list. Each
+  user's row set is **lazily seeded**, not backfilled by migration:
+  `ensureUserRooms(supabase, userId)` in `src/lib/palace-data.ts` checks if the user has any
+  `palace_rooms` rows and, if not, inserts the original `DEFAULT_ROOMS` (same 8 rooms/icons)
+  using their **exact original id strings** (`"living-room"`, `"kitchen"`, ...) rather than
+  random ids — this is what keeps `vocabulary_entries.palace_room` values written before this
+  feature existed still resolving correctly once a user's rows get seeded, with zero data
+  migration needed. `ensureUserRooms` is called both from `/api/palace/generate` (before
+  assigning rooms) and from the palace page itself (`page.tsx`, so a fresh user opening
+  the room manager sees their seeded starter set immediately, not an empty list).
+- Room **CRUD is a client-side, RLS-protected modal** (`PalaceRoomsModal.tsx`, opened via the
+  "⚙️ Tuỳ chỉnh phòng" button on the palace page) — add (name + icon from `ROOM_ICONS`),
+  inline rename, inline icon change, delete, and drag-to-reorder (native HTML5 drag/drop, no
+  external DnD library — consistent with "plain Tailwind, no component library"). No API
+  route needed, same low-stakes-CRUD-from-the-client pattern as topic words. Reordering
+  persists by rewriting every room's `sort_order` to its new array index
+  (`persistOrder`, a `Promise.all` batch update — small N, same shape as the palace-generate
+  route's per-word batch update). **Deleting a room requires `ConfirmDialog`** (unlike single
+  topic-word deletion) because it can silently orphan every word currently assigned to that
+  room across *all* topics, not just one: `handleConfirmDelete` first nulls out
+  `palace_room` on any `vocabulary_entries` row pointing at that room id (so those words
+  become "pending" again and get reassigned on the topic's next generate call), *then*
+  deletes the room row. The delete button is disabled when only 1 room remains — a palace
+  needs at least one room to assign anything into.
+- Room **assignment is still round-robin, not manual** — `api/palace/generate/route.ts` calls
+  `ensureUserRooms()` to get the user's ordered room list, then assigns each pending word
+  (`vocabulary_entries` rows with `palace_room is null`, for one topic) to
+  `rooms[(startOffset + index) % rooms.length]`, where `startOffset` is how many words in
+  that topic already have a room. This makes repeat calls (as a topic keeps accumulating
+  words) continue the same room sequence instead of restarting at room 0 and clashing with
+  earlier assignments in the same room too soon. Unaffected by which rooms exist — it's just
+  cycling through whatever the user's current room list is at generation time.
+- **The mnemonic imagery is AI-generated, once, and stored** — `palace_imagery` on
+  `vocabulary_entries` (alongside `palace_room`) is written once per word and never
+  regenerated, unlike stories which are meant to vary each time. This is deliberate: Method of
+  Loci depends on a *consistent* image reinforcing the same mental location every time you
+  revisit it — a different image each visit would defeat the technique, not add variety.
+  `generateWithKeyPool()` is asked for "one vivid, exaggerated, slightly bizarre" Vietnamese
+  sentence per word specifically because stranger/more visual imagery is what makes the
+  technique work — don't tone this down to a plain, literal description.
+- Rate-limited via its own table, `palace_generations` (mirrors `chat_logs`/`vocab_scans`/
+  `grammar_checks` — just `user_id` + `created_at`), compared against
+  `MAX_PALACE_GENERATIONS_PER_DAY`. One call processes up to `MAX_WORDS_PER_STORY` pending
+  words at once (batched into a single Gemini request), not one call per word.
+- **`PalaceWalkthrough.tsx` has two views, `"map"` and `"session"`** (added 2026-08-09, the
+  floor-plan feature). `"map"` is the landing view: a CSS grid of room tiles (`roomStats`,
+  one per `rooms` entry) — **not** literal SVG/hand-drawn room geometry, a deliberate
+  simplification since rooms are now dynamic in count/identity per user (see above), so there's
+  no fixed architectural layout to draw. Each tile shows the room icon/name, its word count,
+  and a mastery-based tint (`avgMastery` of that room's words: emerald if ≥ `MASTERED_THRESHOLD`,
+  amber if partially learned, white if untouched, dashed/disabled gray if empty) — this reads
+  from each word's *persisted* `palace_mastery`, unlike the session progress bar below which is
+  session-only, because the map is a durable overview you glance at across visits, not a
+  live in-session counter. Clicking a tile (`startRoomSession`) starts a `"session"` scoped to
+  just that room's words; a separate "🔀 Ôn tất cả các phòng" button (`startFullSession`) starts
+  the original whole-topic deck. `"session"` is the pre-existing sequential card flow — one word
+  at a time like `ReviewSession`/`GrammarQuiz`'s card flow — room icon/name header, the imagery
+  sentence, a "👁️ Từ này là gì?" reveal, then the word + meaning plus a "✅ Nhớ rồi" /
+  "❌ Chưa nhớ" self-report (no AI grading, since judging free recall against a vivid image has
+  no single correct-answer shape to grade against) — unchanged by the map, just no longer the
+  only entry point. A "🗺️ Về sơ đồ nhà" button (`exitToMap`) returns to the map from mid-session
+  or from the results screen. Don't turn the map into a second, independent quiz implementation
+  — it only decides *which* words populate the same `deck`/`beginDeck` session machinery that
+  already existed; reuse that rather than duplicating card-flow logic per view. Generating more
+  imagery (`handleGeneratePalace`) and any room-manager change that can orphan word-room
+  assignments (`onWordsAffected`, see room deletion above) both funnel through the same
+  `handleWordsRefresh` → `exitToMap`, landing back on the map with fresh data rather than
+  silently resuming whatever session was active — the underlying room/word set just changed,
+  so continuing a stale deck could reference a room or word that no longer exists.
+- **Mastery tracking (added 2026-08-09)**: `vocabulary_entries.palace_mastery` is a Leitner-
+  style level (smallint, 0-5, migration `20260809093233_add_palace_mastery.sql`) nudged up on
+  "Nhớ rồi" and down on "Chưa nhớ" (`handleAnswer` in `PalaceWalkthrough.tsx`, a plain
+  client-side `.update()` — no API route needed, same low-stakes-CRUD pattern as deleting a
+  topic word). This is deliberately a lightweight in-place counter, **not** an event-log table
+  of every past review — the app doesn't need a history of individual attempts, only "how well
+  is this word known right now," so there's no `palace_reviews` table and no date-based due-for-
+  review scheduling. Don't add one unless a feature actually needs per-attempt history.
+  - **The walkthrough deck is sorted weakest-mastery-first** (`sortByMastery`) and snapshotted
+    into `deck` state **once** per session (on load, and again after generating more words) —
+    it is deliberately *not* re-sorted after every single answer, since a card jumping back to
+    "next" the instant you get it wrong would be a confusing moving target. This is the
+    lightweight stand-in for real spaced repetition: no due-dates, just "review the words you
+    know least, in a stable order, every time you open the palace."
+  - Wrong answers accumulate in `wrongIds` (session-only, reset every `beginDeck`) and unlock a
+    "🔁 Ôn lại N từ chưa nhớ" button on the results screen that starts a new deck scoped to
+    just those words — same `beginDeck`-funnels-every-entry-point shape as
+    `ReviewSession`'s `startSession`/`retryWrongCards`, reuse that pattern rather than
+    duplicating deck-building logic if a similar flow is needed elsewhere.
+  - The palace page header shows a progress bar + "M/N từ đã nhớ (X%)", where M is
+    **`index - wrongIds.size`** — a live tally of correct answers *in the current session*
+    only, out of `deck.length`. It deliberately does **not** read from persisted
+    `palace_mastery` (tried first, reverted): a word already at mastery ≥ 1 from a previous
+    session would make the header start at a nonzero/100% count before the user answered
+    anything in the new session, which read as broken/stuck. A plain session tally — 0 at the
+    start of every `beginDeck`, +1 per "✅ Nhớ rồi" — matches what a user actually watches
+    while working through the deck. This is independent from the per-card "Đang học"/
+    "Đã thuộc"/"Thành thạo" label, which *does* read the word's persisted, cross-session
+    `palace_mastery` — so a word can show "Đang học" on its card (from an earlier session)
+    while not yet counted in this session's "đã nhớ" tally (because you haven't answered it
+    yet this time around). Resets automatically every `beginDeck` call (new session, restart,
+    retry-wrong) since `index` and `wrongIds` both reset there.
+- `TopicDetail.tsx`'s "🏰 Cung điện trí nhớ" link only shows once the topic has at least one
+  word (same guard as the story-generation button) and always routes to the palace page, which
+  itself prompts "🏰 Tạo Cung điện trí nhớ cho N từ" if any words haven't been assigned a room
+  yet — don't require going back to the topic page to trigger generation.
+- **Richer per-word AI content + a per-room connecting story (added 2026-08-09)** — the user
+  asked for a full AI-tutor-style workflow (word analysis, house-tour room path, multi-type
+  quizzes, calendar-based spaced repetition with a 10-minute/1-day/3-day/.../30-day schedule).
+  Explicitly scoped down via `AskUserQuestion` to 3 choices, all "keep it simple": **(1)** stay
+  on the existing card-based review UI, no separate chat mode; **(2)** keep the existing 0-5
+  `palace_mastery` counter, no calendar/date-due scheduling table; **(3)** keep the existing
+  binary "✅ Nhớ rồi / ❌ Chưa nhớ" self-report, no multi-type quiz engine (position-recall,
+  image-recall, sentence-writing, etc.). Don't build those heavier pieces unless explicitly
+  asked again — this section documents what *did* ship from that request:
+  - `vocabulary_entries` gained `ipa`, `usage_note`, `example_sentence` (migration
+    `20260809141055_add_palace_word_detail.sql`), generated by `/api/palace/generate` in the
+    same Gemini call that already produces `palace_imagery` — one extra structured-output call
+    is not made per field, all fields come back in one `PALACE_RESPONSE_SCHEMA` response. Word
+    type reuses the existing `word_type` column from the topic-detail feature (`entry.word_type
+    || ai?.wordType`, same merge-don't-overwrite pattern as meaning elsewhere in the app) rather
+    than adding a parallel field.
+  - **`palace_room_stories`** (new table, PK `(topic_id, room_id)`) holds one connecting
+    Vietnamese narrative per **(topic, room)** pair — deliberately *not* per room alone, even
+    though `palace_rooms` is a shared per-user house: a physical room can hold words from
+    several unrelated topics (each topic independently round-robins its own words into the
+    shared room list — see round-robin note above), and the palace page only ever shows one
+    topic's slice of a room at a time. A single global per-room story would show narrative
+    content referencing another topic's words when viewed from here. It's regenerated
+    (upserted, overwriting the old value) on every generate call that adds a word to that room,
+    from the room's *entire* current roster for that topic (not just the newly-added words) —
+    so the story always covers every word currently visible in that room tile, not just the
+    latest batch.
+  - This requires a **second Gemini call per `/api/palace/generate` request** (one for
+    per-word content, one covering all rooms touched in that batch, via `ROOM_STORY_SCHEMA`) —
+    batched into a single call across all affected rooms rather than one call per room, to
+    avoid multiplying key-pool quota usage by the number of rooms touched. The room-story call
+    is wrapped in its own `try/catch` that only `console.error`s on failure and does **not**
+    fail the whole request — it's a bonus on top of content that's already been saved to
+    `vocabulary_entries` by that point, matching the "writing feedback must never block saving"
+    resilience pattern used elsewhere in the app.
+  - `PalaceWalkthrough.tsx`'s revealed-card state now shows the word-type badge, `/ipa/`,
+    `📝 usage_note`, and `💬 example_sentence` alongside the word/meaning. A room's connecting
+    story is shown as a standing amber banner for the whole room-scoped session (not just once)
+    — reads from `roomStories` state, refetched via `refetchRoomStories()` alongside
+    `refetchWords()` inside `handleWordsRefresh` any time content changes (new generation, or a
+    room-manager change that can affect room contents).
+
 ## Scan vocabulary from a photo (`/api/scan-vocabulary`)
 
 - Lets a learner photograph or upload an image (notebook page, textbook, flashcards) instead
-  of typing words by hand. `TopicDetail`'s hidden file input (`accept="image/*"
-  capture="environment"`) opens the phone camera directly on mobile while still falling back
-  to a normal file picker (with gallery access) on desktop/unsupported browsers — don't remove
-  `capture`, it's what makes "chụp ảnh" the default action instead of "chọn file".
-- The photo is downscaled client-side first (`src/lib/image.ts`, `compressImageToBase64` — max
+  of typing words by hand. Clicking "Scan ảnh AI" (top of `TopicDetail`) or "📸 Scan ảnh trang
+  sách" (empty-state card) opens **`ScanPhotoModal.tsx`** (added 2026-08-09) rather than
+  triggering a file picker directly — the modal offers three explicit entry points: drag-and-
+  drop a file onto the dashed zone, "📷 Mở Camera", or "Chọn file". This needs **two separate
+  hidden `<input type="file">`s** in `TopicDetail.tsx` — `cameraInputRef` (`accept="image/*"
+  capture="environment"`) and `fileInputRef` (`accept="image/*"`, no `capture`) — because the
+  `capture` attribute forces a camera prompt on mobile, which is wrong for "Chọn file" (should
+  open the gallery/file system, not the camera). The modal itself never touches file inputs
+  directly; it calls `onOpenCamera`/`onChooseFile` props that `TopicDetail` wires to
+  `cameraInputRef.current?.click()` / `fileInputRef.current?.click()`.
+- **Sample word sets (`SAMPLE_SETS` in `ScanPhotoModal.tsx`)** let a learner try the feature
+  with zero setup — two clickable thumbnails ("Đồ vật hằng ngày", "Cảm xúc") rendered from
+  static SVGs in `public/samples/` (hand-authored notebook-page mockups, not real photos: no
+  image-generation tool was available, and there was no real sample photo to bundle). Clicking
+  one **skips the Gemini OCR round-trip entirely** — `onUseSample` feeds a small hardcoded
+  `{word, meaning, wordType}[]` straight into `TopicDetail`'s `pending` review list, exactly as
+  if it had been scanned. This is deliberate, not a shortcut to fix later: a demo path doesn't
+  need real OCR (nothing to extract, the words are already known), and skipping the API call
+  means trying the sample costs zero `MAX_VOCAB_SCANS_PER_DAY` quota. Keep sample words simple
+  (basic nouns/adjectives) — the point is an approachable first impression, not a stress test.
+- The photo is downscaled client-side first (`src/lib/utils/image.ts`, `compressImageToBase64` — max
   1600px on the long edge, JPEG quality 0.85) before being base64-encoded and POSTed. This
   keeps the payload well under Vercel's serverless body-size limit and reduces Gemini's image
   token cost; don't send the original full-resolution file.
@@ -289,6 +510,14 @@ a confusing error like
   list); otherwise the model must return an empty string. Don't relax this to "guess a
   reasonable meaning" — that would silently produce wrong meanings the learner didn't ask for
   (the AI-generated meaning during actual story generation is a different, intentional case).
+- **`type` (part of speech) is the one field the model IS asked to infer**, unlike `meaning` —
+  added 2026-08-09 alongside `vocabulary_entries.word_type` (migration
+  `20260809133316_add_word_type.sql`, nullable free text). The distinction: a translation can
+  be flat-out wrong and mislead a learner, but "book" being tagged `n` even though the image
+  never wrote "n" next to it is safe, general-knowledge inference, not a guess that could
+  embarrass the app. `SCAN_RESPONSE_SCHEMA` asks for a short abbreviation (`n`/`v`/`adj`/`adv`/
+  `phrase`) — the same fixed set used by `WORD_TYPES` in `TopicDetail.tsx` for the manual-add
+  and inline-edit `<select>`s. Keep both lists in sync if this set ever changes.
 - The route itself just extracts words from an image — it doesn't know about topics. Scanned
   words come back to `TopicDetail` as a **pending review list** (editable word/meaning,
   removable per row) rather than being saved immediately; the learner reviews for OCR mistakes
@@ -320,7 +549,7 @@ a confusing error like
 - AI replies are automatically read aloud via `speak()` (same TTS helper as everywhere else)
   the moment they arrive — that auto-play is the actual point of this feature ("AI nói tương
   tác lại"), don't make it opt-in/behind a button.
-- Voice input (`getSpeechRecognitionConstructor`, from `src/lib/pronunciation.ts`, already used
+- Voice input (`getSpeechRecognitionConstructor`, from `src/lib/utils/pronunciation.ts`, already used
   by `PronunciationCheck`) fills the text input rather than auto-sending — the learner can
   review/edit a mis-transcribed sentence before it's sent, consistent with how the rest of the
   app treats speech recognition as an input aid, not a blind auto-submit.
@@ -398,7 +627,7 @@ a confusing error like
 ## Voice (text-to-speech)
 
 - Pronunciation/story playback uses the browser's built-in Web Speech API
-  (`window.speechSynthesis`, wrapped in `src/lib/speech.ts`) — free, no API key, no extra
+  (`window.speechSynthesis`, wrapped in `src/lib/utils/speech.ts`) — free, no API key, no extra
   dependency. Don't introduce a paid TTS API (Gemini TTS, ElevenLabs, etc.) unless explicitly
   asked, since it would break the free-tier-only constraint.
 - Buttons that call `speak()` render unconditionally (no `typeof window` check at render time)
@@ -424,7 +653,7 @@ a confusing error like
 
 ## Study streak
 
-- The daily streak (`src/lib/streak.ts`, `getStudyStreak`) is **derived** from
+- The daily streak (`src/lib/utils/streak.ts`, `getStudyStreak`) is **derived** from
   `stories.created_at` — a day counts if the user generated at least one story that day. No
   separate streak table/column. Don't add one; recompute from `stories` instead, to avoid two
   sources of truth that can drift.
@@ -506,7 +735,7 @@ a confusing error like
 - Pronunciation check (`src/components/PronunciationCheck.tsx`) uses the browser's
   `SpeechRecognition` / `webkitSpeechRecognition` API — free, no key, no dependency, same
   "free-tier only" reasoning as the `speak()` TTS helper. It has no official TypeScript types
-  in `lib.dom`, so `src/lib/pronunciation.ts` declares a minimal local interface instead of
+  in `lib.dom`, so `src/lib/utils/pronunciation.ts` declares a minimal local interface instead of
   pulling in an extra `@types` package. Not all browsers support it (notably Safari/Firefox
   are inconsistent) — the component must degrade to an "unsupported" state, never throw.
 
@@ -540,7 +769,7 @@ a confusing error like
   a Chinese IME can't reliably type characters under quiz time pressure, but anyone can type
   romanized Pinyin. `isCorrectAnswer` in `ReviewSession.tsx` branches on `language`: for `zh`
   in the `vi-en` direction it compares the typed answer against `card.ipa` (the Pinyin) via
-  `normalizePinyin()` (`src/lib/pronunciation.ts` — NFD-normalizes and strips combining tone
+  `normalizePinyin()` (`src/lib/utils/pronunciation.ts` — NFD-normalizes and strips combining tone
   diacritics + spaces) instead of `normalizeForCompare()` against the Hán tự. This means a
   learner can type `"ni hao"`, `"nihao"`, or `"nǐ hǎo"` and all grade as correct — tone marks
   are optional, not required. The Anh↔Việt path is untouched (still `normalizeForCompare`

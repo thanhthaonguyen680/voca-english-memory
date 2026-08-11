@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent } from "react";
-import { speak } from "@/lib/speech";
-import { getSpeechRecognitionConstructor } from "@/lib/pronunciation";
-import { CHAT_AI_NAME, LANGUAGES, SPEECH_LANG, type Language } from "@/lib/constants";
+import { speak } from "@/lib/utils/speech";
+import { getSpeechRecognitionConstructor } from "@/lib/utils/pronunciation";
+import { CHAT_AI_NAME, LANGUAGES, SPEECH_LANG } from "@/lib/constants";
+import type { Language } from "@/lib/types";
 import { useLanguage } from "@/lib/language-context";
 
 type Turn = { role: "user" | "model"; text: string };

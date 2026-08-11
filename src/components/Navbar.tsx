@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getStudyStreak } from "@/lib/streak";
+import { getStudyStreak } from "@/lib/utils/streak";
 import SignOutButton from "@/components/SignOutButton";
 import StreakBadge from "@/components/StreakBadge";
 import MobileMenu from "@/components/MobileMenu";

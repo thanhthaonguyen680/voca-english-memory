@@ -3,7 +3,9 @@ import { Type } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
 import { STORY_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
-import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE, isLanguage, type Language } from "@/lib/constants";
+import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE } from "@/lib/constants";
+import type { Language } from "@/lib/types";
+import { isLanguage } from "@/lib/utils/language";
 import type { VocabularyItem } from "@/lib/supabase/types";
 
 function shuffle<T>(items: T[]): T[] {
