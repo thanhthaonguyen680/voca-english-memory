@@ -217,6 +217,21 @@ a confusing error like
   accumulate words into it over time — via the manual add form or the photo scanner — and
   generate a story from however many words it currently holds, whenever you want. Don't bring
   back a "type words → generate immediately" page; that's what this replaced and why.
+- **`TopicDetail.tsx` is a container split across 4 files** (split 2026-08-12, it had grown to
+  ~710 lines): `TopicDetail.tsx` owns `words`/`mode`/`story` state and the top-level
+  list/review/story switch; `TopicWordCapture.tsx` owns the entire "get more words in" flow
+  (scan button + modal, pending-review list, manual add form, and the empty-state CTA — all
+  four stay together because they share one `scanModalOpen`/`showAddForm` trigger, splitting
+  the empty-state's duplicate buttons out would mean two components fighting over one modal);
+  `TopicWordList.tsx` owns the saved-word cards (inline edit/speak/delete) and only needs
+  `words` + 2 callbacks, no scan/story state; `TopicStoryView.tsx` is the read-only generated-
+  story screen. `Word`/`PendingWord`/`Topic`/`GeneratedStory` types are defined once in
+  `TopicDetail.tsx` and imported as types into the other three — don't redefine them locally in
+  a child file, and don't move them to a separate types file just for this (they're this
+  container's view-model, not cross-cutting domain types — see `src/lib/types.ts`'s bar for
+  that). If `TopicWordCapture.tsx` grows further, it's still one cohesive concern (adding
+  words) — resist fragmenting it into "scan half" / "manual-add half" unless it grows enough to
+  justify the prop-plumbing cost.
 - Topic creation is a **modal**, not an inline expanding form — picked emoji icon
   (`TOPIC_ICONS` in `TopicList.tsx`, stored in the `vocabulary_topics.icon` column, default
   `📚`) shown as a live preview badge next to the modal title, uppercase field labels
@@ -279,6 +294,18 @@ a confusing error like
 - A topic word getting a meaning backfilled by a story-generation call (see the note in "API
   routes calling Gemini" above) means the topic's own word list can end up more complete over
   time purely from generating stories — that's intentional, not a side effect to prevent.
+  Pronunciation (`ipa`) is backfilled the same way (added 2026-08-11,
+  `generate-story/route.ts`) — Gemini already computes an `ipa` per word for the story's own
+  `vocabulary_used` snapshot, so writing it back onto the topic's row when null is free (no
+  extra Gemini call). Meaning and `ipa` gap-fill **independently** via two separate
+  `.is(column, null)`-guarded updates, since a word can be missing one but not the other —
+  don't collapse them into a single update call.
+- **The word list cards show IPA/Pinyin pronunciation** next to the word-type badge (styled
+  `/ipa/`, added 2026-08-11) when `vocabulary_entries.ipa` is set. Unlike `word_type`, there is
+  **no manual input for `ipa`** in the add-word form or the inline edit (✏️) — it's populated
+  only by AI (scan, story generation, or Memory Palace generation), read-only in the topic
+  view. If manual pronunciation entry/editing is wanted later, that's a deliberate follow-up,
+  not an oversight.
 - **"🪄 Tạo câu chuyện từ chủ đề này" and "🏰 Cung điện trí nhớ" live right under the topic
   header** (moved 2026-08-09), above the scan/add-word controls and the word list — these are
   the two highest-value actions on the page (generate a story, review via Memory Palace), and
@@ -367,6 +394,18 @@ a confusing error like
   `grammar_checks` — just `user_id` + `created_at`), compared against
   `MAX_PALACE_GENERATIONS_PER_DAY`. One call processes up to `MAX_WORDS_PER_STORY` pending
   words at once (batched into a single Gemini request), not one call per word.
+- **`PalaceWalkthrough.tsx` is a container split across 3 files** (split 2026-08-12, it had
+  grown to ~480 lines): `PalaceWalkthrough.tsx` owns all state (words/rooms/deck/view/etc.) and
+  every handler, and renders the shared header/story-banner/progress-bar chrome plus whichever
+  view is active; `PalaceMap.tsx` is a pure view of `roomStats` (props only, no state of its
+  own — mastery tinting logic reuses `masteryLabel`/`MASTERED_THRESHOLD` from
+  `palace-data.ts`, don't reimplement it here); `PalaceSession.tsx` renders both the active
+  flashcard *and* the results screen (kept as one file since they're really one state machine
+  reacting to `index >= deck.length`, not two independent views). `masteryLabel`,
+  `MASTERED_THRESHOLD`, and `MAX_MASTERY` moved from this file into `palace-data.ts` since both
+  `PalaceMap` and `PalaceSession` need them — don't duplicate them locally in either child. The
+  `Word` view-model type is still defined once in `PalaceWalkthrough.tsx` and imported as a
+  type into the two children, same pattern as `TopicDetail.tsx`'s split above.
 - **`PalaceWalkthrough.tsx` has two views, `"map"` and `"session"`** (added 2026-08-09, the
   floor-plan feature). `"map"` is the landing view: a CSS grid of room tiles (`roomStats`,
   one per `rooms` entry) — **not** literal SVG/hand-drawn room geometry, a deliberate
@@ -510,14 +549,18 @@ a confusing error like
   list); otherwise the model must return an empty string. Don't relax this to "guess a
   reasonable meaning" — that would silently produce wrong meanings the learner didn't ask for
   (the AI-generated meaning during actual story generation is a different, intentional case).
-- **`type` (part of speech) is the one field the model IS asked to infer**, unlike `meaning` —
-  added 2026-08-09 alongside `vocabulary_entries.word_type` (migration
-  `20260809133316_add_word_type.sql`, nullable free text). The distinction: a translation can
-  be flat-out wrong and mislead a learner, but "book" being tagged `n` even though the image
-  never wrote "n" next to it is safe, general-knowledge inference, not a guess that could
-  embarrass the app. `SCAN_RESPONSE_SCHEMA` asks for a short abbreviation (`n`/`v`/`adj`/`adv`/
-  `phrase`) — the same fixed set used by `WORD_TYPES` in `TopicDetail.tsx` for the manual-add
-  and inline-edit `<select>`s. Keep both lists in sync if this set ever changes.
+- **`type` (part of speech) and `pronunciation` (IPA/Pinyin) are fields the model IS asked to
+  infer**, unlike `meaning` — `type` added 2026-08-09 alongside `vocabulary_entries.word_type`
+  (migration `20260809133316_add_word_type.sql`, nullable free text); `pronunciation` added
+  2026-08-11 feeding `vocabulary_entries.ipa`. The distinction: a translation can be flat-out
+  wrong and mislead a learner, but "book" being tagged `n`, or given an IPA transcription, even
+  though the image never wrote either next to it, is safe general-knowledge inference, not a
+  guess that could embarrass the app. `SCAN_RESPONSE_SCHEMA` asks for a short part-of-speech
+  abbreviation (`n`/`v`/`adj`/`adv`/`phrase` — the same fixed set used by `WORD_TYPES` in
+  `TopicDetail.tsx` for the manual-add and inline-edit `<select>`s, keep both lists in sync)
+  plus a `PRONUNCIATION_HINT`-driven pronunciation string (IPA for English, Pinyin with tone
+  marks for Chinese — same per-language hint pattern as `/api/palace/generate`, don't hardcode
+  "IPA" for both languages).
 - The route itself just extracts words from an image — it doesn't know about topics. Scanned
   words come back to `TopicDetail` as a **pending review list** (editable word/meaning,
   removable per row) rather than being saved immediately; the learner reviews for OCR mistakes
@@ -669,6 +712,18 @@ a confusing error like
 
 ## Vocabulary review (`/review`)
 
+- **`/review` is dormant, not deleted (as of 2026-08-11)** — the nav links to it (`Navbar.tsx`,
+  `MobileMenu.tsx`) were removed once `TopicDetail.tsx` gained its own in-topic "📝 Ôn tập từ
+  vựng" button (reviews a topic's *live current word list* directly, no story required — see
+  "Vocabulary topics" above). The user explicitly chose in-topic review as the primary flow
+  going forward and didn't want a link back to `/review` restored. The route/page/
+  `ReviewStoryList` component are all still fully functional if visited directly — they were
+  intentionally left in place (same "dormant, not dead" treatment as `/auth/callback`) rather
+  than deleted, since they cover a genuinely different scope than in-topic review: a per-story
+  *frozen* deck (that story's exact `vocabulary_used` snapshot, unaffected by later edits to
+  the topic's live words) versus the topic's *current* word bank. Don't silently re-add a nav
+  link — if `/review` is wanted back in the UI, that's a decision to make explicitly, not a
+  "just restore the old link" fix.
 - **Review decks are scoped one-per-story, never merged.** `review/page.tsx` reads `stories`
   (`id, content, vocabulary_used, created_at`) directly — each story's own `vocabulary_used`
   jsonb array *is* its deck. `ReviewStoryList` shows a picker (snippet + word chips + date);

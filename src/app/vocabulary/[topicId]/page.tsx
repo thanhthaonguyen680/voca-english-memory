@@ -34,7 +34,7 @@ export default async function TopicPage({
   const [{ data: words }, { data: latestStory }] = await Promise.all([
     supabase
       .from("vocabulary_entries")
-      .select("id, word, meaning, word_type")
+      .select("id, word, meaning, word_type, ipa")
       .eq("topic_id", topicId)
       .eq("user_id", user.id)
       .order("created_at", { ascending: true }),
@@ -63,6 +63,7 @@ export default async function TopicPage({
           word: w.word,
           meaning: w.meaning,
           wordType: w.word_type,
+          ipa: w.ipa,
         }))}
         initialStory={
           latestStory

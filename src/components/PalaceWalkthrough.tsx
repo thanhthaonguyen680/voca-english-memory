@@ -3,10 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import type { Room } from "@/lib/palace-data";
+import { MAX_MASTERY, type Room } from "@/lib/palace-data";
 import PalaceRoomsModal from "@/components/PalaceRoomsModal";
+import PalaceMap from "@/components/PalaceMap";
+import PalaceSession from "@/components/PalaceSession";
 
-type Word = {
+// Shared with PalaceMap.tsx / PalaceSession.tsx — this file stays the source of truth for this
+// view-model shape since it owns the state it describes.
+export type Word = {
   id: string;
   word: string;
   meaning: string | null;
@@ -21,9 +25,6 @@ type Word = {
 
 type Topic = { id: string; name: string; icon: string };
 
-const MAX_MASTERY = 5;
-const MASTERED_THRESHOLD = 3;
-
 function isAssigned(word: Word) {
   return Boolean(word.palaceRoom && word.palaceImagery);
 }
@@ -31,18 +32,6 @@ function isAssigned(word: Word) {
 function sortByMastery(list: Word[]) {
   return [...list].sort((a, b) => a.palaceMastery - b.palaceMastery);
 }
-
-function masteryLabel(level: number) {
-  if (level >= MAX_MASTERY) return "Thành thạo";
-  if (level >= MASTERED_THRESHOLD) return "Đã thuộc";
-  if (level > 0) return "Đang học";
-  return "Mới";
-}
-
-const ROOM_TILE_BASE =
-  "flex flex-col items-center justify-center gap-1 rounded-2xl border-2 p-4 text-center transition-all";
-const ROOM_TILE_ACTIVE =
-  "border-black shadow-[3px_3px_0_0_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none";
 
 export default function PalaceWalkthrough({
   topic,
@@ -321,152 +310,26 @@ export default function PalaceWalkthrough({
           </p>
         </div>
       ) : view === "map" ? (
-        <div className="flex flex-col gap-4">
-          <button
-            type="button"
-            onClick={startFullSession}
-            className="self-start rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
-          >
-            🔀 Ôn tất cả các phòng ({assignedWords.length} từ)
-          </button>
-
-          <div className="rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {roomStats.map(({ room, count, avgMastery }) => {
-                const tint =
-                  count === 0
-                    ? "border-dashed border-neutral-300 bg-neutral-50 opacity-60 cursor-not-allowed"
-                    : avgMastery >= MASTERED_THRESHOLD
-                      ? `${ROOM_TILE_ACTIVE} bg-emerald-50`
-                      : avgMastery > 0
-                        ? `${ROOM_TILE_ACTIVE} bg-amber-50`
-                        : `${ROOM_TILE_ACTIVE} bg-white`;
-
-                return (
-                  <button
-                    key={room.id}
-                    type="button"
-                    onClick={() => startRoomSession(room.id)}
-                    disabled={count === 0}
-                    className={`${ROOM_TILE_BASE} ${tint}`}
-                  >
-                    <span className="text-3xl">{room.icon}</span>
-                    <span className="text-sm font-semibold text-black">{room.name}</span>
-                    <span className="text-xs text-neutral-500">
-                      {count === 0 ? "Chưa có từ" : `${count} từ · ${masteryLabel(avgMastery)}`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      ) : index >= deck.length ? (
-        <div className="rounded-2xl border-2 border-black bg-emerald-50 p-6 text-center shadow-[5px_5px_0_0_#000]">
-          <p className="text-lg font-semibold text-emerald-800">
-            🎉 Bạn đã đi hết {deck.length} phòng — đúng {correctSoFar}, sai {wrongIds.size}!
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-3">
-            {wrongIds.size > 0 && (
-              <button
-                type="button"
-                onClick={handleRetryWrong}
-                className="rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
-              >
-                🔁 Ôn lại {wrongIds.size} từ chưa nhớ
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={handleRestart}
-              className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
-            >
-              Đi lại từ đầu
-            </button>
-            <button
-              type="button"
-              onClick={exitToMap}
-              className="rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
-            >
-              🗺️ Về sơ đồ nhà
-            </button>
-          </div>
-        </div>
+        <PalaceMap
+          assignedWordsCount={assignedWords.length}
+          roomStats={roomStats}
+          onStartFull={startFullSession}
+          onStartRoom={startRoomSession}
+        />
       ) : (
-        (() => {
-          const current = deck[index];
-          const room = rooms.find((r) => r.id === current.palaceRoom);
-          return (
-            <div className="rounded-2xl border-2 border-black bg-white p-6 shadow-[5px_5px_0_0_#000]">
-              <div className="mb-4 flex items-center justify-between text-xs text-neutral-400">
-                <span>
-                  {room?.icon} {room?.name ?? "Phòng"}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full border-2 border-black bg-white px-2 py-0.5 font-semibold text-neutral-600">
-                    {masteryLabel(current.palaceMastery)}
-                  </span>
-                  <span>
-                    {index + 1}/{deck.length}
-                  </span>
-                </div>
-              </div>
-
-              <p className="mb-1 text-xs font-medium text-neutral-400">Hình ảnh liên tưởng</p>
-              <p className="mb-6 text-lg font-semibold text-black">{current.palaceImagery}</p>
-
-              {!revealed ? (
-                <button
-                  type="button"
-                  onClick={handleReveal}
-                  className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
-                >
-                  👁️ Từ này là gì?
-                </button>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  <div className="rounded-lg border-2 border-black bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-                    <p>
-                      <span className="font-semibold text-black">{current.word}</span>
-                      {current.wordType && (
-                        <span className="ml-1.5 rounded-full border border-emerald-700 px-1.5 py-0.5 text-xs font-semibold text-emerald-700">
-                          {current.wordType}
-                        </span>
-                      )}
-                      {current.ipa && <span className="ml-1.5 text-emerald-800">/{current.ipa}/</span>}
-                      {current.meaning && <> — {current.meaning}</>}
-                    </p>
-                    {current.usageNote && (
-                      <p className="mt-1.5 text-xs text-emerald-800">📝 {current.usageNote}</p>
-                    )}
-                    {current.exampleSentence && (
-                      <p className="mt-1 text-xs italic text-emerald-800">
-                        💬 {current.exampleSentence}
-                      </p>
-                    )}
-                  </div>
-                  <p className="text-xs text-neutral-500">Bạn có nhớ ra từ này không?</p>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => handleAnswer(false)}
-                      className="rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
-                    >
-                      ❌ Chưa nhớ
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleAnswer(true)}
-                      className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
-                    >
-                      ✅ Nhớ rồi
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })()
+        <PalaceSession
+          deck={deck}
+          index={index}
+          revealed={revealed}
+          wrongIds={wrongIds}
+          rooms={rooms}
+          correctSoFar={correctSoFar}
+          onReveal={handleReveal}
+          onAnswer={handleAnswer}
+          onRetryWrong={handleRetryWrong}
+          onRestart={handleRestart}
+          onExitToMap={exitToMap}
+        />
       )}
 
       <PalaceRoomsModal

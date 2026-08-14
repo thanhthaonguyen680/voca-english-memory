@@ -69,3 +69,13 @@ export async function ensureUserRooms(
 
   return DEFAULT_ROOMS;
 }
+
+export const MAX_MASTERY = 5;
+export const MASTERED_THRESHOLD = 3;
+
+export function masteryLabel(level: number) {
+  if (level >= MAX_MASTERY) return "Thành thạo";
+  if (level >= MASTERED_THRESHOLD) return "Đã thuộc";
+  if (level > 0) return "Đang học";
+  return "Mới";
+}

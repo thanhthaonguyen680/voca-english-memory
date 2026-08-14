@@ -18,6 +18,11 @@ const LANGUAGE_NAME: Record<Language, string> = {
   zh: "Chinese (Simplified, Hán tự)",
 };
 
+const PRONUNCIATION_HINT: Record<Language, string> = {
+  en: "IPA transcription, e.g. /wɜːrd/",
+  zh: "Pinyin romanization with tone marks, e.g. nǐ hǎo",
+};
+
 const SCAN_RESPONSE_SCHEMA = {
   type: Type.OBJECT,
   properties: {
@@ -41,15 +46,21 @@ const SCAN_RESPONSE_SCHEMA = {
               "adv, or phrase. Unlike meaning, this is safe to infer from general knowledge " +
               "of the word even if not written in the image.",
           },
+          pronunciation: {
+            type: Type.STRING,
+            description: "The word's pronunciation. See the format requested in the prompt.",
+          },
         },
-        required: ["word", "meaning", "type"],
+        required: ["word", "meaning", "type", "pronunciation"],
       },
     },
   },
   required: ["words"],
 };
 
-type ScanResult = { words: { word: string; meaning: string; type: string }[] };
+type ScanResult = {
+  words: { word: string; meaning: string; type: string; pronunciation: string }[];
+};
 
 function startOfTodayISO() {
   const start = new Date();
@@ -133,7 +144,8 @@ export async function POST(request: Request) {
                 "vocabulary entries. If a Vietnamese meaning is also clearly written right " +
                 `next to a word, include it — otherwise leave meaning as an empty string, ` +
                 "never guess one. Also give each word's most common part of speech (n, v, " +
-                `adj, adv, or phrase). Return at most ${MAX_WORDS_PER_STORY} words.`,
+                "adj, adv, or phrase) and its pronunciation as " +
+                `${PRONUNCIATION_HINT[language]}. Return at most ${MAX_WORDS_PER_STORY} words.`,
             },
             { inlineData: { mimeType, data: imageBase64 } },
           ],
@@ -161,6 +173,7 @@ export async function POST(request: Request) {
       word: String(entry.word ?? "").trim(),
       meaning: String(entry.meaning ?? "").trim() || undefined,
       type: String(entry.type ?? "").trim() || undefined,
+      pronunciation: String(entry.pronunciation ?? "").trim() || undefined,
     }))
     .filter((entry) => entry.word.length > 0)
     .slice(0, MAX_WORDS_PER_STORY);

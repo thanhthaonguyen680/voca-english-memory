@@ -3,7 +3,7 @@
 import { useState, type DragEvent } from "react";
 import Image from "next/image";
 
-export type SampleWord = { word: string; meaning: string; wordType: string };
+export type SampleWord = { word: string; meaning: string; wordType: string; ipa: string };
 type SampleSet = { id: string; label: string; image: string; words: SampleWord[] };
 
 const SAMPLE_SETS: SampleSet[] = [
@@ -12,11 +12,11 @@ const SAMPLE_SETS: SampleSet[] = [
     label: "Đồ vật hằng ngày",
     image: "/samples/vocab-sample-1.svg",
     words: [
-      { word: "apple", meaning: "quả táo", wordType: "n" },
-      { word: "book", meaning: "quyển sách", wordType: "n" },
-      { word: "water", meaning: "nước", wordType: "n" },
-      { word: "chair", meaning: "cái ghế", wordType: "n" },
-      { word: "phone", meaning: "điện thoại", wordType: "n" },
+      { word: "apple", meaning: "quả táo", wordType: "n", ipa: "ˈæp.əl" },
+      { word: "book", meaning: "quyển sách", wordType: "n", ipa: "bʊk" },
+      { word: "water", meaning: "nước", wordType: "n", ipa: "ˈwɔː.tər" },
+      { word: "chair", meaning: "cái ghế", wordType: "n", ipa: "tʃer" },
+      { word: "phone", meaning: "điện thoại", wordType: "n", ipa: "foʊn" },
     ],
   },
   {
@@ -24,11 +24,11 @@ const SAMPLE_SETS: SampleSet[] = [
     label: "Cảm xúc",
     image: "/samples/vocab-sample-2.svg",
     words: [
-      { word: "happy", meaning: "vui vẻ", wordType: "adj" },
-      { word: "sad", meaning: "buồn", wordType: "adj" },
-      { word: "angry", meaning: "tức giận", wordType: "adj" },
-      { word: "tired", meaning: "mệt mỏi", wordType: "adj" },
-      { word: "excited", meaning: "hào hứng", wordType: "adj" },
+      { word: "happy", meaning: "vui vẻ", wordType: "adj", ipa: "ˈhæp.i" },
+      { word: "sad", meaning: "buồn", wordType: "adj", ipa: "sæd" },
+      { word: "angry", meaning: "tức giận", wordType: "adj", ipa: "ˈæŋ.ɡri" },
+      { word: "tired", meaning: "mệt mỏi", wordType: "adj", ipa: "taɪərd" },
+      { word: "excited", meaning: "hào hứng", wordType: "adj", ipa: "ɪkˈsaɪ.tɪd" },
     ],
   },
 ];

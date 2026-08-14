@@ -269,10 +269,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Không thể lưu câu chuyện." }, { status: 500 });
   }
 
-  // Best-effort: if a topic word had no meaning yet, backfill it with the one Gemini just
-  // generated for the story, so the topic's word list reads better next time it's viewed.
-  await Promise.all(
-    enrichedWords
+  // Best-effort: if a topic word is missing a meaning or pronunciation, backfill it with what
+  // Gemini just generated for the story, so the topic's word list reads better next time it's
+  // viewed. Meaning and ipa gap-fill independently (a word can have one but not the other), so
+  // each gets its own `.is(..., null)`-guarded update rather than one combined call.
+  await Promise.all([
+    ...enrichedWords
       .filter((entry) => entry.meaning)
       .map((entry) =>
         supabase
@@ -283,7 +285,18 @@ export async function POST(request: Request) {
           .eq("word", entry.word)
           .is("meaning", null),
       ),
-  );
+    ...enrichedWords
+      .filter((entry) => entry.ipa)
+      .map((entry) =>
+        supabase
+          .from("vocabulary_entries")
+          .update({ ipa: entry.ipa })
+          .eq("topic_id", topicId)
+          .eq("user_id", user.id)
+          .eq("word", entry.word)
+          .is("ipa", null),
+      ),
+  ]);
 
   return NextResponse.json({ story });
 }

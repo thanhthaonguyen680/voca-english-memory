@@ -31,9 +31,6 @@ export default async function Navbar() {
               <Link href="/vocabulary" className="text-neutral-600 hover:text-black">
                 Nhập từ vựng
               </Link>
-              <Link href="/review" className="text-neutral-600 hover:text-black">
-                Ôn tập
-              </Link>
               <Link href="/chat" className="text-neutral-600 hover:text-black">
                 Luyện nói
               </Link>
@@ -42,9 +39,6 @@ export default async function Navbar() {
               </Link>
               <Link href="/grammar" className="text-neutral-600 hover:text-black">
                 Ngữ pháp
-              </Link>
-              <Link href="/history" className="text-neutral-600 hover:text-black">
-                Lịch sử học
               </Link>
               <LanguageSwitcher />
               <SignOutButton />
