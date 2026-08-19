@@ -892,6 +892,22 @@ secret there.
 
 ## UI / UX
 
+- **App icon for "Add to Home Screen" (added 2026-08-19)** — `src/app/icon.svg` (existing) only
+  covers the browser-tab favicon; it does **not** work as a home-screen icon since iOS Safari
+  requires a PNG for that, and Android's manifest icons need specific pixel sizes. Three more
+  file-convention files fill that gap: `src/app/apple-icon.tsx` (180×180, read directly by iOS,
+  no manifest involved there) and `src/app/manifest.ts` (Android/Chrome "Add to Home Screen"
+  branding — name, `display: "standalone"`, theme/background color) referencing
+  `src/app/icon-192/route.tsx` and `icon-512/route.tsx`. All four render the same design (solid
+  `#6ee7b7` emerald background, bold black "V", **no border or rounded corners** — unlike the
+  bordered/rounded `icon.svg` favicon, since iOS/Android apply their own mask over a full-bleed
+  square and a pre-rounded image would double up the edge) via `next/og`'s `ImageResponse`
+  (Satori-rendered JSX → PNG at request time) rather than committing static PNG binaries — this
+  keeps the icon defined in code and trivially restylable without an image editor. The 192/512
+  sizes live as plain route handlers (not the `icon.tsx` convention, which only supports one
+  size) purely because `manifest.ts` needs multiple sizes to point at. If the brand mark ever
+  changes, update the "V" + colors in all four files — they're not derived from one shared
+  source.
 - All user-facing text (buttons, form labels, error messages, page copy) stays in
   **Vietnamese** — this app targets Vietnamese speakers learning English. Code (identifiers,
   comments) stays in English.
