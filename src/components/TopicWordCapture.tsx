@@ -2,12 +2,11 @@
 
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import ScanPhotoModal, { type SampleWord } from "@/components/ScanPhotoModal";
+import AddWordModal from "@/components/AddWordModal";
 import { createClient } from "@/lib/supabase/client";
 import { compressImageToBase64 } from "@/lib/utils/image";
 import type { Language } from "@/lib/types";
 import type { Word, PendingWord } from "@/components/TopicDetail";
-
-const WORD_TYPES = ["n", "v", "adj", "adv", "phrase"];
 
 // Owns the whole "get more words into this topic" flow: scan-by-photo (+ its pending-review
 // step), manual add, and the empty-state CTA — all three live here (not split further) because
@@ -47,6 +46,28 @@ export default function TopicWordCapture({
     return against.some((item) => item.word.trim().toLowerCase() === target);
   }
 
+  // Best-effort AI fallback for words the learner left with no meaning — never blocks saving
+  // if it fails (same resilience pattern as the writing-feedback route), just leaves the gap
+  // for the next story/palace generation to fill instead.
+  async function fetchAiMeanings(
+    targetWords: string[],
+  ): Promise<Map<string, { meaning: string; type: string }>> {
+    if (targetWords.length === 0) return new Map();
+    try {
+      const res = await fetch("/api/fill-meaning", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ words: targetWords, language: topic.language }),
+      });
+      if (!res.ok) return new Map();
+      const data = await res.json();
+      const items = (data.items ?? []) as { word: string; meaning: string; type: string }[];
+      return new Map(items.map((item) => [item.word.toLowerCase(), item]));
+    } catch {
+      return new Map();
+    }
+  }
+
   async function handleAddWord(event: FormEvent) {
     event.preventDefault();
     const word = newWord.trim();
@@ -59,6 +80,18 @@ export default function TopicWordCapture({
 
     setAdding(true);
     setWordError("");
+
+    let meaning = newMeaning.trim();
+    let wordType = newWordType;
+    if (!meaning) {
+      const aiMeanings = await fetchAiMeanings([word]);
+      const ai = aiMeanings.get(word.toLowerCase());
+      if (ai) {
+        meaning = ai.meaning;
+        wordType = wordType || ai.type;
+      }
+    }
+
     const supabase = createClient();
     const {
       data: { user },
@@ -76,8 +109,8 @@ export default function TopicWordCapture({
         user_id: user.id,
         topic_id: topic.id,
         word,
-        meaning: newMeaning.trim() || null,
-        word_type: newWordType || null,
+        meaning: meaning || null,
+        word_type: wordType || null,
         language: topic.language,
       })
       .select()
@@ -164,6 +197,16 @@ export default function TopicWordCapture({
     if (pending.length === 0) return;
     setSaving(true);
     setScanError("");
+
+    const missingMeaningWords = pending.filter((p) => !p.meaning.trim()).map((p) => p.word);
+    const aiMeanings = await fetchAiMeanings(missingMeaningWords);
+    const enrichedPending = pending.map((p) => {
+      if (p.meaning.trim()) return p;
+      const ai = aiMeanings.get(p.word.toLowerCase());
+      if (!ai) return p;
+      return { ...p, meaning: ai.meaning, wordType: p.wordType || ai.type };
+    });
+
     const supabase = createClient();
     const {
       data: { user },
@@ -178,7 +221,7 @@ export default function TopicWordCapture({
     const { data, error } = await supabase
       .from("vocabulary_entries")
       .insert(
-        pending.map((p) => ({
+        enrichedPending.map((p) => ({
           user_id: user.id,
           topic_id: topic.id,
           word: p.word,
@@ -334,46 +377,19 @@ export default function TopicWordCapture({
         </div>
       )}
 
-      {showAddForm && (
-        <form
-          onSubmit={handleAddWord}
-          className="mb-6 flex flex-wrap items-start gap-2 rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]"
-        >
-          <input
-            autoFocus
-            value={newWord}
-            onChange={(event) => setNewWord(event.target.value)}
-            placeholder="Từ vựng"
-            className="min-w-0 flex-1 rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
-          />
-          <input
-            value={newMeaning}
-            onChange={(event) => setNewMeaning(event.target.value)}
-            placeholder="Nghĩa (tuỳ chọn)"
-            className="min-w-0 flex-1 rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
-          />
-          <select
-            value={newWordType}
-            onChange={(event) => setNewWordType(event.target.value)}
-            className="rounded-lg border-2 border-black bg-white px-3 py-2.5 text-sm text-black outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
-          >
-            <option value="">Loại từ</option>
-            {WORD_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            disabled={adding || !newWord.trim()}
-            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
-          >
-            Thêm
-          </button>
-          {wordError && <p className="w-full text-sm text-red-600">{wordError}</p>}
-        </form>
-      )}
+      <AddWordModal
+        open={showAddForm}
+        onClose={() => setShowAddForm(false)}
+        word={newWord}
+        meaning={newMeaning}
+        wordType={newWordType}
+        onWordChange={setNewWord}
+        onMeaningChange={setNewMeaning}
+        onWordTypeChange={setNewWordType}
+        onSubmit={handleAddWord}
+        adding={adding}
+        error={wordError}
+      />
 
       {words.length === 0 && (
         <div className="mb-6 rounded-2xl border-2 border-dashed border-black bg-white p-8 text-center">

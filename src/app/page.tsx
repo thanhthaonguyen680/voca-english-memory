@@ -32,7 +32,7 @@ export default async function Home() {
         href={user ? "/vocabulary" : "/login"}
         className="mt-8 rounded-full border-2 border-black bg-emerald-300 px-6 py-2.5 text-sm font-semibold text-black shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
       >
-        {user ? "Nhập từ vựng ngay →" : "Bắt đầu miễn phí →"}
+        Tạo chủ đề ngay →
       </Link>
     </main>
   );

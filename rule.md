@@ -232,6 +232,15 @@ a confusing error like
   that). If `TopicWordCapture.tsx` grows further, it's still one cohesive concern (adding
   words) — resist fragmenting it into "scan half" / "manual-add half" unless it grows enough to
   justify the prop-plumbing cost.
+- **Manual add is a modal (`AddWordModal.tsx`, added 2026-08-17), not the inline expanding row
+  it used to be** — the inline `<form>` packed word/meaning/loại-từ/submit into one flex row,
+  which wrapped awkwardly on mobile. `AddWordModal` is a fully controlled component (no state
+  of its own — `newWord`/`newMeaning`/`newWordType`/`adding`/`wordError` and `handleAddWord`
+  all still live in `TopicWordCapture.tsx`, same as before the extraction) so opening/closing
+  it doesn't disturb the scan-modal coordination note above. Follows the same modal shell
+  (overlay + `max-w-md` panel + icon-badge header + Hủy/submit footer) as `ScanPhotoModal.tsx`
+  and `TopicList.tsx`'s create-topic modal — reuse that shell for any future "add a thing"
+  form instead of an inline row, which is what caused this in the first place.
 - Topic creation is a **modal**, not an inline expanding form — picked emoji icon
   (`TOPIC_ICONS` in `TopicList.tsx`, stored in the `vocabulary_topics.icon` column, default
   `📚`) shown as a live preview badge next to the modal title, uppercase field labels
@@ -556,8 +565,9 @@ a confusing error like
   wrong and mislead a learner, but "book" being tagged `n`, or given an IPA transcription, even
   though the image never wrote either next to it, is safe general-knowledge inference, not a
   guess that could embarrass the app. `SCAN_RESPONSE_SCHEMA` asks for a short part-of-speech
-  abbreviation (`n`/`v`/`adj`/`adv`/`phrase` — the same fixed set used by `WORD_TYPES` in
-  `TopicDetail.tsx` for the manual-add and inline-edit `<select>`s, keep both lists in sync)
+  abbreviation (`n`/`v`/`adj`/`adv`/`phrase` — the same fixed set duplicated as `WORD_TYPES` in
+  `AddWordModal.tsx` and `TopicWordList.tsx` for the manual-add and inline-edit `<select>`s,
+  keep all three lists in sync)
   plus a `PRONUNCIATION_HINT`-driven pronunciation string (IPA for English, Pinyin with tone
   marks for Chinese — same per-language hint pattern as `/api/palace/generate`, don't hardcode
   "IPA" for both languages).
@@ -570,6 +580,26 @@ a confusing error like
 - Scanning is language-aware like every other content-generating feature: it sends the
   app-wide `language` from `useLanguage()` and asks the model to extract that language's words
   specifically, so scanning a Chinese vocabulary list while in English mode won't happen.
+- **`/api/fill-meaning` (added 2026-08-19) is the one place the app deliberately DOES invent a
+  meaning** — unlike scan/OCR above, this route only ever runs for a word the learner has
+  already confirmed (typed manually, or already reviewed/edited in the scan pending list), so
+  there's no OCR-misread risk to guard against; a plausible AI meaning is strictly better than
+  leaving the word permanently blank. Takes `{ words: string[], language }`, returns
+  `{ items: { word, meaning, type }[] }` in one batched call (reuses the same
+  `n`/`v`/`adj`/`adv`/`phrase` set as `word_type` elsewhere — keep in sync, see above).
+  Rate-limited via its own table, `meaning_fills` (same minimal shape as `vocab_scans`),
+  against `MAX_MEANING_FILLS_PER_DAY`.
+  - `TopicWordCapture.tsx`'s `fetchAiMeanings()` calls it from two places, both **best-effort
+    and non-blocking** — if the call fails, the word is still saved with `meaning: null`
+    exactly like before this feature existed, to be gap-filled later by story/palace
+    generation instead: (1) `handleAddWord`, when the "+ Thêm từ" modal is submitted with the
+    nghĩa field left empty — one word; (2) `handleSavePending`, right before bulk-inserting a
+    scanned batch, batched across every pending row that still has no meaning after review —
+    not called per-row during scanning itself, since the learner may still edit/remove rows
+    before saving and per-row calls would waste quota on discarded words.
+  - A user-provided `word_type` (typed in the add form, or already set from the scan
+    extraction) always wins; the AI type only fills that gap too — same
+    `existing || ai` merge pattern used for meaning everywhere else in the app.
 
 ## Conversation practice (`/chat`)
 

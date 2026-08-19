@@ -217,6 +217,24 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      meaning_fills: {
+        Row: {
+          id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: Partial<{
+          id: string;
+          user_id: string;
+          created_at: string;
+        }>;
+        Relationships: [];
+      };
       palace_generations: {
         Row: {
           id: string;

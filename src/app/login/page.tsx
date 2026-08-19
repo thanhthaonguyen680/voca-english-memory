@@ -66,9 +66,7 @@ export default function LoginPage() {
           {mode === "signin" ? "Đăng nhập" : "Tạo tài khoản"}
         </h1>
         <p className="mb-6 text-sm text-neutral-600">
-          {mode === "signin"
-            ? "Nhập email và mật khẩu để đăng nhập."
-            : "Chỉ mất vài giây."}
+          Đăng nhập hoặc đăng ký để bắt đầu tạo chủ đề đầu tiên.
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">

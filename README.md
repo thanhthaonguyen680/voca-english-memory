@@ -1,14 +1,21 @@
 # Voca English Memory
 
 > 🇻🇳 **Giới thiệu nhanh (tiếng Việt):** Đây là dự án cá nhân của mình để học từ vựng tiếng
-> Anh theo phương pháp **Storytelling Technique** (kể chuyện) và **Memory Palace** (cung điện
-> ký ức) — những kỹ thuật mình từng dùng để nhớ 100 con số chỉ trong vài phút (và nhớ rất lâu
-> nếu ôn lại), hay nhớ ngẫu nhiên cả bộ 52 lá bài chỉ sau 1 lần xem qua. Cách dùng: tạo chủ đề,
-> thêm từ vựng (gõ tay, hoặc chụp/chọn ảnh để AI tự quét và tạo ra nghĩa + phiên âm IPA), rồi
-> biến thành câu chuyện riêng để nhớ sâu, nhớ lâu. Ngoài ra còn có ôn tập từ vựng 2 chiều,
-> luyện phát âm, luyện nói, luyện viết, và ngữ pháp — tất cả đều miễn phí. Ban đầu mình định
-> làm cho bản thân, sau mở ra cho vài người bạn cùng mục tiêu học từ vựng tiếng Anh. Giao diện
-> app hoàn toàn bằng tiếng Việt.
+> Anh theo 2 kỹ thuật ghi nhớ mà chính các nhà vô địch trí nhớ thế giới vẫn dùng:
+>
+> - **Storytelling** — nối các từ vựng rời rạc thành 1 câu chuyện liền mạch, để não ghi nhớ qua
+>   ngữ cảnh và logic thay vì học vẹt từng từ đơn lẻ.
+> - **Memory Palace** (cung điện ký ức / phương pháp Loci) — gắn mỗi từ vào 1 vị trí quen thuộc
+>   trong "ngôi nhà trí nhớ" của riêng bạn, kèm 1 hình ảnh liên tưởng càng kỳ lạ, càng phóng đại
+>   thì càng dễ nhớ. Đây chính là kỹ thuật mình từng dùng để nhớ 100 con số ngẫu nhiên chỉ trong
+>   vài phút (và nhớ rất lâu nếu ôn lại), hay nhớ đúng thứ tự cả bộ 52 lá bài chỉ sau 1 lần xem
+>   qua — giờ áp dụng lại đúng nguyên lý đó cho việc học từ vựng.
+>
+> Cách dùng: tạo chủ đề, thêm từ vựng (gõ tay, hoặc chụp/chọn ảnh để AI tự quét và tạo ra nghĩa
+> + phiên âm IPA), rồi biến thành câu chuyện riêng hoặc xếp vào cung điện trí nhớ để nhớ sâu,
+> nhớ lâu. Ngoài ra còn có ôn tập từ vựng 2 chiều, luyện phát âm, luyện nói, luyện viết, và ngữ
+> pháp — tất cả đều miễn phí. Ban đầu mình định làm cho bản thân, sau mở ra cho vài người bạn
+> cùng mục tiêu học từ vựng tiếng Anh. Giao diện app hoàn toàn bằng tiếng Việt.
 
 **English below** 👇
 

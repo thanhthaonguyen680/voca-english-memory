@@ -18,3 +18,14 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* iOS Safari auto-zooms the page when focusing a text input smaller than 16px — forcing 16px
+   on mobile prevents that without touching every input's Tailwind text-size class or disabling
+   pinch-zoom app-wide (which would hurt accessibility). Desktop sizing is untouched. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
