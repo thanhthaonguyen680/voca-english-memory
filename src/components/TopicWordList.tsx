@@ -65,7 +65,7 @@ export default function TopicWordList({
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-black">{w.word}</span>
               {w.wordType && (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-neutral-300 text-xs font-semibold text-neutral-500">
+                <span className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border-2 border-neutral-300 px-2 py-0.5 text-xs font-semibold text-neutral-500">
                   {w.wordType}
                 </span>
               )}
