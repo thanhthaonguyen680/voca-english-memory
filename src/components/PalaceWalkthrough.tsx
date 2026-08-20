@@ -219,7 +219,7 @@ export default function PalaceWalkthrough({
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Link
           href={`/vocabulary/${topic.id}`}
-          className="inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+          className="inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
         >
           ← {topic.icon} {topic.name}
         </Link>
@@ -227,7 +227,7 @@ export default function PalaceWalkthrough({
           <button
             type="button"
             onClick={exitToMap}
-            className="inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+            className="inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             🗺️ Về sơ đồ nhà
           </button>
@@ -240,7 +240,7 @@ export default function PalaceWalkthrough({
           <button
             type="button"
             onClick={() => setRoomsModalOpen(true)}
-            className="rounded-full border-2 border-black bg-white px-3.5 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+            className="rounded-full border-2 border-black bg-white px-3.5 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             ⚙️ Tuỳ chỉnh phòng
           </button>
@@ -286,7 +286,7 @@ export default function PalaceWalkthrough({
             type="button"
             onClick={handleGeneratePalace}
             disabled={generating}
-            className="rounded-full border-2 border-black bg-emerald-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
+            className="rounded-full border-2 border-black bg-emerald-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             {generating ? "Đang tạo..." : `🏰 Tạo Cung điện trí nhớ cho ${pendingCount} từ`}
           </button>

@@ -97,7 +97,7 @@ export default function TopicWordList({
                   type="button"
                   onClick={() => handleSaveEdit(w.id)}
                   disabled={savingEdit}
-                  className="rounded-md border-2 border-black bg-emerald-300 px-2.5 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none disabled:opacity-50"
+                  className="rounded-md border-2 border-black bg-emerald-300 px-2.5 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
                 >
                   {savingEdit ? "Đang lưu..." : "Lưu"}
                 </button>

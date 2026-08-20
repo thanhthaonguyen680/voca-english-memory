@@ -166,7 +166,7 @@ export default function ReviewStoryList({
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") setSelectedId(deck.id);
               }}
-              className="cursor-pointer rounded-2xl border-2 border-black bg-white p-4 text-left shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000]"
+              className="cursor-pointer rounded-2xl border-2 border-black bg-white p-4 text-left shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0_0_#000]"
             >
               <div className="mb-2 flex items-center justify-between gap-2 text-xs text-neutral-400">
                 <span>

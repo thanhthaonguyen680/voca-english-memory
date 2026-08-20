@@ -99,7 +99,7 @@ export default function ScanPhotoModal({
                 type="button"
                 onClick={() => onUseSample(set.words)}
                 disabled={scanning}
-                className="group relative h-24 w-full overflow-hidden rounded-xl border-2 border-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none disabled:opacity-50"
+                className="group relative h-24 w-full overflow-hidden rounded-xl border-2 border-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
               >
                 <Image
                   src={set.image}
@@ -148,7 +148,7 @@ export default function ScanPhotoModal({
             type="button"
             onClick={onOpenCamera}
             disabled={scanning}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-black bg-emerald-300 px-5 py-3 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-black bg-emerald-300 px-5 py-3 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             📷 Mở Camera
           </button>
@@ -156,7 +156,7 @@ export default function ScanPhotoModal({
             type="button"
             onClick={onChooseFile}
             disabled={scanning}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-black bg-white px-5 py-3 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-black bg-white px-5 py-3 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             Chọn file
           </button>

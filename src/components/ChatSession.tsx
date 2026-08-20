@@ -185,7 +185,7 @@ export default function ChatSession() {
               key={item.id}
               type="button"
               onClick={() => startScenario(item)}
-              className="rounded-lg border-2 border-black bg-white px-4 py-3 text-left text-sm font-medium text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0_0_#000]"
+              className="rounded-lg border-2 border-black bg-white px-4 py-3 text-left text-sm font-medium text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[1px_1px_0_0_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_0_#000]"
             >
               {item.label}
             </button>
@@ -204,7 +204,7 @@ export default function ChatSession() {
         <button
           type="button"
           onClick={endScenario}
-          className="inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none"
+          className="inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
         >
           ← Đổi chủ đề
         </button>
@@ -282,7 +282,7 @@ export default function ChatSession() {
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="h-11 shrink-0 rounded-full border-2 border-black bg-emerald-300 px-4 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none disabled:opacity-50"
+          className="h-11 shrink-0 rounded-full border-2 border-black bg-emerald-300 px-4 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
         >
           Gửi
         </button>

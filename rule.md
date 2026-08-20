@@ -951,6 +951,16 @@ secret there.
     secondary/outline = `bg-white text-black`, danger = `bg-red-300 text-black`. Every button
     across the app should follow this exact shadow-press pattern; a plain flat button
     (no border/shadow) reads as visually inconsistent with everything else now.
+  - **Every `hover:` press variant needs a matching `active:` press variant with the exact same
+    values** (added 2026-08-20 — e.g. `hover:translate-x-[3px] hover:translate-y-[3px]
+    hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none`).
+    `:hover` doesn't fire on tap on touch devices, so without `:active` mirroring it, mobile
+    users never see the press feedback desktop users get from mousing over — the button just
+    looked inert on tap. Copy whatever px value (or bare Tailwind spacing step, e.g. the
+    homepage CTA's `hover:translate-x-1`) the button already uses for `hover:`, don't invent a
+    new one. This applies to every bordered/shadowed interactive element (buttons, card-as-
+    button rows like `ReviewStoryList`'s deck picker, icon buttons) — when adding a new one,
+    add both variants together from the start rather than only `hover:`.
   - Inputs: `rounded-lg border-2 border-black bg-white text-black
     placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2
     focus:ring-emerald-300` — same thick black border as cards/buttons, not a separate

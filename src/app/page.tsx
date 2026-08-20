@@ -30,7 +30,7 @@ export default async function Home() {
       </p>
       <Link
         href={user ? "/vocabulary" : "/login"}
-        className="mt-8 rounded-full border-2 border-black bg-emerald-300 px-6 py-2.5 text-sm font-semibold text-black shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+        className="mt-8 rounded-full border-2 border-black bg-emerald-300 px-6 py-2.5 text-sm font-semibold text-black shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none active:translate-x-1 active:translate-y-1 active:shadow-none"
       >
         Tạo chủ đề ngay →
       </Link>

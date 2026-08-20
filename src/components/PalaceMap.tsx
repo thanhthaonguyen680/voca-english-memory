@@ -5,7 +5,7 @@ import { MASTERED_THRESHOLD, masteryLabel, type Room } from "@/lib/palace-data";
 const ROOM_TILE_BASE =
   "flex flex-col items-center justify-center gap-1 rounded-2xl border-2 p-4 text-center transition-all";
 const ROOM_TILE_ACTIVE =
-  "border-black shadow-[3px_3px_0_0_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none";
+  "border-black shadow-[3px_3px_0_0_#000] hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none";
 
 type RoomStat = { room: Room; count: number; avgMastery: number };
 
@@ -25,7 +25,7 @@ export default function PalaceMap({
       <button
         type="button"
         onClick={onStartFull}
-        className="self-start rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none"
+        className="self-start rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
       >
         🔀 Ôn tất cả các phòng ({assignedWordsCount} từ)
       </button>
