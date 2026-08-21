@@ -73,7 +73,7 @@ export default function ScanPhotoModal({
       <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col gap-5 overflow-y-auto rounded-2xl border-2 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-black bg-emerald-200 text-xl">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-black bg-violet-200 text-xl">
               📷
             </span>
             <h2 className="font-bold text-black">Thêm từ vựng bằng Scan ảnh</h2>
@@ -128,7 +128,7 @@ export default function ScanPhotoModal({
           onDrop={handleDrop}
           className={
             dragOver
-              ? "flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-emerald-500 bg-emerald-50 px-6 py-10 text-center"
+              ? "flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-violet-500 bg-violet-50 px-6 py-10 text-center"
               : "flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-black bg-neutral-50 px-6 py-10 text-center"
           }
         >
@@ -140,7 +140,7 @@ export default function ScanPhotoModal({
         </div>
 
         {scanning && (
-          <p className="text-center text-sm font-medium text-emerald-700">Đang quét ảnh...</p>
+          <p className="text-center text-sm font-medium text-violet-700">Đang quét ảnh...</p>
         )}
 
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -148,7 +148,7 @@ export default function ScanPhotoModal({
             type="button"
             onClick={onOpenCamera}
             disabled={scanning}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-black bg-emerald-300 px-5 py-3 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border-2 border-black bg-violet-300 px-5 py-3 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             📷 Mở Camera
           </button>

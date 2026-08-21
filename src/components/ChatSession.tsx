@@ -198,7 +198,7 @@ export default function ChatSession() {
   return (
     <div className="flex flex-1 flex-col rounded-2xl border-2 border-black bg-white p-4 shadow-[5px_5px_0_0_#000]">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-medium text-emerald-800">
+        <span className="text-sm font-medium text-violet-800">
           {CHAT_AI_NAME} · {LANGUAGES.find((item) => item.id === language)?.flag} {scenario.label}
         </span>
         <button
@@ -222,7 +222,7 @@ export default function ChatSession() {
             <div
               className={
                 msg.role === "user"
-                  ? "max-w-[80%] rounded-2xl rounded-br-sm border-2 border-black bg-emerald-300 px-3.5 py-2 text-sm text-black"
+                  ? "max-w-[80%] rounded-2xl rounded-br-sm border-2 border-black bg-violet-300 px-3.5 py-2 text-sm text-black"
                   : "max-w-[80%] rounded-2xl rounded-bl-sm border-2 border-black bg-white px-3.5 py-2 text-sm text-black"
               }
             >
@@ -277,12 +277,12 @@ export default function ChatSession() {
           }}
           onKeyDown={handleKeyDown}
           placeholder={listening ? "Đang nghe..." : "Nhập hoặc bấm mic để nói..."}
-          className="min-w-0 flex-1 resize-none rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-base text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+          className="min-w-0 flex-1 resize-none rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-base text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="h-11 shrink-0 rounded-full border-2 border-black bg-emerald-300 px-4 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+          className="h-11 shrink-0 rounded-full border-2 border-black bg-violet-300 px-4 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
         >
           Gửi
         </button>

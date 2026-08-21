@@ -275,7 +275,7 @@ export default function TopicWordCapture({
           type="button"
           onClick={() => setScanModalOpen(true)}
           disabled={scanning}
-          className="inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-emerald-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-violet-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
         >
           {scanning ? (
             "Đang quét ảnh..."
@@ -301,8 +301,8 @@ export default function TopicWordCapture({
       )}
 
       {pending.length > 0 && (
-        <div className="mb-6 rounded-2xl border-2 border-black bg-emerald-50 p-4 shadow-[4px_4px_0_0_#000]">
-          <p className="mb-3 text-sm font-semibold text-emerald-800">
+        <div className="mb-6 rounded-2xl border-2 border-black bg-violet-50 p-4 shadow-[4px_4px_0_0_#000]">
+          <p className="mb-3 text-sm font-semibold text-violet-800">
             Đã quét được {pending.length} từ — kiểm tra lại rồi lưu vào chủ đề:
           </p>
           <div className="mb-3 flex flex-col gap-2">
@@ -317,7 +317,7 @@ export default function TopicWordCapture({
                       ),
                     )
                   }
-                  className="min-w-0 flex-1 rounded-lg border-2 border-black bg-white px-2.5 py-1.5 text-sm text-black outline-none focus:border-emerald-500"
+                  className="min-w-0 flex-1 rounded-lg border-2 border-black bg-white px-2.5 py-1.5 text-sm text-black outline-none focus:border-violet-500"
                 />
                 <input
                   value={p.meaning}
@@ -329,7 +329,7 @@ export default function TopicWordCapture({
                     )
                   }
                   placeholder="Nghĩa"
-                  className="min-w-0 flex-1 rounded-lg border-2 border-black bg-white px-2.5 py-1.5 text-sm text-black outline-none focus:border-emerald-500"
+                  className="min-w-0 flex-1 rounded-lg border-2 border-black bg-white px-2.5 py-1.5 text-sm text-black outline-none focus:border-violet-500"
                 />
                 <button
                   type="button"
@@ -346,7 +346,7 @@ export default function TopicWordCapture({
             type="button"
             onClick={handleSavePending}
             disabled={saving}
-            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+            className="rounded-full border-2 border-black bg-violet-300 px-4 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             {saving ? "Đang lưu..." : `💾 Lưu ${pending.length} từ vào chủ đề`}
           </button>
@@ -363,7 +363,7 @@ export default function TopicWordCapture({
             type="button"
             onClick={() => onGenerateBatch(lastBatchIds)}
             disabled={generating}
-            className="rounded-full border-2 border-black bg-emerald-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+            className="rounded-full border-2 border-black bg-violet-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             {generating ? "Đang tạo..." : "🪄 Tạo câu chuyện riêng cho batch này"}
           </button>
@@ -393,7 +393,7 @@ export default function TopicWordCapture({
 
       {words.length === 0 && (
         <div className="mb-6 rounded-2xl border-2 border-dashed border-black bg-white p-8 text-center">
-          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black bg-emerald-100 text-2xl">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black bg-violet-100 text-2xl">
             📸
           </span>
           <p className="mb-1 font-semibold text-black">Chưa có từ vựng nào</p>
@@ -405,7 +405,7 @@ export default function TopicWordCapture({
             <div className="rounded-xl border-2 border-black bg-amber-50 px-2 py-3 text-xs text-amber-900">
               <span className="mb-1 block text-lg">📖</span>1. Chụp ảnh sách
             </div>
-            <div className="rounded-xl border-2 border-black bg-emerald-50 px-2 py-3 text-xs text-emerald-900">
+            <div className="rounded-xl border-2 border-black bg-violet-50 px-2 py-3 text-xs text-violet-900">
               <span className="mb-1 block text-lg">🤖</span>2. AI quét từ
             </div>
             <div className="rounded-xl border-2 border-black bg-amber-50 px-2 py-3 text-xs text-amber-900">
@@ -418,7 +418,7 @@ export default function TopicWordCapture({
               type="button"
               onClick={() => setScanModalOpen(true)}
               disabled={scanning}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border-2 border-black bg-emerald-300 px-5 py-3 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border-2 border-black bg-violet-300 px-5 py-3 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
             >
               {scanning ? (
                 "Đang quét ảnh..."

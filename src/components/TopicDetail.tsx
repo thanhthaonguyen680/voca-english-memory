@@ -137,7 +137,7 @@ export default function TopicDetail({
               type="button"
               onClick={() => (story ? setMode("story") : handleGenerate())}
               disabled={generating || (!story && words.length === 0)}
-              className="rounded-full border-2 border-black bg-emerald-300 px-5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+              className="rounded-full border-2 border-black bg-violet-300 px-5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
             >
               {generating
                 ? "Đang tạo câu chuyện..."

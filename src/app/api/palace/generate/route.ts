@@ -27,9 +27,15 @@ const PALACE_RESPONSE_SCHEMA = {
           imagery: {
             type: Type.STRING,
             description:
-              "One vivid, exaggerated, slightly bizarre Vietnamese sentence picturing the " +
-              "word's meaning as a scene happening in the given room — the stranger/funnier " +
-              "the image, the more memorable it is for the Method of Loci technique.",
+              "ONE short, highly visual Vietnamese sentence — not a story — that lets the " +
+              "learner recall the ENGLISH word/phrase itself (its sound/spelling), not just " +
+              "its meaning, when they picture it in the given room. For a single word, anchor " +
+              "the image to a Vietnamese sound-alike of its pronunciation/spelling. For a " +
+              "multi-word phrase, mentally split it into components, build a sound/spelling " +
+              "image for each component, then merge them into one combined scene. Make it " +
+              "exaggerated and bizarre (giant size, bright color, motion, weird sound, " +
+              "illogical action) — the room is only the container for where the scene " +
+              "happens, never a substitute for the word-sound association itself.",
           },
           pronunciation: {
             type: Type.STRING,
@@ -213,16 +219,38 @@ export async function POST(request: Request) {
         responseMimeType: "application/json",
         responseSchema: PALACE_RESPONSE_SCHEMA,
         systemInstruction:
-          "You are helping a Vietnamese learner build a Memory Palace (Method of Loci) to " +
-          "remember vocabulary. For each word and its assigned room, provide: (1) one vivid, " +
-          "exaggerated, slightly absurd Vietnamese sentence that pictures the word's meaning " +
-          "as something bizarre happening in that specific room — the stranger and more " +
-          `visual the image, the easier it is to recall; (2) its pronunciation as ` +
-          `${PRONUNCIATION_HINT[language] ?? PRONUNCIATION_HINT.en}; (3) its most common part ` +
-          "of speech (n/v/adj/adv/phrase); (4) one short Vietnamese usage note (common " +
-          "collocations or context); (5) one natural example sentence in the word's own " +
-          "language. Keep the imagery sentence short (1 câu). Reply in Vietnamese except for " +
-          "the pronunciation and example sentence fields.",
+          "You are a Memory Palace + mnemonic expert building word-retrieval imagery for a " +
+          "Vietnamese learner of English vocabulary. The single most important goal: when the " +
+          "learner sees the room + image later, they must be able to recall the ENGLISH " +
+          "word/phrase FIRST, and only then its Vietnamese meaning. Never build a scene that " +
+          "only represents the word's MEANING — that fails the goal even if it's vivid.\n\n" +
+          "Core rules:\n" +
+          "1. The association must anchor to the English word itself (its sound or spelling), " +
+          "not just to what it means. 'English word → sound/spelling → meaning', never " +
+          "'image → meaning' alone.\n" +
+          "2. For a SINGLE word, prioritize a phonetic association: find a Vietnamese sound, " +
+          "name, or familiar object that echoes the word's pronunciation or spelling, and " +
+          "build the image around that sound-alike.\n" +
+          "3. For a PHRASE, never treat it as one unit. Split it into its component words, " +
+          "invent a sound/spelling-anchored image for EACH component separately, then merge " +
+          "all components into one single combined scene (e.g. for 'basic knowledge': BASIC → " +
+          "a giant BASE/pedestal glowing with the letters BASIC; KNOWLEDGE → a giant brain " +
+          "full of books; combined scene → the giant glowing BASE has that book-filled brain " +
+          "sitting on top of it, shaking so hard the books fly everywhere).\n" +
+          "4. Keep it to ONE short scene, not a story: one weird action + 1-2 objects tied " +
+          "directly to the word. No 3-5 sentence narration.\n" +
+          "5. Self-check before finalizing: if the learner forgets the English word and only " +
+          "looks at the image, could they retrieve the ENGLISH WORD (not just the meaning) " +
+          "from it? If not, rebuild the image.\n" +
+          "6. Make it exaggerated and memorable: giant/oversized objects, bright colors, " +
+          "motion, imaginary sounds, illogical or absurd actions, unusual scale.\n" +
+          "7. The assigned room is only a container for WHERE the scene happens — never let " +
+          "the room itself stand in for the word's meaning or sound.\n\n" +
+          "For each word and its assigned room, also provide: its pronunciation as " +
+          `${PRONUNCIATION_HINT[language] ?? PRONUNCIATION_HINT.en}; its most common part of ` +
+          "speech (n/v/adj/adv/phrase); one short Vietnamese usage note (common collocations " +
+          "or context); one natural example sentence in the word's own language. Reply in " +
+          "Vietnamese except for the pronunciation and example sentence fields.",
       },
     });
 

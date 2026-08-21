@@ -55,7 +55,7 @@ export default function HistoryList({
         Chưa có câu chuyện {LANGUAGE_FLAG[language]} nào. Hãy tạo câu chuyện đầu tiên ở trang{" "}
         <Link
           href="/vocabulary"
-          className="font-medium text-emerald-700 underline hover:text-emerald-800"
+          className="font-medium text-violet-700 underline hover:text-violet-800"
         >
           Nhập từ vựng
         </Link>
@@ -73,7 +73,7 @@ export default function HistoryList({
             onClick={() => setTopicFilter(ALL_TOPICS)}
             className={
               topicFilter === ALL_TOPICS
-                ? "rounded-full border-2 border-black bg-emerald-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
+                ? "rounded-full border-2 border-black bg-violet-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
                 : "rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-medium text-black hover:bg-neutral-50"
             }
           >
@@ -86,7 +86,7 @@ export default function HistoryList({
               onClick={() => setTopicFilter(topic.id)}
               className={
                 topicFilter === topic.id
-                  ? "rounded-full border-2 border-black bg-emerald-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
+                  ? "rounded-full border-2 border-black bg-violet-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
                   : "rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-medium text-black hover:bg-neutral-50"
               }
             >
@@ -99,7 +99,7 @@ export default function HistoryList({
               onClick={() => setTopicFilter(NO_TOPIC)}
               className={
                 topicFilter === NO_TOPIC
-                  ? "rounded-full border-2 border-black bg-emerald-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
+                  ? "rounded-full border-2 border-black bg-violet-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
                   : "rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-medium text-black hover:bg-neutral-50"
               }
             >

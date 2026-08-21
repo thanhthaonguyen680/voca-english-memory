@@ -68,7 +68,7 @@ export default function MobileMenu({ loggedIn, streakCurrent, studiedToday }: Mo
                     key={link.href}
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="rounded-lg px-3 py-2 text-sm text-black hover:bg-emerald-50"
+                    className="rounded-lg px-3 py-2 text-sm text-black hover:bg-violet-50"
                   >
                     {link.label}
                   </Link>

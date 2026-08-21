@@ -59,7 +59,7 @@ export default function LoginPage() {
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-16">
       <div className="rounded-2xl border-2 border-black bg-white p-7 shadow-[5px_5px_0_0_#000]">
-        <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border-2 border-black bg-emerald-300 text-base font-bold text-black">
+        <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border-2 border-black bg-violet-300 text-base font-bold text-black">
           V
         </span>
         <h1 className="mb-2 text-2xl font-semibold text-black">
@@ -76,7 +76,7 @@ export default function LoginPage() {
             placeholder="you@example.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+            className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
           />
           <input
             type="password"
@@ -85,12 +85,12 @@ export default function LoginPage() {
             placeholder="Mật khẩu (tối thiểu 6 ký tự)"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+            className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
           />
           <button
             type="submit"
             disabled={loading}
-            className="rounded-full border-2 border-black bg-emerald-300 px-3.5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+            className="rounded-full border-2 border-black bg-violet-300 px-3.5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             {loading
               ? "Đang xử lý..."
@@ -99,7 +99,7 @@ export default function LoginPage() {
                 : "Tạo tài khoản"}
           </button>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          {info && <p className="text-sm text-emerald-700">{info}</p>}
+          {info && <p className="text-sm text-violet-700">{info}</p>}
         </form>
 
         <button

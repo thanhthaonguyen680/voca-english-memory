@@ -939,24 +939,32 @@ secret there.
   - Surfaces are **white cards on a thick black border with a hard offset shadow**, not soft
     blur shadows: `rounded-2xl border-2 border-black bg-white p-6 shadow-[4px_4px_0_0_#000]`.
     Highlighted/tinted cards (e.g. the just-generated story, streak banner) use
-    `bg-emerald-50` instead of white, same border+shadow. This "neo-brutalism" hard-shadow
+    `bg-violet-50` instead of white, same border+shadow. This "neo-brutalism" hard-shadow
     look (flat color, no blur, no gradient on cards, offset shadow instead of soft elevation)
     is the whole point of the redesign — don't soften it back to `shadow-sm`/blurred shadows.
-  - **Two accent colors, each with a specific job** (2026-08-08, revised from the initial
-    single-green redesign): **emerald is primary** — main/default actions (`bg-emerald-300`),
-    tinted surfaces (`bg-emerald-50` with `border-emerald-300`/`text-emerald-700`), links
-    (`text-emerald-700 hover:text-emerald-800 underline`). **Amber is the secondary accent**,
-    used for: the streak badge (`StreakBadge.tsx`, 🔥 reads more naturally in fire-colored
-    amber than green); the standalone "Đăng nhập" nav pill (`Navbar.tsx`/`MobileMenu.tsx` — an
-    entry-point action, distinct from primary in-flow actions like form submit buttons, which
-    stay emerald); and **bold vocabulary words inside story text** (`BoldText.tsx`,
-    `text-amber-700`) — these needed amber specifically because emerald text on the
-    `bg-emerald-50` highlighted-story background had too little contrast to read as
-    "bolded/important" (emerald-on-emerald visually sinks into the card). Don't use amber for
-    primary CTAs/submit buttons, and don't introduce a third brand color — pick emerald or
-    amber for anything new based on whether it's a primary action/surface (emerald) or a
-    secondary highlight/something that needs to visually pop off an emerald-tinted surface
-    (amber), not on preference.
+  - **Two accent colors, each with a specific job.** **Violet (lavender pastel) is primary**
+    — main/default actions (`bg-violet-300`), tinted surfaces (`bg-violet-50` with
+    `border-violet-300`/`text-violet-700`), links (`text-violet-700 hover:text-violet-800
+    underline`). **Amber is the secondary accent**, used for: the streak badge
+    (`StreakBadge.tsx`, 🔥 reads more naturally in fire-colored amber than purple); the
+    standalone "Đăng nhập" nav pill (`Navbar.tsx`/`MobileMenu.tsx` — an entry-point action,
+    distinct from primary in-flow actions like form submit buttons, which stay violet); and
+    **bold vocabulary words inside story text** (`BoldText.tsx`, `text-amber-700`) — kept
+    amber rather than violet so bolded words still visually pop off a `bg-violet-50`
+    highlighted-story background instead of sinking into it (same-hue text-on-tint is always
+    low-contrast, regardless of which hue is primary). Don't use amber for primary CTAs/submit
+    buttons, and don't introduce a third brand color — pick violet or amber for anything new
+    based on whether it's a primary action/surface (violet) or a secondary highlight/something
+    that needs to visually pop off a violet-tinted surface (amber), not on preference.
+    - **Primary was emerald (mint green) until 2026-08-21**, when the whole app was swapped
+      from `emerald` to `violet` (literal find/replace of every `*-emerald-*` Tailwind class
+      across `src/`, same shade numbers — `emerald-300` → `violet-300`, `emerald-50` →
+      `violet-50`, etc. — plus the hardcoded `#6ee7b7` icon color → `#c4b5fd` in
+      `apple-icon.tsx`/`icon.svg`/`icon-192`/`icon-512`/`manifest.ts`) purely to look visually
+      distinct from a similar-looking reference app the user was comparing against, not for any
+      functional reason. If the primary color ever changes again, this is the exact mechanism —
+      grep for the current color family name across `src/`, swap it and the icon hex together,
+      don't leave the two out of sync.
   - **Buttons are pills with the same hard-shadow treatment**: `rounded-full border-2
     border-black ... shadow-[3px_3px_0_0_#000] transition-all hover:shadow-none
     hover:translate-x-[3px] hover:translate-y-[3px]` — hovering "presses" the button into its

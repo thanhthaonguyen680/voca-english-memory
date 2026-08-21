@@ -163,7 +163,7 @@ export default function ReviewSession({
               key={m}
               type="button"
               onClick={() => startSession(m)}
-              className="flex-1 rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              className="flex-1 rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
             >
               {modeLabels[m]}
             </button>
@@ -178,8 +178,8 @@ export default function ReviewSession({
   if (isFinished) {
     const percent = deck.length > 0 ? Math.round((correctCount / deck.length) * 100) : 0;
     return (
-      <div className="rounded-2xl border-2 border-black bg-emerald-50 p-6 text-center shadow-[5px_5px_0_0_#000]">
-        <p className="text-lg font-semibold text-emerald-800">
+      <div className="rounded-2xl border-2 border-black bg-violet-50 p-6 text-center shadow-[5px_5px_0_0_#000]">
+        <p className="text-lg font-semibold text-violet-800">
           Bạn đúng {correctCount}/{deck.length} câu ({percent}%)
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
@@ -195,7 +195,7 @@ export default function ReviewSession({
           <button
             type="button"
             onClick={() => startSession(mode)}
-            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+            className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
           >
             Ôn lại
           </button>
@@ -255,7 +255,7 @@ export default function ReviewSession({
         <button
           type="button"
           onClick={() => setMode(null)}
-          className="flex items-center gap-1 font-semibold text-black hover:text-emerald-700"
+          className="flex items-center gap-1 font-semibold text-black hover:text-violet-700"
         >
           ← Quay lại
         </button>
@@ -277,7 +277,7 @@ export default function ReviewSession({
           <p className="flex items-center gap-2 text-2xl font-semibold text-black">
             <span>{current.word}</span>
             {current.ipa && (
-              <span className="text-base font-normal text-emerald-700/80">{current.ipa}</span>
+              <span className="text-base font-normal text-violet-700/80">{current.ipa}</span>
             )}
           </p>
         ) : storyId ? (
@@ -323,11 +323,11 @@ export default function ReviewSession({
                   ? "Nhập Pinyin (không cần dấu thanh)"
                   : "Nhập từ tiếng Anh"
             }
-            className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+            className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
           />
           <button
             type="submit"
-            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+            className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
           >
             Kiểm tra
           </button>
@@ -360,7 +360,7 @@ export default function ReviewSession({
               <span className="font-medium text-black">
                 {current.word}
                 {current.ipa && (
-                  <span className="ml-1.5 font-normal text-emerald-700/80">{current.ipa}</span>
+                  <span className="ml-1.5 font-normal text-violet-700/80">{current.ipa}</span>
                 )}
               </span>
             )}
@@ -368,7 +368,7 @@ export default function ReviewSession({
           <button
             type="button"
             onClick={handleNext}
-            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+            className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
           >
             {isLast ? "Xem kết quả" : "Câu tiếp theo →"}
           </button>

@@ -71,7 +71,7 @@ export default function StoryCard({
     <div
       className={
         highlight
-          ? "rounded-2xl border-2 border-black bg-emerald-50 p-6 shadow-[5px_5px_0_0_#000]"
+          ? "rounded-2xl border-2 border-black bg-violet-50 p-6 shadow-[5px_5px_0_0_#000]"
           : "rounded-2xl border-2 border-black bg-white p-6 shadow-[4px_4px_0_0_#000]"
       }
     >
@@ -87,7 +87,7 @@ export default function StoryCard({
                     onClick={() => speak(item.word, speechLang)}
                     title="Nghe phát âm"
                     aria-label="Nghe phát âm"
-                    className="hover:text-emerald-700"
+                    className="hover:text-violet-700"
                   >
                     🔊
                   </button>
@@ -98,11 +98,11 @@ export default function StoryCard({
                     className="flex items-center gap-1 hover:underline"
                   >
                     <span>{item.word}</span>
-                    {item.ipa && <span className="text-emerald-700/80">{item.ipa}</span>}
+                    {item.ipa && <span className="text-violet-700/80">{item.ipa}</span>}
                   </button>
                 </div>
                 {isOpen && (
-                  <div className="mt-1 rounded-lg border-2 border-black bg-emerald-100 px-2.5 py-1 text-xs text-emerald-900">
+                  <div className="mt-1 rounded-lg border-2 border-black bg-violet-100 px-2.5 py-1 text-xs text-violet-900">
                     {item.meaning ?? "Chưa có nghĩa"}
                   </div>
                 )}
@@ -137,7 +137,7 @@ export default function StoryCard({
 
       <div className="mb-2 flex items-center justify-between gap-2">
         {highlight ? (
-          <h3 className="text-sm font-semibold text-emerald-800">
+          <h3 className="text-sm font-semibold text-violet-800">
             {LANGUAGES.find((item) => item.id === language)?.flag} Câu chuyện của bạn
           </h3>
         ) : (
@@ -146,7 +146,7 @@ export default function StoryCard({
         <button
           type="button"
           onClick={() => speak(content.replace(/\*\*/g, ""), speechLang)}
-          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-emerald-50 hover:text-emerald-800"
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-neutral-600 hover:bg-violet-50 hover:text-violet-800"
         >
           <span aria-hidden>🔊</span> Nghe câu chuyện
         </button>

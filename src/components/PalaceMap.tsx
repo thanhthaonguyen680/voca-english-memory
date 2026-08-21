@@ -25,7 +25,7 @@ export default function PalaceMap({
       <button
         type="button"
         onClick={onStartFull}
-        className="self-start rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+        className="self-start rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
       >
         🔀 Ôn tất cả các phòng ({assignedWordsCount} từ)
       </button>
@@ -37,7 +37,7 @@ export default function PalaceMap({
               count === 0
                 ? "border-dashed border-neutral-300 bg-neutral-50 opacity-60 cursor-not-allowed"
                 : avgMastery >= MASTERED_THRESHOLD
-                  ? `${ROOM_TILE_ACTIVE} bg-emerald-50`
+                  ? `${ROOM_TILE_ACTIVE} bg-violet-50`
                   : avgMastery > 0
                     ? `${ROOM_TILE_ACTIVE} bg-amber-50`
                     : `${ROOM_TILE_ACTIVE} bg-white`;

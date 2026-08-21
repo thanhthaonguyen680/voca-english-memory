@@ -61,7 +61,7 @@ export default function EditableMeaning({
             setEditing(true);
           }}
           title="Sửa nghĩa"
-          className="text-xs text-neutral-400 hover:text-emerald-700"
+          className="text-xs text-neutral-400 hover:text-violet-700"
         >
           ✏️
         </button>
@@ -75,13 +75,13 @@ export default function EditableMeaning({
         autoFocus
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
-        className="rounded-md border-2 border-black bg-white px-2 py-1 text-sm text-black outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+        className="rounded-md border-2 border-black bg-white px-2 py-1 text-sm text-black outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
       />
       <button
         type="button"
         onClick={handleSave}
         disabled={saving}
-        className="rounded-md border-2 border-black bg-emerald-300 px-2 py-1 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
+        className="rounded-md border-2 border-black bg-violet-300 px-2 py-1 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
       >
         {saving ? "Đang lưu..." : "Lưu"}
       </button>

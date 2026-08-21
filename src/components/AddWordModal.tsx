@@ -46,7 +46,7 @@ export default function AddWordModal({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-black bg-emerald-200 text-xl">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-black bg-violet-200 text-xl">
               📝
             </span>
             <h2 className="font-bold text-black">Thêm từ mới</h2>
@@ -70,7 +70,7 @@ export default function AddWordModal({
             value={word}
             onChange={(event) => onWordChange(event.target.value)}
             placeholder="Ví dụ: renewable energy"
-            className="w-full rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+            className="w-full rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
           />
         </div>
 
@@ -82,7 +82,7 @@ export default function AddWordModal({
             value={meaning}
             onChange={(event) => onMeaningChange(event.target.value)}
             placeholder="Nghĩa (tuỳ chọn)"
-            className="w-full rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+            className="w-full rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
           />
         </div>
 
@@ -93,7 +93,7 @@ export default function AddWordModal({
           <select
             value={wordType}
             onChange={(event) => onWordTypeChange(event.target.value)}
-            className="w-full rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+            className="w-full rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
           >
             <option value="">Không chọn</option>
             {WORD_TYPES.map((t) => (
@@ -121,7 +121,7 @@ export default function AddWordModal({
           <button
             type="submit"
             disabled={adding || !word.trim()}
-            className="flex-1 rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+            className="flex-1 rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             {adding ? "Đang thêm..." : "+ Thêm từ"}
           </button>

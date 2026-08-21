@@ -79,12 +79,12 @@ export default function TopicWordList({
                   value={editMeaning}
                   onChange={(event) => setEditMeaning(event.target.value)}
                   placeholder="Nghĩa"
-                  className="min-w-0 flex-1 rounded-lg border-2 border-black bg-white px-2.5 py-1.5 text-sm text-black outline-none focus:border-emerald-500"
+                  className="min-w-0 flex-1 rounded-lg border-2 border-black bg-white px-2.5 py-1.5 text-sm text-black outline-none focus:border-violet-500"
                 />
                 <select
                   value={editWordType}
                   onChange={(event) => setEditWordType(event.target.value)}
-                  className="rounded-lg border-2 border-black bg-white px-2 py-1.5 text-sm text-black outline-none focus:border-emerald-500"
+                  className="rounded-lg border-2 border-black bg-white px-2 py-1.5 text-sm text-black outline-none focus:border-violet-500"
                 >
                   <option value="">Loại từ</option>
                   {WORD_TYPES.map((t) => (
@@ -97,7 +97,7 @@ export default function TopicWordList({
                   type="button"
                   onClick={() => handleSaveEdit(w.id)}
                   disabled={savingEdit}
-                  className="rounded-md border-2 border-black bg-emerald-300 px-2.5 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
+                  className="rounded-md border-2 border-black bg-violet-300 px-2.5 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50"
                 >
                   {savingEdit ? "Đang lưu..." : "Lưu"}
                 </button>

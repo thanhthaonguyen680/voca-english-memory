@@ -45,7 +45,7 @@ export default function TopicStoryView({
         </button>
         <Link
           href="/history"
-          className="text-sm font-medium text-emerald-700 underline hover:text-emerald-800"
+          className="text-sm font-medium text-violet-700 underline hover:text-violet-800"
         >
           Xem lịch sử học →
         </Link>

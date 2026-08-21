@@ -225,12 +225,12 @@ export default function PalaceRoomsModal({
                         if (event.key === "Enter") handleRename(room);
                         if (event.key === "Escape") setEditingId(null);
                       }}
-                      className="w-full rounded-md border-2 border-black bg-white px-2 py-1 text-sm text-black outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+                      className="w-full rounded-md border-2 border-black bg-white px-2 py-1 text-sm text-black outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
                     />
                     <button
                       type="button"
                       onClick={() => handleRename(room)}
-                      className="rounded-md border-2 border-black bg-emerald-300 px-2 py-1 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+                      className="rounded-md border-2 border-black bg-violet-300 px-2 py-1 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
                     >
                       Lưu
                     </button>
@@ -242,7 +242,7 @@ export default function PalaceRoomsModal({
                       setEditingId(room.id);
                       setDraftName(room.name);
                     }}
-                    className="flex-1 text-left text-sm font-medium text-black hover:text-emerald-700"
+                    className="flex-1 text-left text-sm font-medium text-black hover:text-violet-700"
                   >
                     {room.name}
                   </button>
@@ -296,13 +296,13 @@ export default function PalaceRoomsModal({
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Ví dụ: Phòng làm việc"
-                className="flex-1 rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+                className="flex-1 rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
               />
             </div>
             <button
               type="submit"
               disabled={adding || !name.trim()}
-              className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+              className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
             >
               {adding ? "Đang thêm..." : "+ Thêm phòng"}
             </button>

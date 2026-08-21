@@ -14,7 +14,7 @@ type SubmittedWriting = {
 };
 
 const FIELD_CLASS =
-  "rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300";
+  "rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300";
 
 export default function WritingForm() {
   const { language } = useLanguage();
@@ -134,15 +134,15 @@ export default function WritingForm() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-1 rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+          className="mt-1 rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
         >
           {loading ? "Đang chấm bài..." : "Nộp bài"}
         </button>
       </form>
 
       {result && (
-        <div className="mt-6 rounded-2xl border-2 border-black bg-emerald-50 p-6 shadow-[5px_5px_0_0_#000]">
-          <h2 className="mb-2 text-sm font-semibold text-emerald-800">
+        <div className="mt-6 rounded-2xl border-2 border-black bg-violet-50 p-6 shadow-[5px_5px_0_0_#000]">
+          <h2 className="mb-2 text-sm font-semibold text-violet-800">
             Đã lưu: {result.title}
           </h2>
           {result.feedback ? (
@@ -156,7 +156,7 @@ export default function WritingForm() {
           )}
           <Link
             href="/writing/history"
-            className="mt-4 inline-block text-sm font-medium text-emerald-700 underline hover:text-emerald-800"
+            className="mt-4 inline-block text-sm font-medium text-violet-700 underline hover:text-violet-800"
           >
             Xem lịch sử viết →
           </Link>

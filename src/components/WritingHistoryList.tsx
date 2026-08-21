@@ -62,7 +62,7 @@ export default function WritingHistoryList({
         Chưa có bài viết {LANGUAGE_FLAG[language]} nào. Hãy viết bài đầu tiên ở trang{" "}
         <a
           href="/writing"
-          className="font-medium text-emerald-700 underline hover:text-emerald-800"
+          className="font-medium text-violet-700 underline hover:text-violet-800"
         >
           Luyện viết
         </a>
@@ -86,7 +86,7 @@ export default function WritingHistoryList({
               <button
                 type="button"
                 onClick={() => setExpandedId(isOpen ? null : writing.id)}
-                className="text-left text-sm font-semibold text-black hover:text-emerald-800"
+                className="text-left text-sm font-semibold text-black hover:text-violet-800"
               >
                 {LANGUAGE_FLAG[isLanguage(writing.language) ? writing.language : DEFAULT_LANGUAGE]}{" "}
                 {writing.title}
@@ -134,8 +134,8 @@ export default function WritingHistoryList({
                   </div>
                 )}
                 {writing.feedback && (
-                  <div className="rounded-lg border-2 border-black bg-emerald-50 p-3">
-                    <p className="mb-1 text-xs font-medium text-emerald-800">Nhận xét từ Ran Ran</p>
+                  <div className="rounded-lg border-2 border-black bg-violet-50 p-3">
+                    <p className="mb-1 text-xs font-medium text-violet-800">Nhận xét từ Ran Ran</p>
                     <p className="whitespace-pre-wrap text-black">{writing.feedback}</p>
                   </div>
                 )}

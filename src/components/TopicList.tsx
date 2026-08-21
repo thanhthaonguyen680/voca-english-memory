@@ -12,11 +12,18 @@ import type { TopicRow } from "@/app/vocabulary/page";
 
 const TOPIC_ICONS = ["📚", "💼", "☀️", "🎯", "🚀", "🌱", "🎨", "🔥", "💡", "🌍", "🎵", "✈️"];
 
-export default function TopicList({ initialTopics }: { initialTopics: TopicRow[] }) {
+export default function TopicList({
+  initialTopics,
+  isLoggedIn,
+}: {
+  initialTopics: TopicRow[];
+  isLoggedIn: boolean;
+}) {
   const router = useRouter();
   const { language } = useLanguage();
   const [topics, setTopics] = useState(initialTopics);
   const [showForm, setShowForm] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [icon, setIcon] = useState(TOPIC_ICONS[0]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -26,6 +33,17 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
   const [deleting, setDeleting] = useState(false);
 
   const totalWords = topics.reduce((sum, t) => sum + t.wordCount, 0);
+
+  // Guests get to see this whole page and click around, but creating a topic is where they
+  // actually need an account — that's the one moment we ask them to log in, instead of gating
+  // the entire page behind auth up front.
+  function handleCreateClick() {
+    if (isLoggedIn) {
+      setShowForm(true);
+    } else {
+      setShowLoginPrompt(true);
+    }
+  }
 
   function closeForm() {
     setShowForm(false);
@@ -98,8 +116,8 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
   const createButton = (
     <button
       type="button"
-      onClick={() => setShowForm(true)}
-      className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+      onClick={handleCreateClick}
+      className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
     >
       + Tạo chủ đề
     </button>
@@ -112,7 +130,7 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
           <div className="rounded-xl border-2 border-black bg-white px-4 py-2 text-center shadow-[3px_3px_0_0_#000]">
             <p className="text-lg font-bold text-black">{topics.length}</p>
             <p className="text-xs text-neutral-500">Chủ đề</p>
-            <span className="mx-auto mt-1 block h-1 w-6 rounded-full bg-emerald-400" />
+            <span className="mx-auto mt-1 block h-1 w-6 rounded-full bg-violet-400" />
           </div>
           <div className="rounded-xl border-2 border-black bg-white px-4 py-2 text-center shadow-[3px_3px_0_0_#000]">
             <p className="text-lg font-bold text-black">{totalWords}</p>
@@ -147,7 +165,7 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-black bg-emerald-200 text-xl">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl border-2 border-black bg-violet-200 text-xl">
                   {icon}
                 </span>
                 <div>
@@ -196,7 +214,7 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Ví dụ: Từ vựng về Du lịch"
-                className="w-full rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+                className="w-full rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
               />
             </div>
 
@@ -209,7 +227,7 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Chủ đề này gồm những từ về..."
-                className="w-full resize-none rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-300"
+                className="w-full resize-none rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
               />
             </div>
 
@@ -235,7 +253,7 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
               <button
                 type="submit"
                 disabled={creating || !name.trim()}
-                className="flex-1 rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+                className="flex-1 rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
               >
                 {creating ? "Đang tạo..." : "+ Tạo chủ đề"}
               </button>
@@ -244,9 +262,48 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
         </div>
       )}
 
+      {showLoginPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
+          <button
+            type="button"
+            aria-hidden
+            tabIndex={-1}
+            onClick={() => setShowLoginPrompt(false)}
+            className="fixed inset-0 cursor-default bg-black/50"
+          />
+          <div className="relative flex w-full max-w-sm flex-col gap-4 rounded-2xl border-2 border-black bg-white p-6 text-center shadow-[6px_6px_0_0_#000]">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black bg-violet-200 text-2xl">
+              🔒
+            </span>
+            <div>
+              <h2 className="font-bold text-black">Đăng nhập để lưu chủ đề</h2>
+              <p className="mt-1.5 text-sm text-neutral-600">
+                Đăng nhập để lưu trữ chủ đề bạn muốn học — từ vựng sẽ được giữ lại trong tài
+                khoản của bạn, không bị mất khi rời trang.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLoginPrompt(false)}
+                className="flex-1 rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              >
+                Để sau
+              </button>
+              <Link
+                href="/login"
+                className="flex-1 rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+              >
+                Đăng nhập
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {topics.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-black bg-white p-8 text-center">
-          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black bg-emerald-100 text-2xl">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black bg-violet-100 text-2xl">
             📁
           </span>
           <p className="mb-1 font-semibold text-black">Chưa có chủ đề nào</p>
@@ -255,8 +312,8 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
           </p>
           <button
             type="button"
-            onClick={() => setShowForm(true)}
-            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+            onClick={handleCreateClick}
+            className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
           >
             + Tạo chủ đề đầu tiên
           </button>
@@ -269,7 +326,7 @@ export default function TopicList({ initialTopics }: { initialTopics: TopicRow[]
               className="group relative rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]"
             >
               <Link href={`/vocabulary/${topic.id}`} className="block">
-                <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl border-2 border-black bg-emerald-200 text-lg">
+                <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl border-2 border-black bg-violet-200 text-lg">
                   {topic.icon}
                 </span>
                 <p className="font-semibold text-black">

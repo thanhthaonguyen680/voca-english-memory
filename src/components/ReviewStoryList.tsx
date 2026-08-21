@@ -80,7 +80,7 @@ export default function ReviewStoryList({
         Chưa có câu chuyện {LANGUAGE_FLAG[language]} nào để ôn tập. Hãy tạo ở trang{" "}
         <Link
           href="/vocabulary"
-          className="font-medium text-emerald-700 underline hover:text-emerald-800"
+          className="font-medium text-violet-700 underline hover:text-violet-800"
         >
           Nhập từ vựng
         </Link>
@@ -110,7 +110,7 @@ export default function ReviewStoryList({
             onClick={() => setTopicFilter(ALL_TOPICS)}
             className={
               topicFilter === ALL_TOPICS
-                ? "rounded-full border-2 border-black bg-emerald-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
+                ? "rounded-full border-2 border-black bg-violet-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
                 : "rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-medium text-black hover:bg-neutral-50"
             }
           >
@@ -123,7 +123,7 @@ export default function ReviewStoryList({
               onClick={() => setTopicFilter(topic.id)}
               className={
                 topicFilter === topic.id
-                  ? "rounded-full border-2 border-black bg-emerald-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
+                  ? "rounded-full border-2 border-black bg-violet-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
                   : "rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-medium text-black hover:bg-neutral-50"
               }
             >
@@ -136,7 +136,7 @@ export default function ReviewStoryList({
               onClick={() => setTopicFilter(NO_TOPIC)}
               className={
                 topicFilter === NO_TOPIC
-                  ? "rounded-full border-2 border-black bg-emerald-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
+                  ? "rounded-full border-2 border-black bg-violet-300 px-3 py-1.5 text-xs font-semibold text-black shadow-[2px_2px_0_0_#000]"
                   : "rounded-full border-2 border-black bg-white px-3 py-1.5 text-xs font-medium text-black hover:bg-neutral-50"
               }
             >
@@ -193,7 +193,7 @@ export default function ReviewStoryList({
                 {deck.words.slice(0, 6).map((item) => (
                   <span
                     key={item.word}
-                    className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800"
+                    className="rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-xs text-violet-800"
                   >
                     {item.word}
                   </span>

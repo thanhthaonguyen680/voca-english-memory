@@ -25,7 +25,7 @@ export default async function WritingHistoryPage() {
         <h1 className="text-2xl font-bold text-black">Lịch sử viết</h1>
         <a
           href="/writing"
-          className="text-sm font-medium text-emerald-700 underline hover:text-emerald-800"
+          className="text-sm font-medium text-violet-700 underline hover:text-violet-800"
         >
           + Viết bài mới
         </a>

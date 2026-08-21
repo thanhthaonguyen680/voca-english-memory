@@ -25,7 +25,7 @@ export default function GrammarTenseList() {
         <button
           type="button"
           onClick={() => setPractice({ mode: "mcq", scope: "mixed" })}
-          className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+          className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
         >
           🎲 Trắc nghiệm — trộn tất cả các thì
         </button>
@@ -66,7 +66,7 @@ export default function GrammarTenseList() {
                     </p>
                     <ul className="flex flex-col gap-1 text-black">
                       <li>
-                        <span className="font-medium text-emerald-700">Khẳng định:</span>{" "}
+                        <span className="font-medium text-violet-700">Khẳng định:</span>{" "}
                         {tense.structure.affirmative}
                       </li>
                       <li>
@@ -99,7 +99,7 @@ export default function GrammarTenseList() {
                       {tense.signalWords.map((word) => (
                         <span
                           key={word}
-                          className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800"
+                          className="rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-xs text-violet-800"
                         >
                           {word}
                         </span>
@@ -125,12 +125,12 @@ export default function GrammarTenseList() {
                     <p className="mb-1 text-xs font-semibold uppercase text-neutral-400">
                       Đặt câu hỏi &amp; trả lời
                     </p>
-                    <div className="rounded-lg border-2 border-black bg-emerald-50 p-3 text-neutral-800">
+                    <div className="rounded-lg border-2 border-black bg-violet-50 p-3 text-neutral-800">
                       <p>
                         <span className="font-medium text-black">Yes/No:</span>{" "}
                         {tense.questionAnswer.yesNo.question}
                         <br />
-                        <span className="text-emerald-800">
+                        <span className="text-violet-800">
                           → {tense.questionAnswer.yesNo.shortYes} /{" "}
                           {tense.questionAnswer.yesNo.shortNo}
                         </span>
@@ -139,7 +139,7 @@ export default function GrammarTenseList() {
                         <span className="font-medium text-black">Wh-question:</span>{" "}
                         {tense.questionAnswer.wh.question}
                         <br />
-                        <span className="text-emerald-800">
+                        <span className="text-violet-800">
                           → {tense.questionAnswer.wh.answer}
                         </span>
                       </p>

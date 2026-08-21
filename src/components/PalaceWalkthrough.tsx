@@ -272,7 +272,7 @@ export default function PalaceWalkthrough({
             <span>{sessionPercent}%</span>
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full border-2 border-black bg-neutral-100">
-            <div className="h-full bg-emerald-300" style={{ width: `${sessionPercent}%` }} />
+            <div className="h-full bg-violet-300" style={{ width: `${sessionPercent}%` }} />
           </div>
         </div>
       )}
@@ -286,7 +286,7 @@ export default function PalaceWalkthrough({
             type="button"
             onClick={handleGeneratePalace}
             disabled={generating}
-            className="rounded-full border-2 border-black bg-emerald-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+            className="rounded-full border-2 border-black bg-violet-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             {generating ? "Đang tạo..." : `🏰 Tạo Cung điện trí nhớ cho ${pendingCount} từ`}
           </button>
@@ -301,7 +301,7 @@ export default function PalaceWalkthrough({
 
       {assignedWords.length === 0 ? (
         <div className="rounded-2xl border-2 border-dashed border-black bg-white p-8 text-center">
-          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black bg-emerald-100 text-2xl">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black bg-violet-100 text-2xl">
             🏰
           </span>
           <p className="mb-1 font-semibold text-black">Chưa có phòng nào trong cung điện</p>

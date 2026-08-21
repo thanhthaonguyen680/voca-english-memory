@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PATHS = ["/vocabulary", "/history", "/review", "/chat", "/writing", "/grammar"];
+// "/vocabulary" itself (the topic list) is deliberately NOT protected — guests can browse it to
+// get a feel for the app before signing up. Only a specific topic ("/vocabulary/xxx", which
+// reads/writes that user's own data) requires auth, hence the separate "/vocabulary/" prefix.
+const PROTECTED_PATHS = ["/vocabulary/", "/history", "/review", "/chat", "/writing", "/grammar"];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

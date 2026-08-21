@@ -25,7 +25,7 @@ export default async function WritingPage() {
         </div>
         <a
           href="/writing/history"
-          className="shrink-0 text-sm font-medium text-emerald-700 underline hover:text-emerald-800"
+          className="shrink-0 text-sm font-medium text-violet-700 underline hover:text-violet-800"
         >
           Lịch sử →
         </a>

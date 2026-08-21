@@ -42,7 +42,7 @@ export default function OnboardingHint({
     <div className="relative inline-block">
       <div
         aria-hidden
-        className="pointer-events-none absolute -inset-2 rounded-2xl border-4 border-dashed border-emerald-400"
+        className="pointer-events-none absolute -inset-2 rounded-2xl border-4 border-dashed border-violet-400"
       />
       <div onClickCapture={dismiss}>{children}</div>
 

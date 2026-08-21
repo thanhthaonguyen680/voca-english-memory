@@ -37,15 +37,15 @@ export default function GrammarQuiz({ scope, onExit }: GrammarQuizProps) {
   if (isFinished) {
     const percent = deck.length > 0 ? Math.round((correctCount / deck.length) * 100) : 0;
     return (
-      <div className="rounded-2xl border-2 border-black bg-emerald-50 p-6 text-center shadow-[5px_5px_0_0_#000]">
-        <p className="text-lg font-semibold text-emerald-800">
+      <div className="rounded-2xl border-2 border-black bg-violet-50 p-6 text-center shadow-[5px_5px_0_0_#000]">
+        <p className="text-lg font-semibold text-violet-800">
           Bạn đúng {correctCount}/{deck.length} câu ({percent}%)
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
           <button
             type="button"
             onClick={onExit}
-            className="rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+            className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
           >
             Quay lại danh sách thì
           </button>
@@ -73,7 +73,7 @@ export default function GrammarQuiz({ scope, onExit }: GrammarQuizProps) {
         <button
           type="button"
           onClick={onExit}
-          className="flex items-center gap-1 font-semibold text-black hover:text-emerald-700"
+          className="flex items-center gap-1 font-semibold text-black hover:text-violet-700"
         >
           ← Chọn thì khác
         </button>
@@ -93,7 +93,7 @@ export default function GrammarQuiz({ scope, onExit }: GrammarQuizProps) {
             "rounded-lg border-2 border-black bg-white px-4 py-2.5 text-left text-sm font-medium text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0_0_#000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0_0_#000]";
           if (selected !== null) {
             if (isCorrectOption) {
-              style = "rounded-lg border-2 border-black bg-emerald-300 px-4 py-2.5 text-left text-sm font-medium text-black shadow-none";
+              style = "rounded-lg border-2 border-black bg-violet-300 px-4 py-2.5 text-left text-sm font-medium text-black shadow-none";
             } else if (isSelectedOption) {
               style = "rounded-lg border-2 border-black bg-red-300 px-4 py-2.5 text-left text-sm font-medium text-black shadow-none";
             } else {
@@ -125,13 +125,13 @@ export default function GrammarQuiz({ scope, onExit }: GrammarQuizProps) {
           >
             {selected === current.correctIndex ? "✅ Chính xác!" : "❌ Chưa đúng"}
           </p>
-          <p className="rounded-lg border-2 border-black bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <p className="rounded-lg border-2 border-black bg-violet-50 px-3 py-2 text-sm text-violet-900">
             {current.explanation}
           </p>
           <button
             type="button"
             onClick={handleNext}
-            className="self-start rounded-full border-2 border-black bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+            className="self-start rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
           >
             {index === deck.length - 1 ? "Xem kết quả" : "Câu tiếp theo →"}
           </button>
