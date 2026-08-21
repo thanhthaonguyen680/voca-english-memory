@@ -362,13 +362,26 @@ a confusing error like
   user_id` on all 4 operations). This replaced the original fixed shared 8-room list. Each
   user's row set is **lazily seeded**, not backfilled by migration:
   `ensureUserRooms(supabase, userId)` in `src/lib/palace-data.ts` checks if the user has any
-  `palace_rooms` rows and, if not, inserts the original `DEFAULT_ROOMS` (same 8 rooms/icons)
-  using their **exact original id strings** (`"living-room"`, `"kitchen"`, ...) rather than
-  random ids — this is what keeps `vocabulary_entries.palace_room` values written before this
-  feature existed still resolving correctly once a user's rows get seeded, with zero data
-  migration needed. `ensureUserRooms` is called both from `/api/palace/generate` (before
-  assigning rooms) and from the palace page itself (`page.tsx`, so a fresh user opening
-  the room manager sees their seeded starter set immediately, not an empty list).
+  `palace_rooms` rows and, if not, inserts the current `DEFAULT_ROOMS` using their **exact
+  original id strings** (`"living-room"`, `"kitchen"`, ...) rather than random ids — this is
+  what keeps `vocabulary_entries.palace_room` values written before this feature existed still
+  resolving correctly once a user's rows get seeded, with zero data migration needed.
+  `ensureUserRooms` is called both from `/api/palace/generate` (before assigning rooms) and
+  from the palace page itself (`page.tsx`, so a fresh user opening the room manager sees their
+  seeded starter set immediately, not an empty list).
+  - **`DEFAULT_ROOMS` isn't limited to whole rooms — it deliberately mixes rooms with specific
+    objects inside them** (fridge, wardrobe, TV, dining table, desk, bookshelf, mirror; added
+    2026-08-20, 8 → 16 stops). Real Method of Loci journeys use every distinct piece of
+    furniture along a walk as its own stop, not just the room as a whole — this also roughly
+    doubles how many words fit in one pass of the round-robin assignment (see below) before it
+    cycles back through the same stops. The original 8 whole-room ids are **never renamed or
+    removed** for the backward-compatibility reason above; new stops only ever get inserted
+    alongside them. This only changes the seed for **brand-new** users — it does **not**
+    retroactively add the new stops to a user who already has `palace_rooms` rows (their
+    customizations are theirs; don't silently mutate them). An existing user gets the new
+    stops the same way they'd add any custom room: "⚙️ Tuỳ chỉnh phòng" → "+ Thêm phòng mới" —
+    `ROOM_ICONS` was extended alongside `DEFAULT_ROOMS` (🧊/👔/📺/🍽️/🪞) so those icons are
+    available in the picker for exactly this.
 - Room **CRUD is a client-side, RLS-protected modal** (`PalaceRoomsModal.tsx`, opened via the
   "⚙️ Tuỳ chỉnh phòng" button on the palace page) — add (name + icon from `ROOM_ICONS`),
   inline rename, inline icon change, delete, and drag-to-reorder (native HTML5 drag/drop, no

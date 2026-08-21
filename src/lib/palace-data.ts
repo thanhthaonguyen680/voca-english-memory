@@ -5,16 +5,31 @@ export type Room = { id: string; name: string; icon: string };
 
 // The original fixed room list — kept as the seed data for every user's first visit, not as a
 // shared global list anymore. Ids are stable strings (not random) so palace_room values
-// written before customization existed keep resolving once a user's rows are seeded.
+// written before customization existed keep resolving once a user's rows are seeded. The 8
+// original whole-room ids (living-room, kitchen, bedroom, bathroom, garden, garage, staircase,
+// balcony) are never renamed/removed for that reason — new stops are only ever inserted
+// alongside them. Deliberately mixes whole rooms with specific objects inside them (fridge,
+// wardrobe, TV, desk...) so a "loci" isn't limited to one stop per room — real Method of Loci
+// journeys use every distinct piece of furniture along the walk, not just the room as a whole,
+// which is also what roughly doubles how many words fit before the round-robin assignment in
+// /api/palace/generate starts cycling back through the same stops.
 export const DEFAULT_ROOMS: Room[] = [
+  { id: "front-door", name: "Cổng nhà", icon: "🚪" },
   { id: "living-room", name: "Phòng khách", icon: "🛋️" },
+  { id: "tv", name: "Ti vi", icon: "📺" },
+  { id: "bookshelf", name: "Kệ sách", icon: "📚" },
   { id: "kitchen", name: "Nhà bếp", icon: "🍳" },
+  { id: "fridge", name: "Tủ lạnh", icon: "🧊" },
+  { id: "dining-table", name: "Bàn ăn", icon: "🍽️" },
   { id: "bedroom", name: "Phòng ngủ", icon: "🛏️" },
+  { id: "wardrobe", name: "Tủ quần áo", icon: "👔" },
+  { id: "desk", name: "Bàn học", icon: "🪑" },
   { id: "bathroom", name: "Phòng tắm", icon: "🚿" },
-  { id: "garden", name: "Sân vườn", icon: "🌳" },
-  { id: "garage", name: "Gara", icon: "🚗" },
+  { id: "mirror", name: "Gương", icon: "🪞" },
   { id: "staircase", name: "Cầu thang", icon: "🪜" },
   { id: "balcony", name: "Ban công", icon: "🌇" },
+  { id: "garden", name: "Sân vườn", icon: "🌳" },
+  { id: "garage", name: "Gara", icon: "🚗" },
 ];
 
 export const ROOM_ICONS = [
@@ -34,6 +49,11 @@ export const ROOM_ICONS = [
   "🛁",
   "🪑",
   "🖼️",
+  "🧊",
+  "👔",
+  "📺",
+  "🍽️",
+  "🪞",
 ];
 
 // Every user gets their own customizable room list, seeded lazily (on first generate call or
