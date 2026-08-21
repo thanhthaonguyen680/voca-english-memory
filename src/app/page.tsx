@@ -1,12 +1,6 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 
-export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export default function Home() {
   return (
     <main className="flex w-full flex-1 flex-col items-center justify-center px-4 py-20 text-center">
       <span className="mb-5 inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-white px-3.5 py-1.5 text-xs font-bold uppercase tracking-wide text-black shadow-[3px_3px_0_0_#000]">
@@ -29,7 +23,7 @@ export default async function Home() {
         không bao giờ quên.
       </p>
       <Link
-        href={user ? "/vocabulary" : "/login"}
+        href="/vocabulary"
         className="mt-8 rounded-full border-2 border-black bg-violet-300 px-6 py-2.5 text-sm font-semibold text-black shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none active:translate-x-1 active:translate-y-1 active:shadow-none"
       >
         Tạo chủ đề ngay →
