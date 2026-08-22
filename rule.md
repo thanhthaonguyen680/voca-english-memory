@@ -54,7 +54,7 @@ Mandatory rules for this project. Read before adding any new feature.
 Don't create additional client variants. Don't call the server `createClient` from a client
 component, or vice versa.
 
-## Auth: email + password
+## Auth: username + password
 
 - `/login` (`src/app/login/page.tsx`) uses `supabase.auth.signUp` /
   `supabase.auth.signInWithPassword` — no email round-trip at all. This is a deliberate
@@ -69,14 +69,30 @@ component, or vice versa.
     email service **locks template editing** entirely. Without custom SMTP configured, there
     is no way to get the code into the email at all.
   Password auth has neither dependency: signup/login complete client-side immediately.
+- **The login form asks for a username, not an email (2026-08-22)** — Supabase Auth's user
+  model is email-based with no native username identity type, so `src/lib/utils/username.ts`
+  derives a synthetic email (`<username>@voca-user.internal`) from the typed username and that
+  fake address is what's actually passed to `signUp`/`signInWithPassword` under the hood. This
+  is only safe because "Confirm email" is off (see below) — no email is ever sent to that
+  address, and no code anywhere reads `user.email` for display, so the fake domain is never
+  user-visible. `isValidUsername` restricts usernames to `[a-z0-9_]{3,20}` (normalized
+  lowercase via `normalizeUsername`) both to keep the derived address a valid email format and
+  to keep usernames simple; Supabase's own "email already registered" constraint is what
+  enforces username uniqueness for free, so no separate uniqueness check is needed.
+  `translateAuthError()` in the login page maps Supabase's email-flavored error strings back to
+  Vietnamese username-flavored ones (e.g. "already registered" → "Tên đăng nhập đã được sử
+  dụng") so the fake-email plumbing never leaks into user-facing text. If a real email address
+  is ever needed again (e.g. for password reset), that's a bigger pivot back to email auth, not
+  a tweak to this scheme.
 - This requires **"Confirm email" turned OFF** in the Supabase dashboard (Authentication →
   Providers → Email), otherwise `signUp` won't return a session (`data.session` is null) and
-  the user is stuck waiting on a confirmation email — which hits the exact same
-  template/redirect problems above. The login page already handles that case (shows an info
-  message instead of failing silently) but the simple, no-email-dependency flow only works
-  with confirmation off.
+  the user is stuck waiting on a confirmation email that can never arrive (the address isn't
+  real). The login page still handles that case defensively (shows an info message instead of
+  failing silently) but the whole username-based flow only works with confirmation off.
 - If magic link or OTP is revisited later (e.g. once custom SMTP is set up), don't delete
   `/auth/callback` — it's dormant, not dead, and is what a link-based flow would need again.
+  Note that reviving either would also mean reverting back to real email addresses, since both
+  depend on actually delivering something to the user's inbox.
 
 ## `Database` type (`src/lib/supabase/types.ts`)
 

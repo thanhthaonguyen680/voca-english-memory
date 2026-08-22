@@ -3,13 +3,28 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isValidUsername, normalizeUsername, usernameToEmail } from "@/lib/utils/username";
 
 type Mode = "signin" | "signup";
+
+function translateAuthError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("already registered") || lower.includes("already exists")) {
+    return "Tên đăng nhập đã được sử dụng, vui lòng chọn tên khác.";
+  }
+  if (lower.includes("invalid login credentials")) {
+    return "Tên đăng nhập hoặc mật khẩu không đúng.";
+  }
+  if (lower.includes("password")) {
+    return "Mật khẩu phải có ít nhất 6 ký tự.";
+  }
+  return "Có lỗi xảy ra, vui lòng thử lại.";
+}
 
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("signin");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,25 +32,37 @@ export default function LoginPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setLoading(true);
     setError("");
     setInfo("");
 
+    const normalized = normalizeUsername(username);
+    if (!isValidUsername(normalized)) {
+      setError(
+        "Tên đăng nhập chỉ gồm chữ thường, số và dấu gạch dưới, từ 3-20 ký tự.",
+      );
+      return;
+    }
+
+    setLoading(true);
     const supabase = createClient();
+    const email = usernameToEmail(normalized);
 
     if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { username: normalized } },
+      });
 
       if (error) {
         setLoading(false);
-        setError(error.message);
+        setError(translateAuthError(error.message));
         return;
       }
 
       if (!data.session) {
-        // Email confirmation is still required in Supabase settings.
         setLoading(false);
-        setInfo("Đã tạo tài khoản. Vui lòng kiểm tra email để xác nhận trước khi đăng nhập.");
+        setInfo("Không thể tạo tài khoản ngay lúc này. Vui lòng thử lại sau.");
         return;
       }
     } else {
@@ -43,11 +70,7 @@ export default function LoginPage() {
 
       if (error) {
         setLoading(false);
-        setError(
-          error.message === "Invalid login credentials"
-            ? "Email hoặc mật khẩu không đúng."
-            : error.message,
-        );
+        setError(translateAuthError(error.message));
         return;
       }
     }
@@ -71,17 +94,19 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input
-            type="email"
+            type="text"
             required
-            placeholder="you@example.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="username"
+            placeholder="Tên đăng nhập"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
             className="rounded-lg border-2 border-black bg-white px-3.5 py-2.5 text-sm text-black outline-none transition-colors placeholder:text-neutral-400 focus:border-violet-500 focus:ring-2 focus:ring-violet-300"
           />
           <input
             type="password"
             required
             minLength={6}
+            autoComplete={mode === "signup" ? "new-password" : "current-password"}
             placeholder="Mật khẩu (tối thiểu 6 ký tự)"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
