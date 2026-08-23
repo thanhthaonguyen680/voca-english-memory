@@ -91,6 +91,7 @@ export type Database = {
           language: string;
           icon: string;
           created_at: string;
+          last_reviewed_at: string | null;
         };
         Insert: {
           id?: string;
@@ -100,6 +101,7 @@ export type Database = {
           language?: string;
           icon?: string;
           created_at?: string;
+          last_reviewed_at?: string | null;
         };
         Update: Partial<{
           id: string;
@@ -109,6 +111,7 @@ export type Database = {
           language: string;
           icon: string;
           created_at: string;
+          last_reviewed_at: string | null;
         }>;
         Relationships: [];
       };

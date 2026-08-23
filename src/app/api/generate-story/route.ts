@@ -272,8 +272,15 @@ export async function POST(request: Request) {
   // Best-effort: if a topic word is missing a meaning or pronunciation, backfill it with what
   // Gemini just generated for the story, so the topic's word list reads better next time it's
   // viewed. Meaning and ipa gap-fill independently (a word can have one but not the other), so
-  // each gets its own `.is(..., null)`-guarded update rather than one combined call.
+  // each gets its own `.is(..., null)`-guarded update rather than one combined call. Also mark
+  // the topic as reviewed today — generating a story is one of the activities that counts
+  // toward the spaced-repetition reminder (see getDueReviewDay in utils/spaced-review.ts).
   await Promise.all([
+    supabase
+      .from("vocabulary_topics")
+      .update({ last_reviewed_at: new Date().toISOString() })
+      .eq("id", topicId)
+      .eq("user_id", user.id),
     ...enrichedWords
       .filter((entry) => entry.meaning)
       .map((entry) =>

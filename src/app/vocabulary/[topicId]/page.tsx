@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import TopicDetail from "@/components/TopicDetail";
 import { DEFAULT_LANGUAGE } from "@/lib/constants";
 import { isLanguage } from "@/lib/utils/language";
+import { getDueReviewDay } from "@/lib/utils/spaced-review";
 
 export default async function TopicPage({
   params,
@@ -22,7 +23,7 @@ export default async function TopicPage({
 
   const { data: topic, error: topicError } = await supabase
     .from("vocabulary_topics")
-    .select("id, name, description, language, icon, created_at")
+    .select("id, name, description, language, icon, created_at, last_reviewed_at")
     .eq("id", topicId)
     .eq("user_id", user.id)
     .single();
@@ -47,6 +48,10 @@ export default async function TopicPage({
       .limit(1)
       .maybeSingle(),
   ]);
+
+  const wordCount = words?.length ?? 0;
+  const dueReviewDay =
+    wordCount > 0 ? getDueReviewDay(topic.created_at, topic.last_reviewed_at) : null;
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
@@ -74,6 +79,7 @@ export default async function TopicPage({
               }
             : null
         }
+        dueReviewDay={dueReviewDay}
       />
     </main>
   );
