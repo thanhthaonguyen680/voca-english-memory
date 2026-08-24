@@ -398,6 +398,34 @@ a confusing error like
     stops the same way they'd add any custom room: "⚙️ Tuỳ chỉnh phòng" → "+ Thêm phòng mới" —
     `ROOM_ICONS` was extended alongside `DEFAULT_ROOMS` (🧊/👔/📺/🍽️/🪞) so those icons are
     available in the picker for exactly this.
+  - **`DEFAULT_ROOMS` is ordered "outside in" (2026-08-24)** — `garden` was moved ahead of
+    `front-door` (previously last, after `balcony`) so a brand-new user's default walk starts
+    in the yard and moves into the house, per an explicit request for the journey to go
+    "from the yard into the house". Same backward-compatibility rule as above: this only
+    changes the seed order for **new** users; an existing user's own `palace_rooms` rows and
+    their `sort_order` are untouched — they can drag-reorder in "⚙️ Tuỳ chỉnh phòng" to match
+    if they want the same flow.
+  - **`ROOM_SUGGESTIONS` (2026-08-24)** — a curated, category-grouped list (Phòng khách, Nhà
+    bếp, Phòng ngủ, Phòng tắm, Phòng làm việc, Ngoài trời) of specific furniture-level stops
+    (Ghế sofa, Bàn trà, Bồn rửa bát, Giường ngủ...), shown as one-tap quick-add chips in
+    `PalaceRoomsModal.tsx` above the manual "+ Thêm phòng mới" form. This is purely a UI
+    shortcut over the existing add-room flow — a chip click calls the same `insertRoom(name,
+    icon)` a hand-typed submission would, no new capability or schema. Solves the same problem
+    "🛋️ Phòng khách" being one broad catch-all stop was flagged for: a learner can now split it
+    into distinct furniture pieces (sofa, coffee table, TV stand...) without typing each one
+    and picking an icon by hand. A chip already present in the user's room list (case-
+    insensitive name match) shows disabled with a ✓, so re-opening the modal doesn't offer
+    already-added suggestions again.
+- **"📖 Xem hành trình trí nhớ" (2026-08-24, `PalaceJourney.tsx`)** stitches every room's
+  *already-generated* `palace_room_stories` entry into one continuous scroll, in the user's
+  room order — rooms with no story yet (no words assigned, or never generated) are simply
+  skipped, not shown as empty steps. Deliberately **not** a new Gemini call: the per-room
+  stories already exist for this exact purpose (see `palace_room_stories` above), so this view
+  is just a different way of reading content that's already in the DB, at zero extra quota
+  cost. Reachable from the map view via a button next to "🔀 Ôn tất cả các phòng", disabled
+  with a tooltip when no room has a story yet. If a smoother, AI-authored single narrative
+  (with real transition sentences between rooms) is wanted later, that's a deliberate bigger
+  step up — an explicit choice made when this shipped, not an oversight to silently upgrade.
 - Room **CRUD is a client-side, RLS-protected modal** (`PalaceRoomsModal.tsx`, opened via the
   "⚙️ Tuỳ chỉnh phòng" button on the palace page) — add (name + icon from `ROOM_ICONS`),
   inline rename, inline icon change, delete, and drag-to-reorder (native HTML5 drag/drop, no

@@ -12,23 +12,38 @@ type RoomStat = { room: Room; count: number; avgMastery: number };
 export default function PalaceMap({
   assignedWordsCount,
   roomStats,
+  hasJourneyStory,
   onStartFull,
   onStartRoom,
+  onViewJourney,
 }: {
   assignedWordsCount: number;
   roomStats: RoomStat[];
+  hasJourneyStory: boolean;
   onStartFull: () => void;
   onStartRoom: (roomId: string) => void;
+  onViewJourney: () => void;
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <button
-        type="button"
-        onClick={onStartFull}
-        className="self-start rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-      >
-        🔀 Ôn tất cả các phòng ({assignedWordsCount} từ)
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={onStartFull}
+          className="self-start rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+        >
+          🔀 Ôn tất cả các phòng ({assignedWordsCount} từ)
+        </button>
+        <button
+          type="button"
+          onClick={onViewJourney}
+          disabled={!hasJourneyStory}
+          title={hasJourneyStory ? undefined : "Chưa có câu chuyện phòng nào để ghép"}
+          className="self-start rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
+        >
+          📖 Xem hành trình trí nhớ
+        </button>
+      </div>
 
       <div className="rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { ROOM_ICONS, type Room } from "@/lib/palace-data";
+import { ROOM_ICONS, ROOM_SUGGESTIONS, type Room, type RoomSuggestion } from "@/lib/palace-data";
 
 export default function PalaceRoomsModal({
   open,
@@ -23,6 +23,7 @@ export default function PalaceRoomsModal({
   const [icon, setIcon] = useState(ROOM_ICONS[0]);
   const [name, setName] = useState("");
   const [adding, setAdding] = useState(false);
+  const [addingSuggestion, setAddingSuggestion] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftName, setDraftName] = useState("");
@@ -55,6 +56,26 @@ export default function PalaceRoomsModal({
     persistOrder(next);
   }
 
+  async function insertRoom(roomName: string, roomIcon: string) {
+    const supabase = createClient();
+    const id = crypto.randomUUID();
+    const { error: insertError } = await supabase.from("palace_rooms").insert({
+      id,
+      user_id: userId,
+      name: roomName,
+      icon: roomIcon,
+      sort_order: rooms.length,
+    });
+
+    if (insertError) {
+      setError("Không thể thêm phòng.");
+      return false;
+    }
+
+    onRoomsChanged([...rooms, { id, name: roomName, icon: roomIcon }]);
+    return true;
+  }
+
   async function handleAddRoom(event: FormEvent) {
     event.preventDefault();
     const trimmed = name.trim();
@@ -63,25 +84,20 @@ export default function PalaceRoomsModal({
     setAdding(true);
     setError("");
     try {
-      const supabase = createClient();
-      const id = crypto.randomUUID();
-      const { error: insertError } = await supabase.from("palace_rooms").insert({
-        id,
-        user_id: userId,
-        name: trimmed,
-        icon,
-        sort_order: rooms.length,
-      });
-
-      if (insertError) {
-        setError("Không thể thêm phòng.");
-        return;
-      }
-
-      onRoomsChanged([...rooms, { id, name: trimmed, icon }]);
-      setName("");
+      const ok = await insertRoom(trimmed, icon);
+      if (ok) setName("");
     } finally {
       setAdding(false);
+    }
+  }
+
+  async function handleQuickAdd(item: RoomSuggestion) {
+    setAddingSuggestion(item.name);
+    setError("");
+    try {
+      await insertRoom(item.name, item.icon);
+    } finally {
+      setAddingSuggestion(null);
     }
   }
 
@@ -259,6 +275,42 @@ export default function PalaceRoomsModal({
                 </button>
               </div>
             ))}
+          </div>
+
+          <div className="flex flex-col gap-3 border-t-2 border-black pt-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              💡 Gợi ý theo phòng (bấm để thêm nhanh)
+            </p>
+            <div className="flex max-h-40 flex-col gap-2.5 overflow-y-auto">
+              {ROOM_SUGGESTIONS.map((group) => (
+                <div key={group.category}>
+                  <p className="mb-1 text-xs font-semibold text-neutral-400">{group.category}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.items.map((item) => {
+                      const alreadyAdded = rooms.some(
+                        (r) => r.name.trim().toLowerCase() === item.name.toLowerCase(),
+                      );
+                      return (
+                        <button
+                          key={item.name}
+                          type="button"
+                          disabled={alreadyAdded || addingSuggestion === item.name}
+                          onClick={() => handleQuickAdd(item)}
+                          className={
+                            alreadyAdded
+                              ? "inline-flex cursor-not-allowed items-center gap-1 rounded-full border-2 border-black bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-400"
+                              : "inline-flex items-center gap-1 rounded-full border-2 border-black bg-white px-2.5 py-1 text-xs font-medium text-black shadow-[2px_2px_0_0_#000] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-60"
+                          }
+                        >
+                          <span aria-hidden>{item.icon}</span> {item.name}
+                          {alreadyAdded && <span aria-hidden>✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <form onSubmit={handleAddRoom} className="flex flex-col gap-3 border-t-2 border-black pt-4">

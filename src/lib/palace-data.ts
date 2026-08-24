@@ -13,7 +13,13 @@ export type Room = { id: string; name: string; icon: string };
 // journeys use every distinct piece of furniture along the walk, not just the room as a whole,
 // which is also what roughly doubles how many words fit before the round-robin assignment in
 // /api/palace/generate starts cycling back through the same stops.
+// Ordered "outside in" (2026-08-24, per a request to walk the journey starting from the yard)
+// — garden moved ahead of front-door so a brand-new user's default walk starts outside and
+// moves into the house, matching how palace-journey.ts stitches per-room stories in this same
+// room order. Only affects newly-seeded users; existing users keep their own stored
+// sort_order and can drag-reorder in "⚙️ Tuỳ chỉnh phòng" if they want the same flow.
 export const DEFAULT_ROOMS: Room[] = [
+  { id: "garden", name: "Sân vườn", icon: "🌳" },
   { id: "front-door", name: "Cổng nhà", icon: "🚪" },
   { id: "living-room", name: "Phòng khách", icon: "🛋️" },
   { id: "tv", name: "Ti vi", icon: "📺" },
@@ -28,7 +34,6 @@ export const DEFAULT_ROOMS: Room[] = [
   { id: "mirror", name: "Gương", icon: "🪞" },
   { id: "staircase", name: "Cầu thang", icon: "🪜" },
   { id: "balcony", name: "Ban công", icon: "🌇" },
-  { id: "garden", name: "Sân vườn", icon: "🌳" },
   { id: "garage", name: "Gara", icon: "🚗" },
 ];
 
@@ -54,6 +59,77 @@ export const ROOM_ICONS = [
   "📺",
   "🍽️",
   "🪞",
+  "🫖",
+  "🚰",
+  "🗄️",
+  "💡",
+  "💻",
+];
+
+export type RoomSuggestion = { name: string; icon: string };
+
+// Quick-add suggestions grouped by room category (2026-08-24) — lets a user split a broad room
+// like "Phòng khách" into specific furniture-level stops (sofa, coffee table...) with one tap
+// instead of typing each one by hand. Purely a UI convenience over the existing "add a custom
+// room" flow (PalaceRoomsModal) — no new capability, no schema change; a suggestion is just a
+// name+icon pair that gets inserted the exact same way a hand-typed room would.
+export const ROOM_SUGGESTIONS: { category: string; items: RoomSuggestion[] }[] = [
+  {
+    category: "Phòng khách",
+    items: [
+      { name: "Ghế sofa", icon: "🛋️" },
+      { name: "Bàn trà", icon: "🫖" },
+      { name: "Kệ tivi", icon: "📺" },
+      { name: "Kệ sách", icon: "📚" },
+      { name: "Cửa sổ", icon: "🪟" },
+    ],
+  },
+  {
+    category: "Nhà bếp",
+    items: [
+      { name: "Bồn rửa bát", icon: "🚰" },
+      { name: "Tủ bếp", icon: "🗄️" },
+      { name: "Bếp nấu", icon: "🍳" },
+      { name: "Bàn ăn", icon: "🍽️" },
+      { name: "Tủ lạnh", icon: "🧊" },
+    ],
+  },
+  {
+    category: "Phòng ngủ",
+    items: [
+      { name: "Giường ngủ", icon: "🛏️" },
+      { name: "Tủ quần áo", icon: "👔" },
+      { name: "Bàn trang điểm", icon: "🪞" },
+      { name: "Đèn ngủ", icon: "💡" },
+    ],
+  },
+  {
+    category: "Phòng tắm",
+    items: [
+      { name: "Bồn tắm", icon: "🛁" },
+      { name: "Vòi sen", icon: "🚿" },
+      { name: "Bồn rửa mặt", icon: "🚰" },
+      { name: "Gương", icon: "🪞" },
+    ],
+  },
+  {
+    category: "Phòng làm việc",
+    items: [
+      { name: "Bàn làm việc", icon: "🪑" },
+      { name: "Máy tính", icon: "💻" },
+      { name: "Kệ sách", icon: "📚" },
+    ],
+  },
+  {
+    category: "Ngoài trời",
+    items: [
+      { name: "Cổng nhà", icon: "🚪" },
+      { name: "Sân vườn", icon: "🌳" },
+      { name: "Ban công", icon: "🌇" },
+      { name: "Gara", icon: "🚗" },
+      { name: "Cầu thang", icon: "🪜" },
+    ],
+  },
 ];
 
 // Every user gets their own customizable room list, seeded lazily (on first generate call or

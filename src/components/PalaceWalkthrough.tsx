@@ -7,6 +7,7 @@ import { MAX_MASTERY, type Room } from "@/lib/palace-data";
 import PalaceRoomsModal from "@/components/PalaceRoomsModal";
 import PalaceMap from "@/components/PalaceMap";
 import PalaceSession from "@/components/PalaceSession";
+import PalaceJourney from "@/components/PalaceJourney";
 
 // Shared with PalaceMap.tsx / PalaceSession.tsx — this file stays the source of truth for this
 // view-model shape since it owns the state it describes.
@@ -52,7 +53,7 @@ export default function PalaceWalkthrough({
   const [roomsModalOpen, setRoomsModalOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
-  const [view, setView] = useState<"map" | "session">("map");
+  const [view, setView] = useState<"map" | "session" | "journey">("map");
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [deck, setDeck] = useState<Word[]>([]);
   const [index, setIndex] = useState(0);
@@ -238,7 +239,7 @@ export default function PalaceWalkthrough({
         >
           ← {topic.icon} {topic.name}
         </Link>
-        {view === "session" && (
+        {(view === "session" || view === "journey") && (
           <button
             type="button"
             onClick={exitToMap}
@@ -264,9 +265,11 @@ export default function PalaceWalkthrough({
       <p className="mb-4 text-sm text-neutral-600">
         {view === "map"
           ? "Mỗi từ được gắn vào 1 phòng trong ngôi nhà trí nhớ, kèm 1 hình ảnh liên tưởng kỳ lạ, dễ nhớ. Bấm vào một phòng trên sơ đồ để ôn các từ trong phòng đó."
-          : activeRoom
-            ? `Đang ôn phòng: ${activeRoom.icon} ${activeRoom.name}`
-            : "Đang ôn tất cả các phòng."}
+          : view === "journey"
+            ? "Đọc liền mạch hành trình đi qua từng phòng, từ ngoài vào trong nhà."
+            : activeRoom
+              ? `Đang ôn phòng: ${activeRoom.icon} ${activeRoom.name}`
+              : "Đang ôn tất cả các phòng."}
       </p>
 
       {view === "session" && activeRoomId && roomStories[activeRoomId] && (
@@ -328,9 +331,13 @@ export default function PalaceWalkthrough({
         <PalaceMap
           assignedWordsCount={assignedWords.length}
           roomStats={roomStats}
+          hasJourneyStory={Object.keys(roomStories).length > 0}
           onStartFull={startFullSession}
           onStartRoom={startRoomSession}
+          onViewJourney={() => setView("journey")}
         />
+      ) : view === "journey" ? (
+        <PalaceJourney rooms={rooms} roomStories={roomStories} onBack={() => setView("map")} />
       ) : (
         <PalaceSession
           deck={deck}
