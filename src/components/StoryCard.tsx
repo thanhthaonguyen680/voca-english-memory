@@ -31,6 +31,15 @@ export default function StoryCard({
   onDeleted,
 }: StoryCardProps) {
   const speechLang = SPEECH_LANG[language];
+  // Only Chinese stories need inline Pinyin next to each bolded word — English's IPA isn't
+  // meant to be read inline in a story the way Pinyin (a romanization, not just pronunciation
+  // notation) is commonly shown alongside Hán tự for learners.
+  const pinyinByWord =
+    language === "zh"
+      ? Object.fromEntries(
+          vocabularyUsed.filter((item) => item.ipa).map((item) => [item.word, item.ipa as string]),
+        )
+      : undefined;
   const [openWords, setOpenWords] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -153,7 +162,7 @@ export default function StoryCard({
       </div>
 
       <p className="whitespace-pre-wrap text-sm leading-relaxed text-black">
-        <BoldText text={content} />
+        <BoldText text={content} pinyinByWord={pinyinByWord} />
       </p>
 
       {translation && (
