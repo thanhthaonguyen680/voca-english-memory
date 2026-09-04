@@ -22,9 +22,6 @@ export default function Home() {
         <span className="font-semibold text-black">Memory Palace</span> — nhớ nhanh, nhớ sâu,
         không bao giờ quên.
       </p>
-      <span className="mt-3 inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-amber-100 px-3.5 py-1.5 text-xs font-semibold text-amber-800 shadow-[2px_2px_0_0_#000]">
-        <span aria-hidden>⏰</span> Tự động nhắc ôn đúng lúc theo lịch lặp lại ngắt quãng
-      </span>
       <Link
         href="/vocabulary"
         className="mt-8 rounded-full border-2 border-black bg-violet-300 px-6 py-2.5 text-sm font-semibold text-black shadow-[4px_4px_0_0_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none active:translate-x-1 active:translate-y-1 active:shadow-none"

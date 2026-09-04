@@ -797,41 +797,20 @@ a confusing error like
   `TopicList.tsx`, `TopicDetail.tsx`) — don't make the whole page a Client Component just
   because part of it needs `useState`.
 
-## Spaced-repetition review reminders (2026-08-22)
+## Spaced-repetition review reminders — removed (added 2026-08-22, removed 2026-09-01)
 
-- When opening a topic's page, if it's "due" per a fixed spaced-repetition schedule and hasn't
-  been reviewed yet today, `TopicDetail.tsx` shows a dialog ("⏰ Đến lúc ôn tập rồi!") nudging
-  the learner to review — Method-of-Loci-style techniques only work if you actually revisit
-  material on a schedule, so this is a reminder, not a new quiz type.
-- **The schedule is a fixed list, `[1, 3, 7, 14, 30]` days since the topic's `created_at`**
-  (`REVIEW_SCHEDULE_DAYS` in `src/lib/utils/spaced-review.ts`), matching the classic
-  Ebbinghaus-forgetting-curve checkpoints, then stopping — deliberately not "every odd day
-  forever" (an earlier phrasing of this request), which would nag too often for too long with
-  no added benefit. `getDueReviewDay(createdAt, lastReviewedAt, now)` is a pure function
-  returning the matching checkpoint number (or `null`) — reuse it rather than reimplementing
-  the day-math if a similar due-date check is needed elsewhere.
-- **"Reviewed" is tracked via a single `vocabulary_topics.last_reviewed_at` column** (migration
-  `20260822225457_add_topic_last_reviewed.sql`), not a per-attempt log table — same
-  lightweight-counter reasoning as `palace_mastery` (see Memory Palace above): the reminder
-  only needs "was this topic touched today," not a history of every review. It's set (fire-
-  and-forget, best-effort, matching the low-stakes-client-update pattern used elsewhere) by
-  three independent activities, all of which count as "reviewing" the topic: generating a
-  story (server-side, in `generate-story/route.ts`, since that route already owns the
-  topic-ownership check), starting the in-topic "📝 Ôn tập từ vựng" quiz
-  (`TopicDetail.handleStartReview`), and starting a Memory Palace session, full or per-room
-  (`PalaceWalkthrough.startFullSession`/`startRoomSession`). Merely opening the topic page does
-  **not** count — that would make the reminder immediately self-dismiss the moment it's shown,
-  defeating the point.
-- The dialog only appears when the topic actually has words (`wordCount > 0`, checked in
-  `page.tsx` before computing `dueReviewDay` at all) — an empty topic has nothing to review.
-  It's re-derived fresh from the server on every page load rather than dismissed-and-remembered
-  client-side (no localStorage flag like `OnboardingHint`): if the learner reopens the same
-  topic again later the same day without reviewing, it's expected to reappear — the whole point
-  is nagging until the learner actually does one of the three review activities above, not a
-  one-time tip.
-- The dialog's own "📝 Ôn tập ngay" button routes to the in-topic quiz specifically (reusing
-  `handleStartReview`) — it doesn't also offer shortcuts to story generation or Memory Palace,
-  since those already have their own prominent buttons directly below on the same page.
+- A dialog nudging the learner to review a topic on a `[1, 3, 7, 14, 30]`-day schedule since
+  creation was built, then explicitly removed at the user's request shortly after. All of it —
+  `TopicDetail.tsx`'s reminder dialog, `src/lib/utils/spaced-review.ts`'s `getDueReviewDay()`,
+  the homepage badge advertising it, and every `last_reviewed_at`-writing call site
+  (`generate-story/route.ts`, `PalaceWalkthrough.tsx`'s `startFullSession`/`startRoomSession`)
+  — was deleted. Don't reintroduce it casually; if wanted again, treat it as a fresh feature
+  request rather than restoring old code, since the schedule/trigger design may need
+  rethinking.
+- **`vocabulary_topics.last_reviewed_at`** (migration `20260822225457_add_topic_last_reviewed.sql`)
+  is left in place but dormant — same "don't delete a shipped column without discussing first"
+  reasoning as `user_settings.gemini_api_key` elsewhere in this doc. No code reads or writes it
+  anymore.
 
 ## Vocabulary review (`/review`)
 

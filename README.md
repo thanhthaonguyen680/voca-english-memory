@@ -10,9 +10,6 @@
 >   thì càng dễ nhớ. Đây chính là kỹ thuật mình từng dùng để nhớ 100 con số ngẫu nhiên chỉ trong
 >   vài phút (và nhớ rất lâu nếu ôn lại), hay nhớ đúng thứ tự cả bộ 52 lá bài chỉ sau 1 lần xem
 >   qua — giờ áp dụng lại đúng nguyên lý đó cho việc học từ vựng.
-> - App còn tự nhắc bạn ôn lại đúng lúc theo lịch **lặp lại ngắt quãng (spaced repetition)** —
->   vào ngày 1, 3, 7, 14, 30 sau khi tạo chủ đề, đúng những mốc trước khi não sắp quên, thay vì
->   để bạn tự nhớ lịch ôn tập.
 >
 > Cách dùng: tạo chủ đề, thêm từ vựng (gõ tay, hoặc chụp/chọn ảnh để AI tự quét và tạo ra nghĩa
 > + phiên âm IPA), rồi biến thành câu chuyện riêng hoặc xếp vào cung điện trí nhớ để nhớ sâu,
@@ -51,9 +48,6 @@ this might be for you.
   (`/writing/history`).
 - **Study streak**: tracks consecutive days with at least one story generated, shown right in
   the navbar to keep the habit going.
-- **Spaced-repetition review reminders**: opening a topic on day 1, 3, 7, 14, or 30 since it
-  was created (and not yet reviewed that day) shows a dialog nudging you to review it —
-  generating a story, doing the in-topic quiz, or a Memory Palace session all count as reviewed.
 - The whole UI is in **Vietnamese** with a dark theme, since that's who this app is for.
 
 ## Why free-tier only

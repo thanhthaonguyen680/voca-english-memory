@@ -6,7 +6,6 @@ import ReviewSession from "@/components/ReviewSession";
 import TopicWordCapture from "@/components/TopicWordCapture";
 import TopicWordList from "@/components/TopicWordList";
 import TopicStoryView from "@/components/TopicStoryView";
-import { createClient } from "@/lib/supabase/client";
 import { LANGUAGES } from "@/lib/constants";
 import type { Language } from "@/lib/types";
 import type { VocabularyItem } from "@/lib/supabase/types";
@@ -38,44 +37,21 @@ export default function TopicDetail({
   topic,
   initialWords,
   initialStory = null,
-  dueReviewDay = null,
 }: {
   topic: Topic;
   initialWords: Word[];
   initialStory?: GeneratedStory | null;
-  dueReviewDay?: number | null;
 }) {
   const [words, setWords] = useState<Word[]>(initialWords);
   const [mode, setMode] = useState<"list" | "review" | "story">("list");
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState("");
   const [story, setStory] = useState<GeneratedStory | null>(initialStory);
-  const [showReviewReminder, setShowReviewReminder] = useState(dueReviewDay !== null);
 
   const flag = LANGUAGES.find((item) => item.id === topic.language)?.flag;
   const reviewableWords = words
     .filter((w) => w.meaning && w.meaning.trim())
     .map((w) => ({ word: w.word, meaning: w.meaning as string }));
-
-  // Best-effort: marks this topic as reviewed today, for the spaced-repetition reminder (see
-  // getDueReviewDay in utils/spaced-review.ts). Story generation marks it server-side instead
-  // (generate-story/route.ts), since that route already validates topic ownership.
-  function markTopicReviewed() {
-    const supabase = createClient();
-    supabase
-      .from("vocabulary_topics")
-      .update({ last_reviewed_at: new Date().toISOString() })
-      .eq("id", topic.id)
-      .then(({ error }) => {
-        if (error) console.error("Failed to mark topic as reviewed", error);
-      });
-  }
-
-  function handleStartReview() {
-    setMode("review");
-    setShowReviewReminder(false);
-    markTopicReviewed();
-  }
 
   function handleWordsAdded(newWords: Word[]) {
     setWords((prev) => [...prev, ...newWords]);
@@ -96,7 +72,6 @@ export default function TopicDetail({
     setGenerating(true);
     setGenerateError("");
     setStory(null);
-    setShowReviewReminder(false);
     try {
       const res = await fetch("/api/generate-story", {
         method: "POST",
@@ -172,7 +147,7 @@ export default function TopicDetail({
             </button>
             <button
               type="button"
-              onClick={handleStartReview}
+              onClick={() => setMode("review")}
               disabled={reviewableWords.length === 0}
               className="inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
             >
@@ -211,48 +186,6 @@ export default function TopicDetail({
             </p>
           )}
         </>
-      )}
-
-      {showReviewReminder && dueReviewDay !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
-          <button
-            type="button"
-            aria-hidden
-            tabIndex={-1}
-            onClick={() => setShowReviewReminder(false)}
-            className="fixed inset-0 cursor-default bg-black/50"
-          />
-          <div className="relative flex w-full max-w-sm flex-col gap-4 rounded-2xl border-2 border-black bg-white p-6 text-center shadow-[6px_6px_0_0_#000]">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-black bg-amber-100 text-2xl">
-              ⏰
-            </span>
-            <div>
-              <h2 className="font-bold text-black">Đến lúc ôn tập rồi!</h2>
-              <p className="mt-1.5 text-sm text-neutral-600">
-                Đã {dueReviewDay} ngày kể từ khi bạn tạo &ldquo;{topic.name}&rdquo; — đây là mốc
-                ôn tập theo phương pháp lặp lại ngắt quãng (spaced repetition), ôn lại ngay để
-                nhớ lâu hơn nhé!
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setShowReviewReminder(false)}
-                className="flex-1 rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-              >
-                Để sau
-              </button>
-              <button
-                type="button"
-                onClick={handleStartReview}
-                disabled={reviewableWords.length === 0}
-                className="flex-1 rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
-              >
-                📝 Ôn tập ngay
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </>
   );

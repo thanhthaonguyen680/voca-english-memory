@@ -150,19 +150,6 @@ export default function PalaceWalkthrough({
     setWrongIds(new Set());
   }
 
-  // Best-effort: marks this topic as reviewed today, for the spaced-repetition reminder on the
-  // topic page (see getDueReviewDay in utils/spaced-review.ts).
-  function markTopicReviewed() {
-    const supabase = createClient();
-    supabase
-      .from("vocabulary_topics")
-      .update({ last_reviewed_at: new Date().toISOString() })
-      .eq("id", topic.id)
-      .then(({ error }) => {
-        if (error) console.error("Failed to mark topic as reviewed", error);
-      });
-  }
-
   function exitToMap() {
     setView("map");
     setActiveRoomId(null);
@@ -177,7 +164,6 @@ export default function PalaceWalkthrough({
     setActiveRoomId(null);
     beginDeck(sortByMastery(assignedWords));
     setView("session");
-    markTopicReviewed();
   }
 
   function startRoomSession(roomId: string) {
@@ -186,7 +172,6 @@ export default function PalaceWalkthrough({
     setActiveRoomId(roomId);
     beginDeck(sortByMastery(roomWords));
     setView("session");
-    markTopicReviewed();
   }
 
   function handleReveal() {
