@@ -188,6 +188,12 @@ Open [http://localhost:3000](http://localhost:3000).
    (including `SUPABASE_SERVICE_ROLE_KEY`).
 4. Run `scripts/add-gemini-key.mjs` locally against the same Supabase project to populate the
    pool — it writes straight to the DB, so there's nothing separate to do on Vercel itself.
+5. `vercel.json` pins Serverless Functions to `sin1` (Singapore) to match the Supabase
+   project's region — every Server Component/API route calls Supabase, so a region mismatch
+   adds real latency to every request. **This only takes effect on a Pro-or-higher plan** —
+   Hobby (free) is fixed to `iad1` (US East) and ignores `regions`. On Hobby, either remove
+   this file or accept the added cross-region latency; if you change which region your own
+   Supabase project lives in, update `regions` here to match.
 
 ## Notes
 

@@ -11,7 +11,9 @@ Mandatory rules for this project. Read before adding any new feature.
   `gemini-2.0-flash` / `gemini-2.0-flash-lite` got their free-tier quota capped to 0 for new
   API keys — use a `-latest` alias so the app keeps tracking whichever model Google currently
   grants free quota to. Don't change the model or switch provider unless explicitly asked.
-- Deploy: Vercel free tier
+- Deploy: Vercel — was free tier, upgraded to **Pro (2026-09-04)** specifically so Serverless
+  Functions can be pinned to a region (see `vercel.json` below); everything else about the
+  stack still deliberately targets free tiers
 - Styling: plain Tailwind CSS, no component library (shadcn, MUI...) unless explicitly asked
 - Package manager: npm (don't add `yarn.lock` / `pnpm-lock.yaml`)
 - **Pure helper modules live in `src/lib/utils/`** (added 2026-08-09 — `crypto.ts`, `image.ts`,
@@ -961,6 +963,26 @@ a confusing error like
 Add new variables to `.env.local.example` whenever one is introduced. Never commit the real
 `.env.local` (already in `.gitignore`). `NEXT_PUBLIC_*` variables are public — never put a
 secret there.
+
+## Deployment region (`vercel.json`, added 2026-09-04)
+
+- Every page and API route calls Supabase, so its region relative to where the Vercel
+  Serverless Functions run directly affects every request's latency — a mismatch there was
+  diagnosed as the main cause of "every click feels slow" (not React/query code; `history`/
+  `review`/`generate-story` already parallelize their Supabase calls with `Promise.all`).
+  Investigated by running `vercel inspect <deployment-url>`, which prints each function's
+  region in its build output (`[iad1]`, etc.) — reuse that command first if this regresses,
+  rather than guessing.
+- `vercel.json`'s `{ "regions": ["sin1"] }` pins functions to Singapore, matching the Supabase
+  project's own region (`ap-southeast-1`, Project Settings → General in the Supabase
+  dashboard) — check there before assuming `sin1` is still correct if a new Supabase project is
+  ever provisioned elsewhere. **Region pinning is a Pro-plan-or-higher feature** — Vercel
+  Hobby (free) ignores `regions` and is fixed to `iad1` (US East). This is the specific,
+  narrow reason the Vercel plan was upgraded (see "Fixed stack" above); nothing else about the
+  stack's free-tier-only stance changed because of it.
+- Don't add `functions.regions` per-route or a `preferredRegion` export as an alternative to
+  this — the top-level `regions` key already applies project-wide for every function Next.js
+  generates (pages, layouts, API routes), so a per-file override would be redundant.
 
 ## UI / UX
 
