@@ -428,6 +428,17 @@ a confusing error like
   with a tooltip when no room has a story yet. If a smoother, AI-authored single narrative
   (with real transition sentences between rooms) is wanted later, that's a deliberate bigger
   step up — an explicit choice made when this shipped, not an oversight to silently upgrade.
+  - **"🧭 Sơ đồ hành trình" chain map (2026-09-05)** — a second, much lighter section added
+    above the per-room stories: one box per room that has at least one assigned word (icon +
+    name + `word (meaning)` list), connected by a plain "→" text arrow, wrapping across lines
+    as needed. No illustration, no AI call — pure client-side render off `words`/`rooms`
+    already in memory, same reasoning as the prose stitching above. Requested explicitly as
+    "much simpler than a reference image with drawn icons per stop" — don't add illustrated
+    per-word artwork here; that's the AI-image-generation idea that was already declined
+    earlier for cost reasons (see "Env vars"/Gemini pricing discussion in project history).
+    Gated on words actually being placed (`palaceRoom` set), independent of whether that
+    room's prose story happened to generate — so "🗺️ Xem hành trình trí nhớ" only stays
+    disabled when a topic has no assigned words *and* no room stories at all.
 - Room **CRUD is a client-side, RLS-protected modal** (`PalaceRoomsModal.tsx`, opened via the
   "⚙️ Tuỳ chỉnh phòng" button on the palace page) — add (name + icon from `ROOM_ICONS`),
   inline rename, inline icon change, delete, and drag-to-reorder (native HTML5 drag/drop, no

@@ -316,13 +316,18 @@ export default function PalaceWalkthrough({
         <PalaceMap
           assignedWordsCount={assignedWords.length}
           roomStats={roomStats}
-          hasJourneyStory={Object.keys(roomStories).length > 0}
+          hasJourneyStory={Object.keys(roomStories).length > 0 || assignedWords.length > 0}
           onStartFull={startFullSession}
           onStartRoom={startRoomSession}
           onViewJourney={() => setView("journey")}
         />
       ) : view === "journey" ? (
-        <PalaceJourney rooms={rooms} roomStories={roomStories} onBack={() => setView("map")} />
+        <PalaceJourney
+          rooms={rooms}
+          words={assignedWords}
+          roomStories={roomStories}
+          onBack={() => setView("map")}
+        />
       ) : (
         <PalaceSession
           deck={deck}

@@ -9,7 +9,10 @@
 >   trong "ngôi nhà trí nhớ" của riêng bạn, kèm 1 hình ảnh liên tưởng càng kỳ lạ, càng phóng đại
 >   thì càng dễ nhớ. Đây chính là kỹ thuật mình từng dùng để nhớ 100 con số ngẫu nhiên chỉ trong
 >   vài phút (và nhớ rất lâu nếu ôn lại), hay nhớ đúng thứ tự cả bộ 52 lá bài chỉ sau 1 lần xem
->   qua — giờ áp dụng lại đúng nguyên lý đó cho việc học từ vựng.
+>   qua — giờ áp dụng lại đúng nguyên lý đó cho việc học từ vựng. Sau khi xếp từ vào từng vị
+>   trí, app còn vẽ lại **hành trình ký ức** — sơ đồ các điểm dừng nối nhau bằng mũi tên (sân →
+>   cổng → phòng khách → ...) kèm từ vựng ở mỗi điểm, để dễ hình dung cả lộ trình trước khi đi
+>   "dạo" một vòng ôn lại trong đầu.
 >
 > Cách dùng: tạo chủ đề, thêm từ vựng (gõ tay, hoặc chụp/chọn ảnh để AI tự quét và tạo ra nghĩa
 > + phiên âm IPA), rồi biến thành câu chuyện riêng hoặc xếp vào cung điện trí nhớ để nhớ sâu,
