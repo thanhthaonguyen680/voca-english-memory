@@ -53,10 +53,18 @@ export default function PalaceJourney({
                     {step.room.icon}
                   </span>
                   <span className="text-xs font-semibold text-black">{step.room.name}</span>
-                  <span className="text-[11px] leading-snug text-neutral-600">
-                    {step.roomWords
-                      .map((w) => (w.meaning ? `${w.word} (${w.meaning})` : w.word))
-                      .join(", ")}
+                  <span className="flex flex-wrap items-baseline justify-center gap-x-1 leading-snug">
+                    {step.roomWords.map((w, i) => (
+                      <span key={w.id} className="whitespace-nowrap">
+                        <span className="text-sm font-bold text-black">{w.word}</span>
+                        {w.meaning && (
+                          <span className="text-[11px] text-neutral-500"> ({w.meaning})</span>
+                        )}
+                        {i < step.roomWords.length - 1 && (
+                          <span className="text-neutral-400">,</span>
+                        )}
+                      </span>
+                    ))}
                   </span>
                 </div>
                 {index < chainSteps.length - 1 && (
