@@ -279,6 +279,9 @@ export async function POST(request: Request) {
           usage_note: ai?.usageNote ?? null,
           example_sentence: ai?.example ?? null,
           word_type: entry.word_type || ai?.wordType || null,
+          // Only ever set once — this update only ever touches rows that were pending
+          // (palace_room is null), i.e. words getting their first room assignment.
+          palace_added_at: new Date().toISOString(),
         })
         .eq("id", entry.id);
     }),

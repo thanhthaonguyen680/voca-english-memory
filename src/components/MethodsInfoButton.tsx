@@ -45,22 +45,6 @@ export default function MethodsInfoButton() {
               </button>
             </div>
 
-            <div className="rounded-xl border-2 border-black bg-violet-50 p-4">
-              <p className="font-bold text-black">📖 Kể chuyện</p>
-              <p className="mt-1.5 text-sm text-neutral-700">
-                AI viết một câu chuyện ngắn có lồng ghép các từ vựng trong chủ đề của bạn. Đọc
-                từ trong một ngữ cảnh tự nhiên giúp não ghi nhớ tốt hơn nhiều so với học thuộc
-                một danh sách từ khô khan.
-              </p>
-              <p className="mt-2 rounded-lg border-2 border-black bg-white px-3 py-2 text-xs text-neutral-600">
-                <strong className="text-black">Ví dụ:</strong> với từ{" "}
-                <strong className="text-violet-700">library</strong>, chuyện có thể kể &ldquo;Cô
-                bé bước vào một <strong className="text-violet-700">library</strong>{" "}
-                khổng lồ, nơi mọi giá sách đều biết bay...&rdquo; — mỗi lần đọc lại, bạn nhớ luôn cả từ
-                lẫn cách dùng nó.
-              </p>
-            </div>
-
             <div className="rounded-xl border-2 border-black bg-amber-50 p-4">
               <p className="font-bold text-black">🏰 Cung điện trí nhớ</p>
               <p className="mt-1.5 text-sm text-neutral-700">

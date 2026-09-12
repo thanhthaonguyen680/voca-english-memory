@@ -5,13 +5,11 @@ import Link from "next/link";
 import ReviewSession from "@/components/ReviewSession";
 import TopicWordCapture from "@/components/TopicWordCapture";
 import TopicWordList from "@/components/TopicWordList";
-import TopicStoryView from "@/components/TopicStoryView";
 import { LANGUAGES } from "@/lib/constants";
 import type { Language } from "@/lib/types";
-import type { VocabularyItem } from "@/lib/supabase/types";
 
-// Shared with TopicWordCapture.tsx / TopicWordList.tsx / TopicStoryView.tsx — this file stays
-// the source of truth for these view-model shapes since it owns the state they describe.
+// Shared with TopicWordCapture.tsx / TopicWordList.tsx — this file stays the source of truth
+// for these view-model shapes since it owns the state they describe.
 export type Word = {
   id: string;
   word: string;
@@ -27,26 +25,16 @@ export type Topic = {
   language: Language;
   icon: string;
 };
-export type GeneratedStory = {
-  content: string;
-  translation: string | null;
-  vocabulary_used: VocabularyItem[];
-};
 
 export default function TopicDetail({
   topic,
   initialWords,
-  initialStory = null,
 }: {
   topic: Topic;
   initialWords: Word[];
-  initialStory?: GeneratedStory | null;
 }) {
   const [words, setWords] = useState<Word[]>(initialWords);
-  const [mode, setMode] = useState<"list" | "review" | "story">("list");
-  const [generating, setGenerating] = useState(false);
-  const [generateError, setGenerateError] = useState("");
-  const [story, setStory] = useState<GeneratedStory | null>(initialStory);
+  const [mode, setMode] = useState<"list" | "review">("list");
 
   const flag = LANGUAGES.find((item) => item.id === topic.language)?.flag;
   const reviewableWords = words
@@ -66,36 +54,6 @@ export default function TopicDetail({
     patch: { meaning: string | null; wordType: string | null },
   ) {
     setWords((prev) => prev.map((w) => (w.id === id ? { ...w, ...patch } : w)));
-  }
-
-  async function handleGenerate(wordIds?: string[]) {
-    setGenerating(true);
-    setGenerateError("");
-    setStory(null);
-    try {
-      const res = await fetch("/api/generate-story", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topicId: topic.id, ...(wordIds ? { wordIds } : {}) }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setGenerateError(data.error ?? "Đã có lỗi xảy ra.");
-        return;
-      }
-
-      setStory({
-        content: data.story.content as string,
-        translation: (data.story.translation as string | null) ?? null,
-        vocabulary_used: (data.story.vocabulary_used as VocabularyItem[]) ?? [],
-      });
-      setMode("story");
-    } catch {
-      setGenerateError("Không thể kết nối tới server.");
-    } finally {
-      setGenerating(false);
-    }
   }
 
   return (
@@ -122,29 +80,9 @@ export default function TopicDetail({
           onExit={() => setMode("list")}
           exitLabel="Quay lại"
         />
-      ) : mode === "story" && story ? (
-        <TopicStoryView
-          story={story}
-          language={topic.language}
-          generating={generating}
-          onBack={() => setMode("list")}
-          onRegenerate={() => handleGenerate()}
-        />
       ) : (
         <>
           <div className="mb-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => (story ? setMode("story") : handleGenerate())}
-              disabled={generating || (!story && words.length === 0)}
-              className="rounded-full border-2 border-black bg-violet-300 px-5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
-            >
-              {generating
-                ? "Đang tạo câu chuyện..."
-                : story
-                  ? "📖 Xem câu chuyện đã tạo"
-                  : "🪄 Tạo câu chuyện từ chủ đề này"}
-            </button>
             <button
               type="button"
               onClick={() => setMode("review")}
@@ -156,7 +94,7 @@ export default function TopicDetail({
             {words.length > 0 && (
               <Link
                 href={`/vocabulary/${topic.id}/palace`}
-                className="inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-white px-5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+                className="inline-flex items-center gap-1.5 rounded-full border-2 border-black bg-violet-300 px-5 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 🏰 Cung điện trí nhớ
               </Link>
@@ -166,9 +104,7 @@ export default function TopicDetail({
           <TopicWordCapture
             topic={{ id: topic.id, language: topic.language }}
             words={words}
-            generating={generating}
             onWordsAdded={handleWordsAdded}
-            onGenerateBatch={(ids) => handleGenerate(ids)}
           />
 
           {words.length > 0 && (
@@ -178,12 +114,6 @@ export default function TopicDetail({
               onDeleteWord={handleWordDeleted}
               onWordUpdated={handleWordUpdated}
             />
-          )}
-
-          {generateError && (
-            <p className="mb-6 rounded-lg border-2 border-red-600 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {generateError}
-            </p>
           )}
         </>
       )}

@@ -1,5 +1,7 @@
 import type { Language } from "@/lib/types";
 
+// Max words handled in one AI batch (scan / fill-meaning / Memory Palace generation). Named
+// for its original use (per-story cap); kept as-is since it's imported in several routes.
 export const MAX_WORDS_PER_STORY = 30;
 export const CHAT_AI_NAME = "Ran Ran";
 

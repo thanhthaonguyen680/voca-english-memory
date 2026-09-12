@@ -17,10 +17,9 @@ export default function Home() {
         không còn nhàm chán
       </h1>
       <p className="mt-4 max-w-md text-neutral-600">
-        Biến từ vựng khô khan thành câu chuyện của riêng bạn bằng kỹ thuật{" "}
-        <span className="font-semibold text-black">Storytelling</span> và{" "}
-        <span className="font-semibold text-black">Memory Palace</span> — nhớ nhanh, nhớ sâu,
-        không bao giờ quên.
+        Gắn mỗi từ vào một vị trí trong &ldquo;ngôi nhà trí nhớ&rdquo; của riêng bạn bằng kỹ
+        thuật <span className="font-semibold text-black">Memory Palace</span> — kỹ thuật của các
+        nhà vô địch trí nhớ. Nhớ nhanh, nhớ sâu, không bao giờ quên.
       </p>
       <Link
         href="/vocabulary"

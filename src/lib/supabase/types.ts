@@ -22,6 +22,7 @@ export type Database = {
           ipa: string | null;
           usage_note: string | null;
           example_sentence: string | null;
+          palace_added_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -38,6 +39,7 @@ export type Database = {
           ipa?: string | null;
           usage_note?: string | null;
           example_sentence?: string | null;
+          palace_added_at?: string | null;
           created_at?: string;
         };
         Update: Partial<{
@@ -54,6 +56,7 @@ export type Database = {
           ipa: string | null;
           usage_note: string | null;
           example_sentence: string | null;
+          palace_added_at: string | null;
           created_at: string;
         }>;
         Relationships: [];

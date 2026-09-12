@@ -93,7 +93,7 @@ export default async function VocabularyPage() {
                 ? "Bạn đã học hôm nay — giữ vững phong độ nhé!"
                 : streak.current > 0
                   ? "Học hôm nay để tiếp tục chuỗi, đừng để mất!"
-                  : "Tạo 1 câu chuyện hôm nay để bắt đầu chuỗi học mỗi ngày."}
+                  : "Thêm từ vựng hoặc học Cung điện trí nhớ hôm nay để bắt đầu chuỗi."}
             </p>
           </div>
         </div>

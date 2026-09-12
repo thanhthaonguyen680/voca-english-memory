@@ -6,7 +6,6 @@ import { normalizeForCompare, normalizePinyin } from "@/lib/utils/pronunciation"
 import { SPEECH_LANG, DEFAULT_LANGUAGE } from "@/lib/constants";
 import type { Language } from "@/lib/types";
 import PronunciationCheck from "@/components/PronunciationCheck";
-import EditableMeaning from "@/components/EditableMeaning";
 
 type WordPair = { word: string; meaning: string; ipa?: string };
 type Direction = "en-vi" | "vi-en";
@@ -67,10 +66,6 @@ function getModeLabels(language: Language): Record<Mode, string> {
 }
 
 type ReviewSessionProps = {
-  // Omitted when reviewing a topic's live word list directly (no story exists yet) — in that
-  // case inline meaning-editing is disabled, since EditableMeaning saves to a specific story's
-  // snapshot via storyId and there's no snapshot to save to.
-  storyId?: string;
   words: WordPair[];
   language?: Language;
   onExit: () => void;
@@ -78,11 +73,10 @@ type ReviewSessionProps = {
 };
 
 export default function ReviewSession({
-  storyId,
   words,
   language = DEFAULT_LANGUAGE,
   onExit,
-  exitLabel = "Chọn câu chuyện khác",
+  exitLabel = "Quay lại",
 }: ReviewSessionProps) {
   const speechLang = SPEECH_LANG[language];
   const modeLabels = getModeLabels(language);
@@ -121,16 +115,6 @@ export default function ReviewSession({
     beginDeck(
       mode,
       wrongCards.map(({ word, meaning, ipa }) => ({ word, meaning, ipa })),
-    );
-  }
-
-  function updateCardMeaning(word: string, newMeaning: string) {
-    setDeck((prev) =>
-      prev.map((card) =>
-        card.word.toLowerCase() === word.toLowerCase()
-          ? { ...card, meaning: newMeaning }
-          : card,
-      ),
     );
   }
 
@@ -280,14 +264,6 @@ export default function ReviewSession({
               <span className="text-base font-normal text-violet-700/80">{current.ipa}</span>
             )}
           </p>
-        ) : storyId ? (
-          <EditableMeaning
-            storyId={storyId}
-            word={current.word}
-            meaning={current.meaning}
-            onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}
-            displayClassName="text-2xl font-semibold text-black"
-          />
         ) : (
           <p className="text-2xl font-semibold text-black">{current.meaning}</p>
         )}
@@ -346,16 +322,7 @@ export default function ReviewSession({
           <p className="text-sm text-neutral-600">
             Đáp án đúng:{" "}
             {current.direction === "en-vi" ? (
-              storyId ? (
-                <EditableMeaning
-                  storyId={storyId}
-                  word={current.word}
-                  meaning={current.meaning}
-                  onSaved={(newMeaning) => updateCardMeaning(current.word, newMeaning)}
-                />
-              ) : (
-                <span className="font-medium text-black">{current.meaning}</span>
-              )
+              <span className="font-medium text-black">{current.meaning}</span>
             ) : (
               <span className="font-medium text-black">
                 {current.word}

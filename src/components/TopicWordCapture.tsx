@@ -15,15 +15,11 @@ import type { Word, PendingWord } from "@/components/TopicDetail";
 export default function TopicWordCapture({
   topic,
   words,
-  generating,
   onWordsAdded,
-  onGenerateBatch,
 }: {
   topic: { id: string; language: Language };
   words: Word[];
-  generating: boolean;
   onWordsAdded: (newWords: Word[]) => void;
-  onGenerateBatch: (wordIds: string[]) => void;
 }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newWord, setNewWord] = useState("");
@@ -36,7 +32,6 @@ export default function TopicWordCapture({
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [lastBatchIds, setLastBatchIds] = useState<string[] | null>(null);
   const [scanModalOpen, setScanModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +43,7 @@ export default function TopicWordCapture({
 
   // Best-effort AI fallback for words the learner left with no meaning — never blocks saving
   // if it fails (same resilience pattern as the writing-feedback route), just leaves the gap
-  // for the next story/palace generation to fill instead.
+  // for the next Memory Palace generation to fill instead.
   async function fetchAiMeanings(
     targetWords: string[],
   ): Promise<Map<string, { meaning: string; type: string }>> {
@@ -165,7 +160,6 @@ export default function TopicWordCapture({
           ipa: w.pronunciation ?? "",
         }));
       setPending((prev) => [...prev, ...scanned]);
-      setLastBatchIds(null);
     } catch {
       setScanError("Không thể xử lý ảnh. Vui lòng thử lại.");
     } finally {
@@ -185,7 +179,6 @@ export default function TopicWordCapture({
       .filter((w) => !isDuplicate(w.word, words) && !isDuplicate(w.word, pending))
       .map((w) => ({ word: w.word, meaning: w.meaning, wordType: w.wordType, ipa: w.ipa }));
     setPending((prev) => [...prev, ...filtered]);
-    setLastBatchIds(null);
     setScanModalOpen(false);
   }
 
@@ -248,7 +241,6 @@ export default function TopicWordCapture({
         ipa: d.ipa,
       })),
     );
-    setLastBatchIds(data.map((d) => d.id));
     setPending([]);
     setSaving(false);
   }
@@ -349,30 +341,6 @@ export default function TopicWordCapture({
             className="rounded-full border-2 border-black bg-violet-300 px-4 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
           >
             {saving ? "Đang lưu..." : `💾 Lưu ${pending.length} từ vào chủ đề`}
-          </button>
-        </div>
-      )}
-
-      {pending.length === 0 && lastBatchIds && lastBatchIds.length > 0 && (
-        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-black bg-amber-50 p-4 shadow-[4px_4px_0_0_#000]">
-          <p className="text-sm text-amber-900">
-            ✅ Đã lưu {lastBatchIds.length} từ vừa quét vào chủ đề. Tạo riêng 1 câu chuyện chỉ
-            dùng đúng {lastBatchIds.length} từ này?
-          </p>
-          <button
-            type="button"
-            onClick={() => onGenerateBatch(lastBatchIds)}
-            disabled={generating}
-            className="rounded-full border-2 border-black bg-violet-300 px-3.5 py-2 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:opacity-50"
-          >
-            {generating ? "Đang tạo..." : "🪄 Tạo câu chuyện riêng cho batch này"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setLastBatchIds(null)}
-            className="text-xs text-amber-800 hover:underline"
-          >
-            Bỏ qua
           </button>
         </div>
       )}

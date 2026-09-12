@@ -22,7 +22,7 @@ export default async function TopicPage({
 
   const { data: topic, error: topicError } = await supabase
     .from("vocabulary_topics")
-    .select("id, name, description, language, icon, created_at")
+    .select("id, name, description, language, icon")
     .eq("id", topicId)
     .eq("user_id", user.id)
     .single();
@@ -31,22 +31,12 @@ export default async function TopicPage({
     notFound();
   }
 
-  const [{ data: words }, { data: latestStory }] = await Promise.all([
-    supabase
-      .from("vocabulary_entries")
-      .select("id, word, meaning, word_type, ipa")
-      .eq("topic_id", topicId)
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("stories")
-      .select("content, translation, vocabulary_used")
-      .eq("topic_id", topicId)
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const { data: words } = await supabase
+    .from("vocabulary_entries")
+    .select("id, word, meaning, word_type, ipa")
+    .eq("topic_id", topicId)
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: true });
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
@@ -65,15 +55,6 @@ export default async function TopicPage({
           wordType: w.word_type,
           ipa: w.ipa,
         }))}
-        initialStory={
-          latestStory
-            ? {
-                content: latestStory.content,
-                translation: latestStory.translation,
-                vocabulary_used: latestStory.vocabulary_used ?? [],
-              }
-            : null
-        }
       />
     </main>
   );

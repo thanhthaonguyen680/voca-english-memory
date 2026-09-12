@@ -22,6 +22,7 @@ export type Word = {
   ipa: string | null;
   usageNote: string | null;
   exampleSentence: string | null;
+  palaceAddedAt: string | null;
 };
 
 type Topic = { id: string; name: string; icon: string };
@@ -80,7 +81,7 @@ export default function PalaceWalkthrough({
     const { data: refreshed } = await supabase
       .from("vocabulary_entries")
       .select(
-        "id, word, meaning, word_type, palace_room, palace_imagery, palace_mastery, ipa, usage_note, example_sentence",
+        "id, word, meaning, word_type, palace_room, palace_imagery, palace_mastery, ipa, usage_note, example_sentence, palace_added_at",
       )
       .eq("topic_id", topic.id)
       .order("created_at", { ascending: true });
@@ -98,6 +99,7 @@ export default function PalaceWalkthrough({
       ipa: w.ipa,
       usageNote: w.usage_note,
       exampleSentence: w.example_sentence,
+      palaceAddedAt: w.palace_added_at,
     }));
     setWords(mapped);
     return mapped;

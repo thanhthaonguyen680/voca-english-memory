@@ -34,7 +34,7 @@ export default async function PalacePage({
     supabase
       .from("vocabulary_entries")
       .select(
-        "id, word, meaning, word_type, palace_room, palace_imagery, palace_mastery, ipa, usage_note, example_sentence",
+        "id, word, meaning, word_type, palace_room, palace_imagery, palace_mastery, ipa, usage_note, example_sentence, palace_added_at",
       )
       .eq("topic_id", topicId)
       .eq("user_id", user.id)
@@ -69,6 +69,7 @@ export default async function PalacePage({
           ipa: w.ipa,
           usageNote: w.usage_note,
           exampleSentence: w.example_sentence,
+          palaceAddedAt: w.palace_added_at,
         }))}
       />
     </main>
