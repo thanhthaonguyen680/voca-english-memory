@@ -86,7 +86,7 @@ export default function PalaceJourney({
                   </span>
                 </div>
                 {index < chainSteps.length - 1 && (
-                  <span aria-hidden className="shrink-0 text-neutral-300">
+                  <span aria-hidden className="shrink-0 text-xl font-bold leading-none text-black">
                     <span className="sm:hidden">↓</span>
                     <span className="hidden sm:inline">→</span>
                   </span>
@@ -124,7 +124,7 @@ export default function PalaceJourney({
                 <p className="text-sm text-neutral-700">{roomStories[room.id]}</p>
               </div>
               {index < steps.length - 1 && (
-                <div aria-hidden className="py-1 text-center text-neutral-300">
+                <div aria-hidden className="py-1 text-center text-xl font-bold leading-none text-black">
                   ↓
                 </div>
               )}
