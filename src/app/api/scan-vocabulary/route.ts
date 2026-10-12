@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { Type } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
-import { STORY_MODEL } from "@/lib/gemini/client";
+import { GEMINI_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
-import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE } from "@/lib/constants";
+import { countUsageToday, logUsage } from "@/lib/utils/rate-limit";
+import { MAX_WORDS_PER_BATCH, DEFAULT_LANGUAGE, PRONUNCIATION_HINT } from "@/lib/constants";
 import type { Language } from "@/lib/types";
 import { isLanguage } from "@/lib/utils/language";
 
@@ -16,11 +17,6 @@ const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const LANGUAGE_NAME: Record<Language, string> = {
   en: "English",
   zh: "Chinese (Simplified, Hán tự)",
-};
-
-const PRONUNCIATION_HINT: Record<Language, string> = {
-  en: "IPA transcription, e.g. /wɜːrd/",
-  zh: "Pinyin romanization with tone marks, e.g. nǐ hǎo",
 };
 
 const SCAN_RESPONSE_SCHEMA = {
@@ -62,12 +58,6 @@ type ScanResult = {
   words: { word: string; meaning: string; type: string; pronunciation: string }[];
 };
 
-function startOfTodayISO() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  return start.toISOString();
-}
-
 export async function POST(request: Request) {
   const supabase = await createClient();
 
@@ -103,20 +93,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const { count, error: countError } = await supabase
-    .from("vocab_scans")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", startOfTodayISO());
-
-  if (countError) {
-    return NextResponse.json(
-      { error: "Không thể kiểm tra giới hạn sử dụng." },
-      { status: 500 },
-    );
+  const usedToday = await countUsageToday(supabase, "vocab_scans", user.id);
+  if (usedToday === null) {
+    return NextResponse.json({ error: "Không thể kiểm tra giới hạn sử dụng." }, { status: 500 });
   }
 
-  if ((count ?? 0) >= MAX_VOCAB_SCANS_PER_DAY) {
+  if (usedToday >= MAX_VOCAB_SCANS_PER_DAY) {
     return NextResponse.json(
       {
         error: `Bạn đã đạt giới hạn ${MAX_VOCAB_SCANS_PER_DAY} lượt quét ảnh/ngày. Vui lòng quay lại vào ngày mai.`,
@@ -130,7 +112,7 @@ export async function POST(request: Request) {
   let result: ScanResult;
   try {
     const response = await generateWithKeyPool({
-      model: STORY_MODEL,
+      model: GEMINI_MODEL,
       contents: [
         {
           role: "user",
@@ -145,7 +127,7 @@ export async function POST(request: Request) {
                 `next to a word, include it — otherwise leave meaning as an empty string, ` +
                 "never guess one. Also give each word's most common part of speech (n, v, " +
                 "adj, adv, or phrase) and its pronunciation as " +
-                `${PRONUNCIATION_HINT[language]}. Return at most ${MAX_WORDS_PER_STORY} words.`,
+                `${PRONUNCIATION_HINT[language]}. Return at most ${MAX_WORDS_PER_BATCH} words.`,
             },
             { inlineData: { mimeType, data: imageBase64 } },
           ],
@@ -176,7 +158,7 @@ export async function POST(request: Request) {
       pronunciation: String(entry.pronunciation ?? "").trim() || undefined,
     }))
     .filter((entry) => entry.word.length > 0)
-    .slice(0, MAX_WORDS_PER_STORY);
+    .slice(0, MAX_WORDS_PER_BATCH);
 
   if (words.length === 0) {
     return NextResponse.json(
@@ -185,10 +167,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error: logError } = await supabase.from("vocab_scans").insert({ user_id: user.id });
-  if (logError) {
-    console.error("Failed to log vocab scan usage", logError);
-  }
+  await logUsage(supabase, "vocab_scans", user.id);
 
   return NextResponse.json({ words });
 }

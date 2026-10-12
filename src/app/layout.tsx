@@ -17,7 +17,7 @@ const beVietnamPro = Be_Vietnam_Pro({
 
 export const metadata: Metadata = {
   title: "Voca English Memory",
-  description: "Học từ vựng qua câu chuyện được tạo bởi Ran Ran",
+  description: "Học từ vựng bằng Cung điện trí nhớ (Memory Palace)",
 };
 
 export default function RootLayout({

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { STORY_MODEL } from "@/lib/gemini/client";
+import { GEMINI_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
+import { countUsageToday, logUsage } from "@/lib/utils/rate-limit";
 import { CHAT_AI_NAME, DEFAULT_LANGUAGE } from "@/lib/constants";
 import type { Language } from "@/lib/types";
 import { isLanguage } from "@/lib/utils/language";
@@ -15,12 +16,6 @@ const MAX_CHAT_MESSAGES_PER_DAY = Number(process.env.MAX_CHAT_MESSAGES_PER_DAY ?
 const MAX_HISTORY_TURNS = 20;
 
 type ChatTurn = { role: "user" | "model"; text: string };
-
-function startOfTodayISO() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  return start.toISOString();
-}
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -60,20 +55,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu tin nhắn để gửi." }, { status: 400 });
   }
 
-  const { count, error: countError } = await supabase
-    .from("chat_logs")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", startOfTodayISO());
-
-  if (countError) {
-    return NextResponse.json(
-      { error: "Không thể kiểm tra giới hạn sử dụng." },
-      { status: 500 },
-    );
+  const usedToday = await countUsageToday(supabase, "chat_logs", user.id);
+  if (usedToday === null) {
+    return NextResponse.json({ error: "Không thể kiểm tra giới hạn sử dụng." }, { status: 500 });
   }
 
-  if ((count ?? 0) >= MAX_CHAT_MESSAGES_PER_DAY) {
+  if (usedToday >= MAX_CHAT_MESSAGES_PER_DAY) {
     return NextResponse.json(
       {
         error: `Bạn đã đạt giới hạn ${MAX_CHAT_MESSAGES_PER_DAY} tin nhắn/ngày. Vui lòng quay lại vào ngày mai.`,
@@ -115,7 +102,7 @@ export async function POST(request: Request) {
   let reply: string;
   try {
     const response = await generateWithKeyPool({
-      model: STORY_MODEL,
+      model: GEMINI_MODEL,
       contents: messages.map((turn) => ({ role: turn.role, parts: [{ text: turn.text }] })),
       config: {
         temperature: 0.9,
@@ -140,10 +127,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error: logError } = await supabase.from("chat_logs").insert({ user_id: user.id });
-  if (logError) {
-    console.error("Failed to log chat usage", logError);
-  }
+  await logUsage(supabase, "chat_logs", user.id);
 
   return NextResponse.json({ reply });
 }

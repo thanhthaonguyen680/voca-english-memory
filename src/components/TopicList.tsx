@@ -63,9 +63,12 @@ export default function TopicList({
     setCreating(true);
     setError("");
     const supabase = createClient();
+    // getSession() reads the local session — no extra round-trip before the insert, and
+    // RLS still enforces ownership server-side.
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
+      data: { session },
+    } = await supabase.auth.getSession();
+    const user = session?.user;
 
     if (!user) {
       setError("Bạn cần đăng nhập.");

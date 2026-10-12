@@ -49,10 +49,14 @@ export async function generateWithKeyPool(
     try {
       const client = new GoogleGenAI({ apiKey });
       const response = await client.models.generateContent(params);
-      await admin
-        .from("gemini_api_key_pool")
-        .update({ is_valid: true, last_used_at: new Date().toISOString(), last_error: null })
-        .eq("id", candidate.id);
+      // Only write when a previously-exhausted key has recovered. A key that was already
+      // valid needs no state change, so the common case costs no extra database write.
+      if (!candidate.is_valid) {
+        await admin
+          .from("gemini_api_key_pool")
+          .update({ is_valid: true, last_used_at: new Date().toISOString(), last_error: null })
+          .eq("id", candidate.id);
+      }
       return response;
     } catch (err) {
       if (!isQuotaError(err)) throw err;

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { Type } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
-import { STORY_MODEL } from "@/lib/gemini/client";
+import { GEMINI_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
-import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE } from "@/lib/constants";
+import { countUsageToday, logUsage } from "@/lib/utils/rate-limit";
+import { MAX_WORDS_PER_BATCH, DEFAULT_LANGUAGE } from "@/lib/constants";
 import type { Language } from "@/lib/types";
 import { isLanguage } from "@/lib/utils/language";
 
@@ -44,12 +45,6 @@ const FILL_MEANING_SCHEMA = {
 
 type FillResult = { items: { word: string; meaning: string; type: string }[] };
 
-function startOfTodayISO() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  return start.toISOString();
-}
-
 export async function POST(request: Request) {
   const supabase = await createClient();
 
@@ -73,24 +68,19 @@ export async function POST(request: Request) {
   const words = rawWords
     .map((w) => String(w ?? "").trim())
     .filter((w) => w.length > 0)
-    .slice(0, MAX_WORDS_PER_STORY);
+    .slice(0, MAX_WORDS_PER_BATCH);
   const language: Language = isLanguage(record.language) ? record.language : DEFAULT_LANGUAGE;
 
   if (words.length === 0) {
     return NextResponse.json({ error: "Thiếu từ vựng." }, { status: 400 });
   }
 
-  const { count, error: countError } = await supabase
-    .from("meaning_fills")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", startOfTodayISO());
-
-  if (countError) {
+  const usedToday = await countUsageToday(supabase, "meaning_fills", user.id);
+  if (usedToday === null) {
     return NextResponse.json({ error: "Không thể kiểm tra giới hạn sử dụng." }, { status: 500 });
   }
 
-  if ((count ?? 0) >= MAX_MEANING_FILLS_PER_DAY) {
+  if (usedToday >= MAX_MEANING_FILLS_PER_DAY) {
     return NextResponse.json(
       {
         error: `Bạn đã đạt giới hạn ${MAX_MEANING_FILLS_PER_DAY} lượt tự động tạo nghĩa/ngày. Vui lòng quay lại vào ngày mai.`,
@@ -104,7 +94,7 @@ export async function POST(request: Request) {
   let result: FillResult;
   try {
     const response = await generateWithKeyPool({
-      model: STORY_MODEL,
+      model: GEMINI_MODEL,
       contents: `${languageName} words:\n` + words.join("\n"),
       config: {
         temperature: 0.3,
@@ -127,10 +117,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error: logError } = await supabase.from("meaning_fills").insert({ user_id: user.id });
-  if (logError) {
-    console.error("Failed to log meaning-fill usage", logError);
-  }
+  await logUsage(supabase, "meaning_fills", user.id);
 
   return NextResponse.json({ items: result.items ?? [] });
 }

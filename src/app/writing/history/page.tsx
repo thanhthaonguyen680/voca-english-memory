@@ -1,13 +1,11 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import WritingHistoryList from "@/components/WritingHistoryList";
 
 export default async function WritingHistoryPage() {
+  const user = await getCurrentUser();
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");
@@ -23,12 +21,12 @@ export default async function WritingHistoryPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
       <div className="mb-6 flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-black">Lịch sử viết</h1>
-        <a
+        <Link
           href="/writing"
           className="text-sm font-medium text-violet-700 underline hover:text-violet-800"
         >
           + Viết bài mới
-        </a>
+        </Link>
       </div>
 
       {error && (

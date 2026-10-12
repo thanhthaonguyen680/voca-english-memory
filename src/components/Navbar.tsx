@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/server";
 import { getStudyStreak } from "@/lib/utils/streak";
 import SignOutButton from "@/components/SignOutButton";
 import StreakBadge from "@/components/StreakBadge";
@@ -7,12 +7,8 @@ import MobileMenu from "@/components/MobileMenu";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default async function Navbar() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const streak = user ? await getStudyStreak(supabase, user.id) : null;
+  const user = await getCurrentUser();
+  const streak = user ? await getStudyStreak(user.id) : null;
 
   return (
     <header className="relative z-30 border-b-2 border-black bg-[#FAF7F0]/95 backdrop-blur-sm">

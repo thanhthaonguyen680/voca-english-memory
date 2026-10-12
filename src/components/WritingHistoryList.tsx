@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { createClient } from "@/lib/supabase/client";
 import { LANGUAGES, DEFAULT_LANGUAGE } from "@/lib/constants";
@@ -60,12 +61,12 @@ export default function WritingHistoryList({
     return (
       <p className="text-sm text-neutral-600">
         Chưa có bài viết {LANGUAGE_FLAG[language]} nào. Hãy viết bài đầu tiên ở trang{" "}
-        <a
+        <Link
           href="/writing"
           className="font-medium text-violet-700 underline hover:text-violet-800"
         >
           Luyện viết
-        </a>
+        </Link>
         .
       </p>
     );

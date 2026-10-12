@@ -151,10 +151,16 @@ a confusing error like
   response.
 - Never expose `GEMINI_API_KEY` or any secret on the client — only use it inside a Route
   Handler (server-side).
-- The batch word cap (`MAX_WORDS_PER_STORY` in `src/lib/constants.ts`) is shared by
+- The batch word cap (`MAX_WORDS_PER_BATCH` in `src/lib/constants.ts`) is shared by
   `scan-vocabulary`, `fill-meaning`, and `palace/generate` — they all cap how many words go
-  into one Gemini call. The name is a leftover from the removed Storytelling feature; kept
-  as-is since renaming touches several imports.
+  into one Gemini call. The model id lives in `GEMINI_MODEL` (`src/lib/gemini/client.ts`) and
+  the per-language pronunciation wording in `PRONUNCIATION_HINT` (`constants.ts`). (These
+  were `MAX_WORDS_PER_STORY` / `STORY_MODEL` until the 2026-10-12 cleanup.)
+- **Rate limiting goes through `src/lib/utils/rate-limit.ts`** — `countUsageToday(supabase,
+  table, userId)` (returns `null` when the count itself fails; refuse the request in that
+  case) and `logUsage(...)` (best-effort insert after a successful AI call). Don't re-inline
+  the count query or a local `startOfTodayISO()` in a route; a new AI feature adds its table
+  name to the `UsageTable` union there.
 - Prefer `responseMimeType: "application/json"` + `responseSchema` over parsing free-form text
   whenever an AI call needs more than one field back (see `PALACE_RESPONSE_SCHEMA` /
   `SCAN_RESPONSE_SCHEMA`).
@@ -430,7 +436,7 @@ a confusing error like
   technique work — don't tone this down to a plain, literal description.
 - Rate-limited via its own table, `palace_generations` (mirrors `chat_logs`/`vocab_scans`/
   `grammar_checks` — just `user_id` + `created_at`), compared against
-  `MAX_PALACE_GENERATIONS_PER_DAY`. One call processes up to `MAX_WORDS_PER_STORY` pending
+  `MAX_PALACE_GENERATIONS_PER_DAY`. One call processes up to `MAX_WORDS_PER_BATCH` pending
   words at once (batched into a single Gemini request), not one call per word.
 - **`PalaceWalkthrough.tsx` is a container split across 3 files** (split 2026-08-12, it had
   grown to ~480 lines): `PalaceWalkthrough.tsx` owns all state (words/rooms/deck/view/etc.) and
@@ -752,8 +758,32 @@ a confusing error like
   activity to avoid two sources of truth that can drift.
 - "Day" boundaries use local server time (`new Date()`, `getFullYear/Month/Date`), matching how
   the rate-limit tables define "today" — keep both conventions in sync if either changes.
-- Server Components that need the streak call `getStudyStreak(supabase, user.id)` directly
-  (see `Navbar.tsx`, `vocabulary/page.tsx`). Pages needing both server-fetched data (streak,
+- Server Components get the signed-in user from **`getCurrentUser()`**
+  (`src/lib/supabase/server.ts`, returns `{ id } | null`) and the streak from
+  `getStudyStreak(user.id)` — both wrapped in React `cache()`, so the navbar (root layout) and
+  the page share one lookup per request. The streak queries are ordered newest-first and
+  capped at 1000 rows each — PostgREST caps responses at 1000 rows anyway, and an unordered
+  query past that size returned an arbitrary slice.
+- **Page loads verify the session locally, with no Auth request (2026-10-12).** Both
+  `getCurrentUser()` and `src/proxy.ts`'s `updateSession` call `supabase.auth.getClaims()`,
+  which checks the access token's signature against the project's public signing keys (the
+  project signs with ES256; the JWKS is cached in memory) instead of `getUser()`'s network
+  call to the Auth server — previously 2-3 Auth requests per page load, and one per
+  prefetched link. `getClaims()` silently falls back to a network call if the project is ever
+  switched back to a symmetric (HS256) secret, so it stays correct either way. **Route
+  Handlers still use `getUser()`** — they mutate data / spend AI quota, so they keep the
+  server-verified answer (which also catches a session revoked before its token expires).
+- Counts come from the database, not from downloading rows: the topic list reads
+  `vocabulary_entries(count)` embedded on `vocabulary_topics` (this is why
+  `vocabulary_entries` declares its `topic_id` relationship in `types.ts`).
+- `generateWithKeyPool()` only writes to `gemini_api_key_pool` when a key's state changes
+  (exhausted, or recovered) — a normal successful call does no write, so `last_used_at` now
+  means "last recovered", not "last used".
+- Independent Supabase queries on a page go in one `Promise.all` (topic + its words, etc.),
+  not one `await` after another — each sequential query is a full network round-trip.
+- Client components that insert a row read the user from `supabase.auth.getSession()` (local,
+  no network) rather than `getUser()` — RLS is what actually enforces ownership.
+- Pages needing both server-fetched data (streak,
   topic list) and client interactivity (forms, buttons) split into `page.tsx` (Server
   Component, fetches data) + a `"use client"` component for the interactive part (see
   `TopicList.tsx`, `TopicDetail.tsx`) — don't make the whole page a Client Component just

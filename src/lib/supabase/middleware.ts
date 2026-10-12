@@ -30,9 +30,12 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the access token's signature locally against the project's cached
+  // public keys (the project signs with ES256) instead of asking the Auth server on every
+  // request the way getUser() does. It still refreshes an expiring session first, which is
+  // what keeps the cookies above up to date.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims ?? null;
 
   const isProtected = PROTECTED_PATHS.some((path) =>
     request.nextUrl.pathname.startsWith(path),

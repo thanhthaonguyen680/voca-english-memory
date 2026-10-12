@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { STORY_MODEL } from "@/lib/gemini/client";
+import { GEMINI_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
+import { countUsageToday } from "@/lib/utils/rate-limit";
 import { DEFAULT_LANGUAGE } from "@/lib/constants";
 import type { Language } from "@/lib/types";
 import { isLanguage } from "@/lib/utils/language";
@@ -12,12 +13,6 @@ const LANGUAGE_NAME: Record<Language, string> = {
   en: "English",
   zh: "Chinese (Mandarin)",
 };
-
-function startOfTodayISO() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  return start.toISOString();
-}
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -51,20 +46,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const { count, error: countError } = await supabase
-    .from("writings")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", startOfTodayISO());
-
-  if (countError) {
-    return NextResponse.json(
-      { error: "Không thể kiểm tra giới hạn sử dụng." },
-      { status: 500 },
-    );
+  const usedToday = await countUsageToday(supabase, "writings", user.id);
+  if (usedToday === null) {
+    return NextResponse.json({ error: "Không thể kiểm tra giới hạn sử dụng." }, { status: 500 });
   }
 
-  if ((count ?? 0) >= MAX_WRITINGS_PER_DAY) {
+  if (usedToday >= MAX_WRITINGS_PER_DAY) {
     return NextResponse.json(
       {
         error: `Bạn đã đạt giới hạn ${MAX_WRITINGS_PER_DAY} bài viết/ngày. Vui lòng quay lại vào ngày mai.`,
@@ -87,7 +74,7 @@ export async function POST(request: Request) {
   let feedback: string | null = null;
   try {
     const response = await generateWithKeyPool({
-      model: STORY_MODEL,
+      model: GEMINI_MODEL,
       contents: `Here is a learner's essay:\n\n${essayText}`,
       config: {
         temperature: 0.7,

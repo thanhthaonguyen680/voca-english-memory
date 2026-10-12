@@ -1,18 +1,14 @@
 import { NextResponse } from "next/server";
 import { Type } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
-import { STORY_MODEL } from "@/lib/gemini/client";
+import { GEMINI_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
-import { MAX_WORDS_PER_STORY, DEFAULT_LANGUAGE } from "@/lib/constants";
+import { countUsageToday, logUsage } from "@/lib/utils/rate-limit";
+import { MAX_WORDS_PER_BATCH, DEFAULT_LANGUAGE, PRONUNCIATION_HINT } from "@/lib/constants";
 import { isLanguage } from "@/lib/utils/language";
 import { ensureUserRooms } from "@/lib/palace-data";
 
 const MAX_PALACE_GENERATIONS_PER_DAY = Number(process.env.MAX_PALACE_GENERATIONS_PER_DAY ?? 10);
-
-const PRONUNCIATION_HINT: Record<string, string> = {
-  en: "IPA transcription, e.g. /wɜːrd/",
-  zh: "Pinyin romanization with tone marks, e.g. nǐ hǎo",
-};
 
 const PALACE_RESPONSE_SCHEMA = {
   type: Type.OBJECT,
@@ -99,12 +95,6 @@ type PalaceWordResult = {
 type PalaceResult = { items: PalaceWordResult[] };
 type RoomStoryResult = { rooms: { roomId: string; story: string }[] };
 
-function startOfTodayISO() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  return start.toISOString();
-}
-
 export async function POST(request: Request) {
   const supabase = await createClient();
 
@@ -141,27 +131,32 @@ export async function POST(request: Request) {
 
   const language = isLanguage(topic.language) ? topic.language : DEFAULT_LANGUAGE;
 
-  const { count: assignedCount, error: countAssignedError } = await supabase
-    .from("vocabulary_entries")
-    .select("id", { count: "exact", head: true })
-    .eq("topic_id", topicId)
-    .eq("user_id", user.id)
-    .not("palace_room", "is", null);
+  // Independent lookups — run them together instead of one round-trip after another.
+  const [assignedResult, pendingResult, usedToday, rooms] = await Promise.all([
+    supabase
+      .from("vocabulary_entries")
+      .select("id", { count: "exact", head: true })
+      .eq("topic_id", topicId)
+      .eq("user_id", user.id)
+      .not("palace_room", "is", null),
+    supabase
+      .from("vocabulary_entries")
+      .select("id, word, meaning, word_type")
+      .eq("topic_id", topicId)
+      .eq("user_id", user.id)
+      .is("palace_room", null)
+      .order("created_at", { ascending: true })
+      .limit(MAX_WORDS_PER_BATCH),
+    countUsageToday(supabase, "palace_generations", user.id),
+    ensureUserRooms(supabase, user.id),
+  ]);
 
-  if (countAssignedError) {
+  if (assignedResult.error) {
     return NextResponse.json({ error: "Không thể kiểm tra Cung điện trí nhớ." }, { status: 500 });
   }
 
-  const { data: pendingWords, error: pendingError } = await supabase
-    .from("vocabulary_entries")
-    .select("id, word, meaning, word_type")
-    .eq("topic_id", topicId)
-    .eq("user_id", user.id)
-    .is("palace_room", null)
-    .order("created_at", { ascending: true })
-    .limit(MAX_WORDS_PER_STORY);
-
-  if (pendingError) {
+  const pendingWords = pendingResult.data;
+  if (pendingResult.error) {
     return NextResponse.json({ error: "Không thể tải từ vựng của chủ đề." }, { status: 500 });
   }
 
@@ -172,17 +167,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const { count, error: countError } = await supabase
-    .from("palace_generations")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", startOfTodayISO());
-
-  if (countError) {
+  if (usedToday === null) {
     return NextResponse.json({ error: "Không thể kiểm tra giới hạn sử dụng." }, { status: 500 });
   }
 
-  if ((count ?? 0) >= MAX_PALACE_GENERATIONS_PER_DAY) {
+  if (usedToday >= MAX_PALACE_GENERATIONS_PER_DAY) {
     return NextResponse.json(
       {
         error: `Bạn đã đạt giới hạn ${MAX_PALACE_GENERATIONS_PER_DAY} lượt tạo Cung điện trí nhớ/ngày. Vui lòng quay lại vào ngày mai.`,
@@ -191,25 +180,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const rooms = await ensureUserRooms(supabase, user.id);
-
   // Continue the round-robin from where the last batch left off, so revisiting the same topic
   // later keeps assigning rooms in the same fixed order instead of restarting at room 0 and
   // reusing rooms sooner than necessary.
-  const startOffset = assignedCount ?? 0;
+  const startOffset = assignedResult.count ?? 0;
   const assignments = pendingWords.map((entry, index) => ({
     ...entry,
     room: rooms[(startOffset + index) % rooms.length],
   }));
 
   const wordList = assignments
-    .map((entry) => `${entry.word}${entry.meaning ? ` (${entry.meaning})` : ""} → ${entry.room.name}`)
+    .map(
+      (entry) => `${entry.word}${entry.meaning ? ` (${entry.meaning})` : ""} → ${entry.room.name}`,
+    )
     .join("\n");
 
   let result: PalaceResult;
   try {
     const response = await generateWithKeyPool({
-      model: STORY_MODEL,
+      model: GEMINI_MODEL,
       contents:
         "Vocabulary words with their assigned room (word (Vietnamese meaning) → room):\n" +
         wordList,
@@ -247,7 +236,7 @@ export async function POST(request: Request) {
           "7. The assigned room is only a container for WHERE the scene happens — never let " +
           "the room itself stand in for the word's meaning or sound.\n\n" +
           "For each word and its assigned room, also provide: its pronunciation as " +
-          `${PRONUNCIATION_HINT[language] ?? PRONUNCIATION_HINT.en}; its most common part of ` +
+          `${PRONUNCIATION_HINT[language]}; its most common part of ` +
           "speech (n/v/adj/adv/phrase); one short Vietnamese usage note (common collocations " +
           "or context); one natural example sentence in the word's own language. Reply in " +
           "Vietnamese except for the pronunciation and example sentence fields.",
@@ -258,14 +247,14 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error("Gemini palace generation failed", err);
     return NextResponse.json(
-      { error: "Không thể tạo Cung điện trí nhớ lúc này. Vui lòng thử lại sau." },
+      {
+        error: "Không thể tạo Cung điện trí nhớ lúc này. Vui lòng thử lại sau.",
+      },
       { status: 502 },
     );
   }
 
-  const aiByWord = new Map(
-    (result.items ?? []).map((entry) => [entry.word.toLowerCase(), entry]),
-  );
+  const aiByWord = new Map((result.items ?? []).map((entry) => [entry.word.toLowerCase(), entry]));
 
   await Promise.all(
     assignments.map((entry) => {
@@ -292,20 +281,20 @@ export async function POST(request: Request) {
   // imagery that already made it into the database above.
   try {
     const affectedRoomIds = [...new Set(assignments.map((a) => a.room.id))];
-    const roomRosters = await Promise.all(
-      affectedRoomIds.map(async (roomId) => {
-        const { data: roomWords } = await supabase
-          .from("vocabulary_entries")
-          .select("word, palace_imagery")
-          .eq("topic_id", topicId)
-          .eq("user_id", user.id)
-          .eq("palace_room", roomId)
-          .not("palace_imagery", "is", null)
-          .order("created_at", { ascending: true });
-        const room = rooms.find((r) => r.id === roomId);
-        return { roomId, roomName: room?.name ?? roomId, words: roomWords ?? [] };
-      }),
-    );
+    const { data: rosterWords } = await supabase
+      .from("vocabulary_entries")
+      .select("word, palace_imagery, palace_room")
+      .eq("topic_id", topicId)
+      .eq("user_id", user.id)
+      .in("palace_room", affectedRoomIds)
+      .not("palace_imagery", "is", null)
+      .order("created_at", { ascending: true });
+
+    const roomRosters = affectedRoomIds.map((roomId) => ({
+      roomId,
+      roomName: rooms.find((r) => r.id === roomId)?.name ?? roomId,
+      words: (rosterWords ?? []).filter((w) => w.palace_room === roomId),
+    }));
 
     const roomPromptText = roomRosters
       .map(
@@ -316,7 +305,7 @@ export async function POST(request: Request) {
       .join("\n\n");
 
     const roomResponse = await generateWithKeyPool({
-      model: STORY_MODEL,
+      model: GEMINI_MODEL,
       contents:
         "Rooms with their vocabulary imagery scenes, in the order they were placed:\n\n" +
         roomPromptText,
@@ -336,28 +325,32 @@ export async function POST(request: Request) {
 
     const roomStoryResult: RoomStoryResult = JSON.parse(roomResponse.text ?? "");
 
-    await Promise.all(
-      (roomStoryResult.rooms ?? []).map((r) =>
-        supabase.from("palace_room_stories").upsert(
-          {
-            topic_id: topicId,
-            room_id: r.roomId,
-            user_id: user.id,
-            story: r.story,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "topic_id,room_id" },
-        ),
-      ),
+    // Keyed by room so a room the model repeats (or invents) can't break the single upsert —
+    // Postgres rejects one statement that touches the same conflict key twice.
+    const storyByRoom = new Map(
+      (roomStoryResult.rooms ?? [])
+        .filter((r) => affectedRoomIds.includes(r.roomId) && r.story)
+        .map((r) => [r.roomId, r.story]),
     );
+    const updatedAt = new Date().toISOString();
+    if (storyByRoom.size > 0) {
+      const { error: storyError } = await supabase.from("palace_room_stories").upsert(
+        [...storyByRoom].map(([roomId, story]) => ({
+          topic_id: topicId,
+          room_id: roomId,
+          user_id: user.id,
+          story,
+          updated_at: updatedAt,
+        })),
+        { onConflict: "topic_id,room_id" },
+      );
+      if (storyError) console.error("Failed to save palace room stories", storyError);
+    }
   } catch (err) {
     console.error("Gemini room story generation failed", err);
   }
 
-  const { error: logError } = await supabase.from("palace_generations").insert({ user_id: user.id });
-  if (logError) {
-    console.error("Failed to log palace generation usage", logError);
-  }
+  await logUsage(supabase, "palace_generations", user.id);
 
   return NextResponse.json({ assigned: assignments.length });
 }

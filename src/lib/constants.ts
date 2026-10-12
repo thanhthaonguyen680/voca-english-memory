@@ -1,11 +1,17 @@
 import type { Language } from "@/lib/types";
 
-// Max words handled in one AI batch (scan / fill-meaning / Memory Palace generation). Named
-// for its original use (per-story cap); kept as-is since it's imported in several routes.
-export const MAX_WORDS_PER_STORY = 30;
+// Max words handled in one AI call (scan / fill-meaning / Memory Palace generation).
+export const MAX_WORDS_PER_BATCH = 30;
 export const CHAT_AI_NAME = "Ran Ran";
 
 export const DEFAULT_LANGUAGE: Language = "en";
+
+// How a word's pronunciation should be written, per language — interpolated into AI prompts.
+// The result is stored in `vocabulary_entries.ipa` either way (see rule.md).
+export const PRONUNCIATION_HINT: Record<Language, string> = {
+  en: "IPA transcription, e.g. /wɜːrd/",
+  zh: "Pinyin romanization with tone marks, e.g. nǐ hǎo",
+};
 
 export const LANGUAGES: { id: Language; label: string; flag: string }[] = [
   { id: "en", label: "Tiếng Anh", flag: "🇬🇧" },

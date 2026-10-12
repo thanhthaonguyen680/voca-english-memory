@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getCurrentUser } from "@/lib/supabase/server";
 import { getStudyStreak } from "@/lib/utils/streak";
 import TopicList from "@/components/TopicList";
 import MethodsInfoButton from "@/components/MethodsInfoButton";
@@ -15,11 +15,8 @@ export type TopicRow = {
 };
 
 export default async function VocabularyPage() {
+  const user = await getCurrentUser();
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   // Guests can browse this page (see the empty state, read the intro, get familiar with the
   // app) without an account — they're only asked to log in once they actually try to create a
@@ -30,27 +27,18 @@ export default async function VocabularyPage() {
   let topicsError = null;
 
   if (user) {
-    streak = await getStudyStreak(supabase, user.id);
-
-    const [{ data: topics, error: fetchError }, { data: wordRows }] = await Promise.all([
+    // The word count comes back as an aggregate from the database (one small number per
+    // topic) instead of downloading every word row just to count them here.
+    const [currentStreak, { data: topics, error: fetchError }] = await Promise.all([
+      getStudyStreak(user.id),
       supabase
         .from("vocabulary_topics")
-        .select("id, name, description, language, icon, created_at")
+        .select("id, name, description, language, icon, created_at, vocabulary_entries(count)")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false }),
-      supabase
-        .from("vocabulary_entries")
-        .select("topic_id")
-        .eq("user_id", user.id)
-        .not("topic_id", "is", null),
     ]);
+    streak = currentStreak;
     topicsError = fetchError;
-
-    const wordCountByTopic = new Map<string, number>();
-    for (const row of wordRows ?? []) {
-      if (!row.topic_id) continue;
-      wordCountByTopic.set(row.topic_id, (wordCountByTopic.get(row.topic_id) ?? 0) + 1);
-    }
 
     topicRows = (topics ?? []).map((topic) => ({
       id: topic.id,
@@ -59,7 +47,7 @@ export default async function VocabularyPage() {
       language: (topic.language as Language) ?? "en",
       icon: topic.icon || "📚",
       created_at: topic.created_at,
-      wordCount: wordCountByTopic.get(topic.id) ?? 0,
+      wordCount: topic.vocabulary_entries[0]?.count ?? 0,
     }));
   }
 
@@ -67,12 +55,10 @@ export default async function VocabularyPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">
       <h1 className="mb-1 text-2xl font-bold text-black">Nhập từ vựng</h1>
       <p className="mb-3 text-sm text-neutral-600">
-        Gom từ vựng theo từng chủ đề, gõ tay hoặc chụp ảnh đều được. Rồi ôn lại bằng phương
-        pháp <strong className="font-bold text-black">Storytelling</strong> — đọc một câu
-        chuyện lồng ghép các từ, hoặc phương pháp{" "}
-        <strong className="font-bold text-black">Memory Palace</strong> — dạo qua Cung điện
-        trí nhớ để nhớ sâu và lâu hơn. Ngoài ra bạn còn có thể ôn tập 2 chiều Việt - Anh và
-        luyện phát âm ngay trong từng chủ đề.
+        Gom từ vựng theo từng chủ đề, gõ tay hoặc chụp ảnh đều được. Rồi ôn lại bằng phương pháp{" "}
+        <strong className="font-bold text-black">Memory Palace</strong> — dạo qua Cung điện trí nhớ
+        để nhớ sâu và lâu hơn. Ngoài ra bạn còn có thể ôn tập 2 chiều Việt - Anh và luyện phát âm
+        ngay trong từng chủ đề.
       </p>
 
       <MethodsInfoButton />

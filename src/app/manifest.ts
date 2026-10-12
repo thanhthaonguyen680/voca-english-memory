@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Voca English Memory",
     short_name: "Voca",
-    description: "Học từ vựng qua câu chuyện được tạo bởi Ran Ran",
+    description: "Học từ vựng bằng Cung điện trí nhớ (Memory Palace)",
     start_url: "/",
     display: "standalone",
     background_color: "#FAF7F0",

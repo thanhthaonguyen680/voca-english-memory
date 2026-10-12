@@ -59,7 +59,15 @@ export type Database = {
           palace_added_at: string | null;
           created_at: string;
         }>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "vocabulary_entries_topic_id_fkey";
+            columns: ["topic_id"];
+            isOneToOne: false;
+            referencedRelation: "vocabulary_topics";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       palace_room_stories: {
         Row: {

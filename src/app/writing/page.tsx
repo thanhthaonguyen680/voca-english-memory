@@ -1,13 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/server";
 import WritingForm from "@/components/WritingForm";
 
 export default async function WritingPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login");
@@ -23,12 +20,12 @@ export default async function WritingPage() {
             khi bạn nộp bài.
           </p>
         </div>
-        <a
+        <Link
           href="/writing/history"
           className="shrink-0 text-sm font-medium text-violet-700 underline hover:text-violet-800"
         >
           Lịch sử →
-        </a>
+        </Link>
       </div>
 
       <WritingForm />

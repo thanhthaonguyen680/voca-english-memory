@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { Type } from "@google/genai";
 import { createClient } from "@/lib/supabase/server";
-import { STORY_MODEL } from "@/lib/gemini/client";
+import { GEMINI_MODEL } from "@/lib/gemini/client";
 import { generateWithKeyPool } from "@/lib/gemini/pool";
+import { countUsageToday, logUsage } from "@/lib/utils/rate-limit";
 import { TENSES, type TenseId } from "@/lib/grammar-data";
 
 const MAX_GRAMMAR_CHECKS_PER_DAY = Number(process.env.MAX_GRAMMAR_CHECKS_PER_DAY ?? 20);
@@ -32,12 +33,6 @@ const CHECK_RESPONSE_SCHEMA = {
 
 type CheckResult = { correct: boolean; feedback: string; correctedSentence: string };
 
-function startOfTodayISO() {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  return start.toISOString();
-}
-
 export async function POST(request: Request) {
   const supabase = await createClient();
 
@@ -66,20 +61,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Thiếu dữ liệu câu cần dịch hoặc câu trả lời." }, { status: 400 });
   }
 
-  const { count, error: countError } = await supabase
-    .from("grammar_checks")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .gte("created_at", startOfTodayISO());
-
-  if (countError) {
-    return NextResponse.json(
-      { error: "Không thể kiểm tra giới hạn sử dụng." },
-      { status: 500 },
-    );
+  const usedToday = await countUsageToday(supabase, "grammar_checks", user.id);
+  if (usedToday === null) {
+    return NextResponse.json({ error: "Không thể kiểm tra giới hạn sử dụng." }, { status: 500 });
   }
 
-  if ((count ?? 0) >= MAX_GRAMMAR_CHECKS_PER_DAY) {
+  if (usedToday >= MAX_GRAMMAR_CHECKS_PER_DAY) {
     return NextResponse.json(
       {
         error: `Bạn đã đạt giới hạn ${MAX_GRAMMAR_CHECKS_PER_DAY} lượt chấm bài/ngày. Vui lòng quay lại vào ngày mai.`,
@@ -91,7 +78,7 @@ export async function POST(request: Request) {
   let result: CheckResult;
   try {
     const response = await generateWithKeyPool({
-      model: STORY_MODEL,
+      model: GEMINI_MODEL,
       contents:
         `Vietnamese sentence: "${vi}"\n` +
         `Target tense: ${tense.nameEn}\n` +
@@ -120,10 +107,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error: logError } = await supabase.from("grammar_checks").insert({ user_id: user.id });
-  if (logError) {
-    console.error("Failed to log grammar check usage", logError);
-  }
+  await logUsage(supabase, "grammar_checks", user.id);
 
   return NextResponse.json({
     correct: Boolean(result.correct),
