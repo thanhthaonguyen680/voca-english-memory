@@ -14,8 +14,6 @@ type MobileMenuProps = {
 
 const LINKS = [
   { href: "/vocabulary", label: "Nhập từ vựng" },
-  { href: "/chat", label: "Luyện nói" },
-  { href: "/writing", label: "Luyện viết" },
   { href: "/grammar", label: "Ngữ pháp" },
 ];
 

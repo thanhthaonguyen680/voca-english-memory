@@ -27,12 +27,6 @@ export default async function Navbar() {
               <Link href="/vocabulary" className="text-neutral-600 hover:text-black">
                 Nhập từ vựng
               </Link>
-              <Link href="/chat" className="text-neutral-600 hover:text-black">
-                Luyện nói
-              </Link>
-              <Link href="/writing" className="text-neutral-600 hover:text-black">
-                Luyện viết
-              </Link>
               <Link href="/grammar" className="text-neutral-600 hover:text-black">
                 Ngữ pháp
               </Link>

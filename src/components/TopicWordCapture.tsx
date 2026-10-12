@@ -42,7 +42,7 @@ export default function TopicWordCapture({
   }
 
   // Best-effort AI fallback for words the learner left with no meaning — never blocks saving
-  // if it fails (same resilience pattern as the writing-feedback route), just leaves the gap
+  // if it fails, just leaves the gap
   // for the next Memory Palace generation to fill instead.
   async function fetchAiMeanings(
     targetWords: string[],
@@ -372,7 +372,7 @@ export default function TopicWordCapture({
           </span>
           <p className="mb-1 font-semibold text-black">Chưa có từ vựng nào</p>
           <p className="mb-4 text-sm text-neutral-500">
-            Đừng tốn công gõ tay từng từ — chụp ảnh trang sách để Ran Ran tự bóc tách từ &amp;
+            Đừng tốn công gõ tay từng từ — chụp ảnh trang sách để AI tự bóc tách từ &amp;
             dịch nghĩa trong vài giây.
           </p>
           <div className="mx-auto grid max-w-sm grid-cols-3 gap-2">

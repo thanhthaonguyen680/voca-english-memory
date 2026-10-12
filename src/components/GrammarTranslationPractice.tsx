@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { TENSES, TRANSLATION_PROMPTS, type TenseId, type TranslationPrompt } from "@/lib/grammar-data";
+import { TENSES, type TenseId } from "@/lib/grammar-data";
+import { TRANSLATION_PROMPTS, type TranslationPrompt } from "@/lib/grammar-questions";
 
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
@@ -19,17 +20,21 @@ type GrammarTranslationPracticeProps = {
   onExit: () => void;
 };
 
+// One sitting is a random draw, not the whole bank: every answer here costs an AI grading call
+// against the daily limit, so a set stays short. Finishing a set offers another draw.
+const SESSION_SIZE = 6;
+
+function drawDeck(scope: TenseId | "mixed"): TranslationPrompt[] {
+  const pool =
+    scope === "mixed" ? TRANSLATION_PROMPTS : TRANSLATION_PROMPTS.filter((p) => p.tenseId === scope);
+  return shuffle(pool).slice(0, SESSION_SIZE);
+}
+
 export default function GrammarTranslationPractice({
   scope,
   onExit,
 }: GrammarTranslationPracticeProps) {
-  const [deck] = useState<TranslationPrompt[]>(() =>
-    shuffle(
-      scope === "mixed"
-        ? TRANSLATION_PROMPTS
-        : TRANSLATION_PROMPTS.filter((p) => p.tenseId === scope),
-    ),
-  );
+  const [deck, setDeck] = useState<TranslationPrompt[]>(() => drawDeck(scope));
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,6 +45,15 @@ export default function GrammarTranslationPractice({
   const scopeLabel =
     scope === "mixed" ? "Trộn tất cả các thì" : TENSES.find((t) => t.id === scope)?.nameVi ?? "";
 
+  function handleNewSet() {
+    setDeck(drawDeck(scope));
+    setIndex(0);
+    setAnswer("");
+    setError("");
+    setResult(null);
+    setCorrectCount(0);
+  }
+
   const isFinished = index >= deck.length;
 
   if (isFinished) {
@@ -49,13 +63,14 @@ export default function GrammarTranslationPractice({
         <p className="text-lg font-semibold text-violet-800">
           Bạn đúng {correctCount}/{deck.length} câu ({percent}%)
         </p>
-        <button
-          type="button"
-          onClick={onExit}
-          className="mt-5 rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-        >
-          Quay lại danh sách thì
-        </button>
+        <div className="mt-5 flex flex-wrap justify-center gap-3">
+          <button type="button" onClick={handleNewSet} className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none">
+            Làm bộ câu khác
+          </button>
+          <button type="button" onClick={onExit} className="rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none">
+            Quay lại danh sách thì
+          </button>
+        </div>
       </div>
     );
   }

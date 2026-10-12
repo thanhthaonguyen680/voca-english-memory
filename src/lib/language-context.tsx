@@ -15,7 +15,7 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 // App-wide "which language am I learning right now" toggle, switched from the navbar and
-// read by every page that generates or speaks content (vocabulary, chat, writing). Persisted
+// read by every page that generates or speaks content (vocabulary). Persisted
 // per-browser in localStorage — this is a personal preference, not account data, so there's
 // no need for a DB column or extra round-trip just to remember it.
 export function LanguageProvider({ children }: { children: ReactNode }) {

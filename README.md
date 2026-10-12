@@ -13,7 +13,7 @@
 >
 > Cách dùng: tạo chủ đề, thêm từ vựng (gõ tay, hoặc chụp/chọn ảnh để AI tự quét và tạo ra nghĩa
 > + phiên âm IPA), rồi xếp vào cung điện trí nhớ để nhớ sâu, nhớ lâu. Ngoài ra còn có ôn tập từ
-> vựng 2 chiều, luyện phát âm, luyện nói, luyện viết, và ngữ pháp — tất cả đều miễn phí. Ban
+> vựng 2 chiều, luyện phát âm và bài tập ngữ pháp — tất cả đều miễn phí. Ban
 > đầu mình định làm cho bản thân, sau mở ra cho vài người bạn cùng mục tiêu học từ vựng tiếng
 > Anh. Giao diện app hoàn toàn bằng tiếng Việt.
 
@@ -40,12 +40,9 @@ worked well enough for me that I opened it up to a few friends chasing the same 
   or mixed, with voice pronunciation checking and a retry mode for missed cards.
 - **Read-aloud pronunciation** for any word, via the browser's built-in speech synthesis
   (free, no API needed).
-- **AI conversation practice — "Ran Ran"** (`/chat`): free-form or scenario-based roleplay
-  chat that naturally works your own vocabulary into the conversation, replies in both text
-  and voice, and accepts typed or spoken input.
-- **Writing practice** (`/writing`): write a short essay (title, intro, body, conclusion) and
-  get AI feedback in Vietnamese. Full history of past essays + feedback is kept
-  (`/writing/history`).
+- **Grammar practice** (`/grammar`): a reference for all 12 English tenses, with 144
+  multiple-choice questions and 72 Vietnamese → English translation prompts (AI-graded),
+  drawn in short random sets.
 - **Study streak**: tracks consecutive days with at least one activity (a word added, or a
   Memory Palace generation), shown right in the navbar to keep the habit going.
 - The whole UI is in **Vietnamese**, since that's who this app is for.
@@ -75,16 +72,13 @@ src/
     login/page.tsx               Username + password sign in / sign up
     vocabulary/page.tsx          Topic list — create topics, add words
     vocabulary/[topicId]/        Topic detail (words + in-topic review) and /palace (Memory Palace)
-    chat/page.tsx                Roleplay voice/text conversation practice with Gemini
-    writing/page.tsx             Write title/overview/body/conclusion, get AI feedback
-    writing/history/page.tsx     Past writings + feedback, with delete
+    grammar/page.tsx             Tense reference + multiple-choice and translation practice
     auth/callback/route.ts       Dormant — only used if magic-link auth is reintroduced
     api/palace/generate/         API route: assigns words to rooms + Gemini mnemonic imagery + stories
     api/scan-vocabulary/         API route: extract words from a photo via Gemini
     api/fill-meaning/            API route: AI meaning/type for words left blank
-    api/chat/                    API route: multi-turn Gemini conversation + rate limiting
-    api/writing/                 API route: saves an essay + gets AI feedback + rate limiting
-  components/                    Navbar, PalaceWalkthrough, ReviewSession, ChatSession, WritingForm...
+    api/grammar/check/           API route: AI-grades a translated sentence + rate limiting
+  components/                    Navbar, PalaceWalkthrough, ReviewSession, GrammarQuiz...
   lib/
     supabase/                    Supabase client (browser/server/middleware) + types
     supabase/admin.ts            Service-role Supabase client (server-only, bypasses RLS)
@@ -134,13 +128,11 @@ NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 GEMINI_API_KEY=...
-MAX_CHAT_MESSAGES_PER_DAY=30
-MAX_WRITINGS_PER_DAY=10
 ENCRYPTION_KEY=...
 ```
 
-- `MAX_CHAT_MESSAGES_PER_DAY` / `MAX_WRITINGS_PER_DAY` (and the per-feature limits in
-  `.env.local.example` for scan / fill-meaning / Memory Palace generation) — basic per-user
+- The per-feature limits in `.env.local.example` (scan / fill-meaning / Memory Palace
+  generation / grammar checks) are optional — basic per-user
   daily rate limits, regardless of which pooled key ends up serving the request.
 - `SUPABASE_SERVICE_ROLE_KEY` — from **Project Settings > API > service_role**. ⚠️ Server-only
   secret, bypasses RLS entirely — never expose to the browser. Used only to read/write the
@@ -197,15 +189,12 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Notes
 
 - RLS ensures each user can only read/write their own `vocabulary_entries`, `vocabulary_topics`,
-  `palace_rooms`, `chat_logs`, and `writings` rows (`auth.uid() = user_id`). `gemini_api_key_pool`
+  and `palace_rooms` rows (`auth.uid() = user_id`). `gemini_api_key_pool`
   has RLS enabled with zero policies — only the service-role key (server-only, bypasses RLS) can
   touch it, since it's shared infrastructure with no per-user owner.
-- Rate limiting counts rows in per-feature tables (`chat_logs`, `writings`, `vocab_scans`,
+- Rate limiting counts rows in per-feature tables (`vocab_scans`,
   `meaning_fills`, `palace_generations`) created today by server clock — simple, no external
   rate-limit service. Those tables store no content, only a row per call, purely for counting.
-- `/chat` conversations are not persisted — history lives in the browser tab for the length of
-  the session and is resent with each request (Gemini's `generateContent` is stateless across
-  serverless invocations either way, so there's no server-side session to lose).
 - All Gemini calls go through `generateWithKeyPool()` (`src/lib/gemini/pool.ts`): sticky
   rotation through `gemini_api_key_pool` (drain the lowest-`sort_order` valid key fully before
   moving on), auto-invalidate on a quota error, auto-retry ~20h later, and fall back to the
@@ -213,8 +202,9 @@ Open [http://localhost:3000](http://localhost:3000).
 - The old "user brings their own Gemini key" feature has been replaced by the key pool above.
   `user_settings.gemini_api_key` and its encrypt/decrypt code path are dormant (table and
   `src/lib/crypto.ts` left in place, not deleted) rather than removed outright.
-- `/writing` always saves the essay even if the AI feedback call fails — feedback is a
-  nice-to-have, not a condition for saving the user's work.
+- The essay-writing (`/writing`) and AI conversation (`/chat`) features were **removed
+  2026-10-12** to keep the app focused on vocabulary. The `writings` and `chat_logs` tables
+  are left in place but dormant.
 - The AI "Storytelling" feature (generate a story from a topic, story history, per-story
   flashcard decks) was **removed 2026-09-10** — it wasn't pulling its weight. The `stories`
   table is left in place but dormant; the study streak now counts activity days from

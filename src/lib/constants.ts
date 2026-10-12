@@ -2,7 +2,6 @@ import type { Language } from "@/lib/types";
 
 // Max words handled in one AI call (scan / fill-meaning / Memory Palace generation).
 export const MAX_WORDS_PER_BATCH = 30;
-export const CHAT_AI_NAME = "Ran Ran";
 
 export const DEFAULT_LANGUAGE: Language = "en";
 

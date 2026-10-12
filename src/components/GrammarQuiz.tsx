@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { GRAMMAR_QUESTIONS, TENSES, type TenseId, type GrammarQuestion } from "@/lib/grammar-data";
+import { TENSES, type TenseId } from "@/lib/grammar-data";
+import { GRAMMAR_QUESTIONS, type GrammarQuestion } from "@/lib/grammar-questions";
 
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
@@ -12,25 +13,44 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
+// One sitting is a random draw from the bank, not the whole bank — "mixed" alone has well over
+// a hundred questions. Finishing a set offers another draw.
+const SESSION_SIZE = 10;
+
+// Draws a session and shuffles each question's options, so the right answer's position can't
+// be memorised (the bank lists most correct answers in the same slot).
+function drawDeck(scope: TenseId | "mixed"): GrammarQuestion[] {
+  const pool =
+    scope === "mixed" ? GRAMMAR_QUESTIONS : GRAMMAR_QUESTIONS.filter((q) => q.tenseId === scope);
+  return shuffle(pool)
+    .slice(0, SESSION_SIZE)
+    .map((q) => {
+      const correct = q.options[q.correctIndex];
+      const options = shuffle(q.options);
+      return { ...q, options, correctIndex: options.indexOf(correct) };
+    });
+}
+
 type GrammarQuizProps = {
   scope: TenseId | "mixed";
   onExit: () => void;
 };
 
 export default function GrammarQuiz({ scope, onExit }: GrammarQuizProps) {
-  const [deck] = useState<GrammarQuestion[]>(() =>
-    shuffle(
-      scope === "mixed"
-        ? GRAMMAR_QUESTIONS
-        : GRAMMAR_QUESTIONS.filter((q) => q.tenseId === scope),
-    ),
-  );
+  const [deck, setDeck] = useState<GrammarQuestion[]>(() => drawDeck(scope));
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [correctCount, setCorrectCount] = useState(0);
 
   const scopeLabel =
     scope === "mixed" ? "Trộn tất cả các thì" : TENSES.find((t) => t.id === scope)?.nameVi ?? "";
+
+  function handleNewSet() {
+    setDeck(drawDeck(scope));
+    setIndex(0);
+    setSelected(null);
+    setCorrectCount(0);
+  }
 
   const isFinished = index >= deck.length;
 
@@ -42,11 +62,10 @@ export default function GrammarQuiz({ scope, onExit }: GrammarQuizProps) {
           Bạn đúng {correctCount}/{deck.length} câu ({percent}%)
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <button
-            type="button"
-            onClick={onExit}
-            className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
-          >
+          <button type="button" onClick={handleNewSet} className="rounded-full border-2 border-black bg-violet-300 px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none">
+            Làm bộ câu khác
+          </button>
+          <button type="button" onClick={onExit} className="rounded-full border-2 border-black bg-white px-4 py-2.5 text-sm font-semibold text-black shadow-[3px_3px_0_0_#000] transition-all hover:translate-x-[3px] hover:translate-y-[3px] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] active:shadow-none">
             Quay lại danh sách thì
           </button>
         </div>

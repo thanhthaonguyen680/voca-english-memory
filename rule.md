@@ -19,7 +19,7 @@ Mandatory rules for this project. Read before adding any new feature.
 - **Pure helper modules live in `src/lib/utils/`** (added 2026-08-09 — `crypto.ts`, `image.ts`,
   `pronunciation.ts`, `speech.ts`, `streak.ts`, `language.ts`), not loose directly under
   `src/lib/`. This is for generic, mostly-stateless helper *functions* only — it does **not**
-  include data modules (`grammar-data.ts`, `palace-data.ts`), shared constants (`constants.ts`),
+  include data modules (`grammar-data.ts`, `grammar-questions.ts`, `palace-data.ts`), shared constants (`constants.ts`),
   React context (`language-context.tsx`), or service clients (`gemini/`, `supabase/` — these
   follow their own documented, path-significant conventions below and must **not** be moved
   into `utils/`). When adding a new stateless helper function, put it in `src/lib/utils/`; when
@@ -31,7 +31,7 @@ Mandatory rules for this project. Read before adding any new feature.
   in `src/lib/types.ts` is "used across many unrelated files as a standalone type," the way
   `Language` is imported by ~20 files spanning routes/components/lib. A type that only
   describes the shape of data defined right next to it in the same file (e.g. `Room` in
-  `palace-data.ts`, `Tense`/`GrammarQuestion` in `grammar-data.ts`, `StudyStreak` in
+  `palace-data.ts`, `Tense` in `grammar-data.ts`, `GrammarQuestion` in `grammar-questions.ts`, `StudyStreak` in
   `utils/streak.ts`) should **stay co-located with that data**, not move here — splitting a
   type away from the one constant/function it describes fragments a single cohesive concept
   for no benefit. `constants.ts` still owns the actual *values* tied to `Language`
@@ -137,7 +137,7 @@ a confusing error like
 - Always check `user` via `supabase.auth.getUser()` first and return `401` if not
   authenticated.
 - Always rate-limit before calling Gemini (count rows in the feature's own per-call table —
-  `chat_logs` / `writings` / `vocab_scans` / `meaning_fills` / `palace_generations` — created
+  `vocab_scans` / `meaning_fills` / `palace_generations` / `grammar_checks` — created
   today, compare against the matching `MAX_*_PER_DAY`). Always enforced per user, regardless of
   which pooled key ends up serving the request (see "Gemini API key pool" below). If a new
   AI-calling feature is added, apply the same daily-count mechanism — don't skip rate limiting
@@ -177,7 +177,7 @@ a confusing error like
   no `/settings` page, no `GeminiKeyForm`, no `/api/user-settings/gemini-key` route anymore.
   Purpose: multiply the effective free-tier daily quota across all users without requiring any
   action from them.
-- Every AI-calling route (`chat`, `writing`, `scan-vocabulary`, `fill-meaning`,
+- Every AI-calling route (`scan-vocabulary`, `fill-meaning`,
   `palace/generate`, `grammar/check`) calls `generateWithKeyPool()` (`src/lib/gemini/pool.ts`)
   instead of a route-local `GoogleGenAI` client, and always enforces its `MAX_*_PER_DAY` rate
   limit — there's no "skip the limit" path anymore since there's no concept of a user's own key.
@@ -280,7 +280,7 @@ a confusing error like
     (see below), just relocated into the card's icon row instead of being the chip's "✕".
 - Removing a single word from a topic (`handleDeleteWord`) does **not** go through
   `ConfirmDialog`, unlike every other delete in the app — deliberately: a single word is
-  trivial to re-add (unlike losing an entire story or writing), so a confirmation prompt would
+  trivial to re-add (unlike losing a whole topic), so a confirmation prompt would
   just be friction. Deleting an entire **topic** (`TopicList`) *does* use `ConfirmDialog`,
   since that cascades (`on delete cascade` on `vocabulary_entries.topic_id`) and destroys every
   word in it at once — a much higher-stakes action.
@@ -434,7 +434,7 @@ a confusing error like
   `generateWithKeyPool()` is asked for "one vivid, exaggerated, slightly bizarre" Vietnamese
   sentence per word specifically because stranger/more visual imagery is what makes the
   technique work — don't tone this down to a plain, literal description.
-- Rate-limited via its own table, `palace_generations` (mirrors `chat_logs`/`vocab_scans`/
+- Rate-limited via its own table, `palace_generations` (mirrors `vocab_scans`/
   `grammar_checks` — just `user_id` + `created_at`), compared against
   `MAX_PALACE_GENERATIONS_PER_DAY`. One call processes up to `MAX_WORDS_PER_BATCH` pending
   words at once (batched into a single Gemini request), not one call per word.
@@ -544,7 +544,7 @@ a confusing error like
     avoid multiplying key-pool quota usage by the number of rooms touched. The room-story call
     is wrapped in its own `try/catch` that only `console.error`s on failure and does **not**
     fail the whole request — it's a bonus on top of content that's already been saved to
-    `vocabulary_entries` by that point, matching the "writing feedback must never block saving"
+    `vocabulary_entries` by that point, matching the "a bonus AI call must never block saving"
     resilience pattern used elsewhere in the app.
   - `PalaceWalkthrough.tsx`'s revealed-card state now shows the word-type badge, `/ipa/`,
     `📝 usage_note`, and `💬 example_sentence` alongside the word/meaning. A room's connecting
@@ -635,62 +635,30 @@ a confusing error like
     extraction) always wins; the AI type only fills that gap too — same
     `existing || ai` merge pattern used for meaning everywhere else in the app.
 
-## Conversation practice (`/chat`)
+## Conversation practice — removed (2026-10-12)
 
-- `src/app/api/chat/route.ts` is **stateless**: the client (`ChatSession.tsx`) resends the
-  full message history (capped to the last `MAX_HISTORY_TURNS = 20`) on every turn, and the
-  route just forwards it as Gemini's `contents` array (`{role: "user"|"model", parts:[{text}]}`).
-  There's no server-side chat session object and no persisted transcript — don't add one just
-  to "simplify" the client; a serverless route can't hold state between requests anyway, so
-  resending history is the only correct approach here, not a shortcut.
-- `chat_logs` exists **only** for rate-limiting (same shape as every other per-call table —
-  `user_id` + `created_at` — `MAX_CHAT_MESSAGES_PER_DAY` env var, always enforced). It stores
-  no message content, because the
-  conversation itself is never persisted. Don't add columns to store chat text there; if real
-  conversation history/logging is wanted later, that's a different, deliberate feature — not
-  something to bolt onto the rate-limit table.
-- The system instruction pulls up to 10 of the user's own `vocabulary_entries` words and asks
-  Gemini to naturally reuse them in conversation — this is what ties `/chat` back to the app's
-  "learn through context" premise instead of being a generic chatbot. Keep that when editing
-  the prompt.
-- AI replies are automatically read aloud via `speak()` (same TTS helper as everywhere else)
-  the moment they arrive — that auto-play is the actual point of this feature ("AI nói tương
-  tác lại"), don't make it opt-in/behind a button.
-- Voice input (`getSpeechRecognitionConstructor`, from `src/lib/utils/pronunciation.ts`, already used
-  by `PronunciationCheck`) fills the text input rather than auto-sending — the learner can
-  review/edit a mis-transcribed sentence before it's sent, consistent with how the rest of the
-  app treats speech recognition as an input aid, not a blind auto-submit.
+- The AI speaking/chat feature (`/chat`, `/api/chat`, `ChatSession`, `CHAT_AI_NAME`,
+  `MAX_CHAT_MESSAGES_PER_DAY`) was deleted together with Writing so the app stays focused on
+  vocabulary (plus the grammar reference, which the user chose to keep). Treat it as a fresh
+  feature request if it's ever wanted again.
+- The `chat_logs` table is left in place but dormant, same rule as `writings`/`stories`.
 
-## Writing practice (`/writing`, `/writing/history`)
+## Writing practice — removed (2026-10-12)
 
-- Structure is fixed: title (required) + overview/conclusion (optional) + body (required) —
-  matches how the user described the feature. Don't make title/body optional; the AI feedback
-  prompt and the history list both assume they exist.
-- `writings` is a normal per-user table (`auth.uid() = user_id` RLS), **not** a
-  rate-limit-only table like `chat_logs` — it stores the full essay text and the AI's
-  feedback, because (unlike `/chat`) the whole point here is a persistent history the user
-  re-reads later.
-- The Gemini call in `src/app/api/writing/route.ts` returns **plain text feedback**, not
-  structured JSON — there's only one field to get back (the feedback itself), so a
-  `responseSchema` would just be overhead. Only reach for structured JSON output when a call
-  genuinely needs multiple distinct fields back.
-- Feedback failure must never block saving the essay: the Gemini call is wrapped in its own
-  `try/catch` that only sets `feedback = null` on error and continues to the `insert` — a
-  learner's work should never be lost because the AI call happened to fail. `WritingForm`
-  reflects that: if `feedback` comes back null it shows "chưa lấy được nhận xét" instead of an
-  error, since the save itself still succeeded.
-- Rate limiting: count `writings` rows created today, compare to `MAX_WRITINGS_PER_DAY`,
-  always enforced. Keep this consistent if another AI-calling feature is ever added — don't
-  invent a different limiting mechanism per feature.
-- Deleting a writing (`WritingHistoryList`) is a client-side, RLS-protected direct `.delete()`
-  (no API route needed), confirmed via the shared `ConfirmDialog` component — not
-  `window.confirm`.
+- The essay-writing feature (`/writing`, `/writing/history`, `/api/writing`, `WritingForm`,
+  `WritingHistoryList`, `MAX_WRITINGS_PER_DAY`) was deleted at the user's request so the app
+  stays focused on vocabulary. Don't reintroduce it casually — treat it as a fresh feature
+  request if it's wanted again.
+- The `writings` table is left in place but dormant (same "don't drop a shipped table without
+  discussing first" rule as `stories` and `user_settings.gemini_api_key`). No code reads or
+  writes it.
 
 ## Grammar reference (`/grammar`)
 
 - **Deliberately static, not AI-generated** — `src/lib/grammar-data.ts` hand-curates all 12
   English tenses (structure, usage, signal words, examples, question/short-answer patterns)
-  plus a matching multiple-choice question bank (`GRAMMAR_QUESTIONS`). Grammar rules are fixed
+  and `src/lib/grammar-questions.ts` holds the practice banks (`GRAMMAR_QUESTIONS`, 12 per
+  tense; `TRANSLATION_PROMPTS`, 6 per tense — grown 2026-10-12). Grammar rules are fixed
   and objective, unlike a story's wording — generating them fresh via Gemini each time would
   risk the model hallucinating an incorrect rule or, worse, marking an exercise answer wrong
   when it's actually right. Don't switch this to an AI call "for variety"; add more hand-written
@@ -699,20 +667,20 @@ a confusing error like
   `src/lib/language-context.tsx`) — tenses are an English-specific grammar concept, so this
   page doesn't read or react to the Anh/Trung switcher at all, unlike every other
   content-generating feature. Don't wire it up to `language`; that switch controls what
-  language new vocabulary/stories/chat/writing are *in*, which isn't relevant to a fixed
+  language new vocabulary content is *in*, which isn't relevant to a fixed
   grammar reference.
 - `/grammar` is behind login (added to `PROTECTED_PATHS` in `src/lib/supabase/middleware.ts`)
   for consistency with the rest of the app's learning tools.
 - `GrammarTenseList.tsx` (browse: expandable card per tense) is the shared entry point for
   **two** separate practice modes, each scoped to one tense or `"mixed"` (all 12):
-  - **Multiple-choice** (`GrammarQuiz.tsx`, `GRAMMAR_QUESTIONS` in `grammar-data.ts`) — fully
+  - **Multiple-choice** (`GrammarQuiz.tsx`, `GRAMMAR_QUESTIONS` in `grammar-questions.ts`) — fully
     static, no AI call. Grading a typed grammar answer reliably needs the same kind of
     loose-matching logic `ReviewSession` already fights with for Vietnamese meanings, and
     grammar answers have far less acceptable variation than a translation does — MCQ sidesteps
     that ambiguity and keeps grading 100% deterministic. Don't switch this to an AI call "for
     variety"; add more hand-written questions to `GRAMMAR_QUESTIONS` instead.
   - **Dịch câu (Việt → Anh)** (`GrammarTranslationPractice.tsx`, prompts from
-    `TRANSLATION_PROMPTS` in `grammar-data.ts`, graded by `POST /api/grammar/check`) — this
+    `TRANSLATION_PROMPTS` in `grammar-questions.ts`, graded by `POST /api/grammar/check`) — this
     *is* AI-graded, unlike everything else in this feature, because judging a free-written
     sentence for "did they use this tense correctly and does it mean the right thing" isn't
     something a static answer key can do (unlike MCQ, there's no finite list of correct
@@ -723,10 +691,19 @@ a confusing error like
     intentionally *different* Vietnamese sentences from each tense's `examples` shown on the
     reference card, so the practice sentence isn't something the learner can just read the
     answer to a few lines above.
-  - Rate-limited via its own table, `grammar_checks` (mirrors `chat_logs`/`vocab_scans` —
+  - Rate-limited via its own table, `grammar_checks` (mirrors `vocab_scans` —
     just `user_id` + `created_at`, no sentence/feedback content stored), compared against
     `MAX_GRAMMAR_CHECKS_PER_DAY`. Only the translation mode counts against this; MCQ is free
     and unlimited since it costs no AI call.
+  - **A sitting is a random draw, not the whole bank** (`SESSION_SIZE` in each component: 10
+    multiple-choice, 6 translation — the latter kept short because each answer costs an AI
+    grading call against the daily limit). The result screen offers "Làm bộ câu khác" to draw
+    again. `GrammarQuiz` also shuffles each question's options at draw time, since the bank
+    lists most correct answers in the same slot — keep that when adding questions, and don't
+    rely on option order in an explanation ("đáp án B...").
+  - When adding questions: every item needs exactly one defensible answer among its four
+    options (watch for time expressions that also allow another tense), and the question
+    text must be unique in the bank.
   - Both modes reuse `ReviewSession.tsx`'s shuffle-deck/score/retry pattern — reuse that
     structure rather than inventing a third quiz flow if a fourth is ever added.
 
@@ -741,7 +718,7 @@ a confusing error like
   support `speechSynthesis`.
 - The Server-Component-fetches / Client-Component-mutates split (a page's `page.tsx` fetches,
   a `"use client"` child owns list state so a delete/edit updates the UI without a refetch) is
-  the pattern to follow — see `TopicList.tsx` / `TopicDetail.tsx` / `WritingHistoryList.tsx`.
+  the pattern to follow — see `TopicList.tsx` / `TopicDetail.tsx`.
 - Destructive confirmations use `src/components/ConfirmDialog.tsx`, not the browser's native
   `window.confirm()` — the native dialog can't be styled and looks jarringly out of place
   against the app's custom theme. Reuse `ConfirmDialog` for any future destructive action
@@ -842,10 +819,9 @@ a confusing error like
   render the language picker), `SPEECH_LANG` (BCP-47 codes for TTS/speech recognition), and
   `isLanguage()` (a type guard for parsing `language` out of an untrusted request body). Any
   new language-aware code should go through these, not a locally re-declared union.
-- `writings` and `vocabulary_entries` (and the dormant `stories`) each have a `language text
-  not null default 'en'` column (migration `20260729223259_add_language_support.sql`) with a
-  check constraint limiting it to `'en' | 'zh'`. Existing rows default to `'en'`. A
-  writing's language is fixed at creation time.
+- `vocabulary_entries` (and the dormant `stories` / `writings`) has a `language text not null
+  default 'en'` column (migration `20260729223259_add_language_support.sql`) with a check
+  constraint limiting it to `'en' | 'zh'`. Existing rows default to `'en'`.
 - The per-word `ipa` field is reused for Chinese too — it holds an IPA transcription for
   English words and a Pinyin romanization (with tone marks, e.g. `nǐ hǎo`) for Chinese words.
   Don't rename the field or add a parallel `pinyin` field; treat `ipa` as "however this word's
@@ -853,13 +829,6 @@ a confusing error like
 - When an AI response schema needs to vary by language, vary the field *description* / system
   instruction, not the JSON shape (see `PALACE_RESPONSE_SCHEMA`'s per-language pronunciation
   hint) — follow that if a third language is ever added.
-- **Chat corrections stay in the target language for English, but switch to Vietnamese for
-  Chinese** (`correctionLanguage` in `src/app/api/chat/route.ts`): correcting an English
-  mistake in English is immersive and the learner can still follow it; correcting a Chinese
-  mistake in Hán tự a beginner can't read yet defeats the point, so those corrections go in
-  Vietnamese instead. Don't unify this to one language for both.
-- Chat's vocabulary-context lookup (`vocabulary_entries`) filters `.eq("language", language)`
-  so an English chat session never gets Chinese words suggested into it, and vice versa.
 - **Reviewing Việt→Trung typed answers grades against Pinyin, not Hán tự** — a learner without
   a Chinese IME can't reliably type characters under quiz time pressure, but anyone can type
   romanized Pinyin. `isCorrectAnswer` in `ReviewSession.tsx` branches on `language`: for `zh`
@@ -877,14 +846,12 @@ a confusing error like
   (`voca:language`) — this is a personal UI preference, not account data, so it deliberately
   has no DB column and doesn't sync across devices. `LanguageSwitcher.tsx` (a flag + dropdown)
   is the only place it's changed, rendered in both `Navbar` (desktop) and `MobileMenu`. Every
-  language-aware form (`TopicList` when creating a topic, `ChatSession`, `WritingForm`) reads
+  language-aware form (`TopicList` when creating a topic) reads
   it via `useLanguage()` — don't reintroduce a local per-form language picker; that was the
   first version of this feature and was replaced because switching languages separately on
   every page was repetitive and confusing about which one was "active". Content-generating
   routes that act on a topic (`palace/generate`) read `language` from the topic row itself,
-  not the request body — a topic's language is fixed at creation time. `WritingHistoryList`
-  is the exception: it shows a *specific past writing's own* stored `language` (fixed at
-  creation time), not the live global toggle, so mixed-language history stays distinguishable.
+  not the request body — a topic's language is fixed at creation time.
 - `useLanguage()` throws if called outside `LanguageProvider` — every client component that
   needs the active language must be a descendant of the root layout's `<LanguageProvider>`
   (true for anything rendered inside `{children}`, so this should never actually happen).
@@ -1005,7 +972,7 @@ secret there.
     dark-mode-style opacity tints from before.
 - No complex loading skeletons/animations — use simple status text (e.g. "Đang tải...", the
   `loading.tsx` files) in line with the "simple, clean UI" requirement.
-- Routes that require auth (`/vocabulary/[topicId]`, `/chat`, `/writing`, `/grammar`) are
+- Routes that require auth (`/vocabulary/[topicId]`, `/grammar`) are
   protected in `src/proxy.ts` via `PROTECTED_PATHS` in `src/lib/supabase/middleware.ts`. When
   a new route needs auth, add it to that array instead of checking `user` ad hoc. Note
   `/vocabulary` itself (the topic list) is deliberately *not* protected — guests can browse it
