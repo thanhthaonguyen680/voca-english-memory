@@ -3,15 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { TENSES, type TenseId } from "@/lib/grammar-data";
 import { TRANSLATION_PROMPTS, type TranslationPrompt } from "@/lib/grammar-questions";
-
-function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
+import { shuffle } from "@/lib/utils/shuffle";
 
 type Result = { correct: boolean; feedback: string; correctedSentence: string };
 

@@ -17,7 +17,7 @@ Mandatory rules for this project. Read before adding any new feature.
 - Styling: plain Tailwind CSS, no component library (shadcn, MUI...) unless explicitly asked
 - Package manager: npm (don't add `yarn.lock` / `pnpm-lock.yaml`)
 - **Pure helper modules live in `src/lib/utils/`** (added 2026-08-09 — `crypto.ts`, `image.ts`,
-  `pronunciation.ts`, `speech.ts`, `streak.ts`, `language.ts`), not loose directly under
+  `pronunciation.ts`, `speech.ts`, `streak.ts`, `language.ts`, later `rate-limit.ts`, `shuffle.ts`), not loose directly under
   `src/lib/`. This is for generic, mostly-stateless helper *functions* only — it does **not**
   include data modules (`grammar-data.ts`, `grammar-questions.ts`, `palace-data.ts`), shared constants (`constants.ts`),
   React context (`language-context.tsx`), or service clients (`gemini/`, `supabase/` — these
