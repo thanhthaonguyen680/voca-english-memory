@@ -3,15 +3,7 @@
 import { useState } from "react";
 import { TENSES, type TenseId } from "@/lib/grammar-data";
 import { GRAMMAR_QUESTIONS, type GrammarQuestion } from "@/lib/grammar-questions";
-
-function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
+import { shuffle } from "@/lib/utils/shuffle";
 
 // One sitting is a random draw from the bank, not the whole bank — "mixed" alone has well over
 // a hundred questions. Finishing a set offers another draw.

@@ -6,20 +6,12 @@ import { normalizeForCompare, normalizePinyin } from "@/lib/utils/pronunciation"
 import { SPEECH_LANG, DEFAULT_LANGUAGE } from "@/lib/constants";
 import type { Language } from "@/lib/types";
 import PronunciationCheck from "@/components/PronunciationCheck";
+import { shuffle } from "@/lib/utils/shuffle";
 
 type WordPair = { word: string; meaning: string; ipa?: string };
 type Direction = "en-vi" | "vi-en";
 type Mode = "en-vi" | "vi-en" | "mixed";
 type Card = WordPair & { direction: Direction };
-
-function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
 
 // Word-side answers must match closely; Vietnamese meanings accept a looser containment
 // match since the same meaning is often phrased several valid ways (e.g. "táo" vs "quả táo").
