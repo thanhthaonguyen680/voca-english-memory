@@ -1,8 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-
-const WORD_TYPES = ["n", "v", "adj", "adv", "phrase"];
+import { WORD_TYPES } from "@/lib/constants";
 
 export default function AddWordModal({
   open,

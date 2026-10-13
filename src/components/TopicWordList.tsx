@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import { speak } from "@/lib/utils/speech";
-import { SPEECH_LANG } from "@/lib/constants";
+import { SPEECH_LANG, WORD_TYPES } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/client";
 import type { Language } from "@/lib/types";
 import type { Word } from "@/components/TopicDetail";
-
-const WORD_TYPES = ["n", "v", "adj", "adv", "phrase"];
 
 export default function TopicWordList({
   words,
